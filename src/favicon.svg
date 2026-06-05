@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-3 -1 106 106" width="250" height="250">
+  <defs>
+    <circle id="topp" cx="50" cy="34.3" r="31.6" />
+    <circle id="venstre" cx="31.6" cy="65.9" r="31.6" />
+    <circle id="hoyre" cx="68.4" cy="65.9" r="31.6" />
+    <mask id="mask-topp"><rect x="-10" y="-10" width="120" height="120" fill="white" /><use href="#hoyre" fill="black" stroke="black" stroke-width="10" /></mask>
+    <mask id="mask-venstre"><rect x="-10" y="-10" width="120" height="120" fill="white" /><use href="#topp" fill="black" stroke="black" stroke-width="10" /></mask>
+    <mask id="mask-hoyre"><rect x="-10" y="-10" width="120" height="120" fill="white" /><use href="#venstre" fill="black" stroke="black" stroke-width="10" /></mask>
+    <filter id="skygge" x="-10%" y="-10%" width="120%" height="120%"><feDropShadow dx="1" dy="3" stdDeviation="2.5" flood-color="#000000" flood-opacity="0.35" /></filter>
+
+    <!-- Norsk rød — øverste sirkel -->
+    <linearGradient id="grad-topp" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ff5a5c"/>
+      <stop offset="25%" stop-color="#ef2b2d"/>
+      <stop offset="75%" stop-color="#ef2b2d"/>
+      <stop offset="100%" stop-color="#a01e1f"/>
+    </linearGradient>
+
+    <!-- Hvit/lys — venstre sirkel -->
+    <linearGradient id="grad-venstre" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="25%" stop-color="#e8eef8"/>
+      <stop offset="75%" stop-color="#d0daf0"/>
+      <stop offset="100%" stop-color="#b0c0e0"/>
+    </linearGradient>
+
+    <!-- Norsk blå — høyre sirkel -->
+    <linearGradient id="grad-hoyre" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0055bb"/>
+      <stop offset="25%" stop-color="#003087"/>
+      <stop offset="75%" stop-color="#003087"/>
+      <stop offset="100%" stop-color="#001a4d"/>
+    </linearGradient>
+
+    <linearGradient id="glass-shine" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.8"/>
+      <stop offset="10%" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="90%" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.2"/>
+    </linearGradient>
+  </defs>
+  <g filter="url(#skygge)">
+    <g mask="url(#mask-topp)"><use href="#topp" fill="url(#grad-topp)" /><use href="#topp" fill="url(#glass-shine)" stroke="url(#glass-shine)" stroke-width="1.5" /></g>
+    <g mask="url(#mask-venstre)"><use href="#venstre" fill="url(#grad-venstre)" /><use href="#venstre" fill="url(#glass-shine)" stroke="url(#glass-shine)" stroke-width="1.5" /></g>
+    <g mask="url(#mask-hoyre)"><use href="#hoyre" fill="url(#grad-hoyre)" /><use href="#hoyre" fill="url(#glass-shine)" stroke="url(#glass-shine)" stroke-width="1.5" /></g>
+  </g>
+</svg>

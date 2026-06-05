@@ -1,0 +1,3094 @@
+// ── Konfig ────────────────────────────────────────────────────────────────────
+const TL_START  = 17.5; // 17:30 CEST
+const TL_END    = 32.5; // 08:30 neste dag
+const TL_COLS   = (TL_END - TL_START) * 2;
+const TL_STEP   = 0.5;
+const MATCH_DUR = 2.0;
+const API_URL   = 'https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json';
+const FETCH_TIMEOUT_MS = 8000;
+
+// VM starter 11. juni 2026 kl. 21:00 CEST = 19:00 UTC
+const VM_START_UTC = new Date('2026-06-11T19:00:00Z');
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let MATCHES = [];
+let NORWAY_POTENTIAL_MATCHES = new Set(); // kamp-num for potensielle Norge-kamper
+let FAVORITE_TEAMS = JSON.parse(localStorage.getItem('favoriteTeams') || '["Norway"]');
+let ACTIVE_FILTER = null; // { type: 'team'|'group', value: 'Norway'|'A' }
+let HIGHLIGHTS_ON = localStorage.getItem('highlightsOn') !== 'false'; // default true
+let TL_EXPANDED   = localStorage.getItem('tlExpanded')   !== 'false'; // default true
+let TBL_REST_DAYS = localStorage.getItem('tblRestDays')  !== 'false'; // default true
+
+function saveFavorites() {
+    localStorage.setItem('favoriteTeams', JSON.stringify(FAVORITE_TEAMS));
+}
+function saveHighlights() {
+    localStorage.setItem('highlightsOn', String(HIGHLIGHTS_ON));
+}
+function saveTlExpanded() {
+    localStorage.setItem('tlExpanded', String(TL_EXPANDED));
+}
+function saveTblRestDays() {
+    localStorage.setItem('tblRestDays', String(TBL_REST_DAYS));
+}
+
+// ── (Header-kollaps fjernet — header er alltid synlig og kompakt) ─────────────
+
+function updateCountdown() {
+    const infoEl = document.getElementById('next-match-info');
+    const norRow = document.getElementById('norway-next-row');
+    const norInfo = document.getElementById('norway-next-info');
+    const liveBadge = document.getElementById('live-badge');
+    if (!infoEl) return;
+
+    const now = Date.now();
+
+    function fmtCountdown(diffMs) {
+        const d = Math.floor(diffMs / 86400000);
+        const h = Math.floor((diffMs % 86400000) / 3600000);
+        const m = Math.floor((diffMs % 3600000) / 60000);
+        const s = Math.floor((diffMs % 60000) / 1000);
+        if (d > 0)   return `om ${d}d ${h}t`;
+        if (h > 0)   return `om ${h}t ${m}m`;
+        if (m > 0)   return `om ${m}m ${s}s`;
+        return `om ${s}s`;
+    }
+
+    function buildMatchText(m) {
+        const st = STADIUMS[m.v] || {};
+        const startMs = cestToDate(m.isoDate, m.t).getTime();
+        const diffMs  = Math.max(0, startMs - now);
+        const isLive  = now >= startMs && now <= startMs + MATCH_DUR * 3600000;
+        const countdown = isLive ? 'LIVE' : fmtCountdown(diffMs);
+        const fifa1 = TEAMS[m.team1]?.fifa_code || m.team1.slice(0,3).toUpperCase();
+        const fifa2 = TEAMS[m.team2]?.fifa_code || m.team2.slice(0,3).toUpperCase();
+        return (
+            `<span class="nm-date">${m.day} ${m.date} · </span>` +
+            `<span class="nm-time">${fmtT(m.t)}</span>` +
+            `<span class="nm-sep"> · </span>` +
+            `<span class="nm-teams">${m.flag1} <span class="nm-name">${m.team1}</span><span class="nm-fifa">${fifa1}</span>` +
+            ` v ${m.flag2} <span class="nm-name">${m.team2}</span><span class="nm-fifa">${fifa2}</span></span>` +
+            `<span class="nm-city"> · ${st.city || m.ground}</span>` +
+            `<span class="nm-countdown"> (<span class="nm-om">om </span>${countdown.replace(/^om /, '')})</span>`
+        );
+    }
+
+    // Finn pågående eller neste kamp
+    const live = MATCHES.find(m => {
+        const s = cestToDate(m.isoDate, m.t).getTime();
+        return now >= s && now <= s + MATCH_DUR * 3600000;
+    });
+    const next = live || MATCHES.find(m => cestToDate(m.isoDate, m.t).getTime() > now);
+
+    if (!next) {
+        infoEl.textContent = 'VM 2026 er over';
+        if (liveBadge) liveBadge.style.display = 'none';
+        if (norRow) norRow.style.display = 'none';
+        return;
+    }
+
+    infoEl.innerHTML = buildMatchText(next);
+    if (liveBadge) liveBadge.style.display = live ? 'inline' : 'none';
+
+    // Neste Norge-kamp
+    if (norRow && norInfo) {
+        const norMatches = MATCHES.filter(m => m.team1 === 'Norway' || m.team2 === 'Norway');
+        const nextNor = norMatches.find(m => {
+            const s = cestToDate(m.isoDate, m.t).getTime();
+            return s > now || (now >= s && now <= s + MATCH_DUR * 3600000);
+        });
+        if (!nextNor || nextNor === next) {
+            norRow.style.display = 'none';
+        } else {
+            const opp = nextNor.team1 === 'Norway' ? nextNor.team2 : nextNor.team1;
+            const oppFlag = nextNor.team1 === 'Norway' ? nextNor.flag2 : nextNor.flag1;
+            const norSt = STADIUMS[nextNor.v] || {};
+            const norStart = cestToDate(nextNor.isoDate, nextNor.t).getTime();
+            const norDiff  = Math.max(0, norStart - now);
+            const norLive  = now >= norStart && now <= norStart + MATCH_DUR * 3600000;
+            const norCountdown = norLive ? 'LIVE' : fmtCountdown(norDiff);
+            const oppFifa = TEAMS[opp]?.fifa_code || opp.slice(0,3).toUpperCase();
+            norInfo.innerHTML =
+                `<span class="nm-date">${nextNor.day} ${nextNor.date} · </span>` +
+                `<span class="nm-time">${fmtT(nextNor.t)}</span>` +
+                `<span class="nm-sep"> · </span>` +
+                `${TEAMS['Norway']?.flag_id ? `<svg class="flag-svg" aria-hidden="true" style="height:1em"><use href="#${TEAMS['Norway'].flag_id}"/></svg>` : '🇳🇴'} ` +
+                `<span class="nm-teams"><span class="nm-name">Norge</span><span class="nm-fifa">NOR</span>` +
+                ` v ${oppFlag} <span class="nm-name">${opp}</span><span class="nm-fifa">${oppFifa}</span></span>` +
+                `<span class="nm-city"> · ${norSt.city || nextNor.ground}</span>` +
+                `<span class="nm-countdown"> (<span class="nm-om">om </span>${norCountdown.replace(/^om /, '')})</span>`;
+            norRow.style.display = 'flex';
+        }
+    }
+}
+
+function updateNorwayBanner() { updateCountdown(); }
+
+
+
+// ── Hjelpefunksjoner ──────────────────────────────────────────────────────────
+function tlPct(t) {
+    let off = t - TL_START;
+    if (off < 0) off += 24;
+    return Math.max(0, Math.min(100, (off / (TL_COLS * TL_STEP)) * 100));
+}
+function tlW() { return (MATCH_DUR / (TL_COLS * TL_STEP)) * 100; }
+
+function scoreStr(score) {
+    if (!score) return '';
+    if (score.ft) return score.ft.join('–');
+    return '';
+}
+
+// Konverter CEST-desimaltimer til UTC Date for en gitt isoDate
+function cestToDate(isoDate, cestT) {
+    const h   = Math.floor(cestT) % 24;
+    const min = Math.round((cestT % 1) * 60);
+    const d   = new Date(isoDate + 'T00:00:00Z');
+    if (cestT >= 24) d.setUTCDate(d.getUTCDate() + 1);
+    // CEST = UTC+2
+    d.setUTCHours(h - 2, min, 0, 0);
+    return d;
+}
+
+// ── Dagens flagg-stripe ───────────────────────────────────────────────────────
+function updateTodayStrip() {
+    const strip = document.getElementById('today-strip');
+    const flagsEl = document.getElementById('today-flags');
+    if (!strip || !flagsEl) return;
+
+    const todayISO = new Date().toISOString().slice(0, 10);
+    const todayMatches = MATCHES.filter(m => m.isoDate === todayISO);
+
+    if (todayMatches.length === 0) {
+        strip.style.display = 'none';
+        return;
+    }
+
+    strip.style.display = 'flex';
+    flagsEl.innerHTML = todayMatches.map((m, i) => {
+        return `<span class="today-flag-pair" onclick="openModal(MATCHES[${MATCHES.indexOf(m)}])" title="${m.team1} vs ${m.team2} — ${fmtT(m.t)}">
+            ${m.flag1}<span class="vs-dot">·</span>${m.flag2}
+        </span>`;
+    }).join('');
+}
+
+// ── Live-badge (global) ───────────────────────────────────────────────────────
+function checkLive() {
+    const now = Date.now();
+    const isLive = MATCHES.some(m => {
+        if (m.t == null) return false;
+        const start = cestToDate(m.isoDate, m.t).getTime();
+        return now >= start && now <= start + MATCH_DUR * 3600000;
+    });
+    // Live-badge vises i norway-banner hvis Norge spiller, ellers skjult
+    if (!MATCHES.some(m => (m.team1 === 'Norway' || m.team2 === 'Norway') &&
+        (() => { const s = cestToDate(m.isoDate, m.t).getTime(); return now >= s && now <= s + MATCH_DUR * 3600000; })())) {
+        const lb = document.getElementById('live-badge');
+        if (lb) lb.style.display = isLive ? 'inline' : 'none';
+    }
+}
+
+// ── Resolve W/L-koder i KO-kamper ────────────────────────────────────────────
+function resolveKOTeams() {
+    const numWinner = {};
+    const numLoser  = {};
+
+    // Bygg num→{winner,loser} fra spilte KO-kamper.
+    // Matcher via score på m (som allerede har riktige lagnavn etter fetchResults
+    // eller fra TEST_SCORES der nøkkelen matcher team1/team2 i MATCHES).
+    // Kjør iterativt siden R16 depends on R32, QF on R16 etc.
+    for (let pass = 0; pass < 6; pass++) {
+        MATCHES.filter(m => m.num != null && m.type !== 'g').forEach(m => {
+            if (numWinner[m.num]) return;
+            // Hent score: prøv m.score (satt av fetchResults/buildMatches)
+            const sc = m.score;
+            if (!sc?.ft) return;
+            const [g1, g2] = sc.ft;
+            let w, l;
+            if (g1 !== g2) {
+                w = g1 > g2 ? m.team1 : m.team2;
+                l = g1 > g2 ? m.team2 : m.team1;
+            } else if (sc.p) {
+                const [p1, p2] = sc.p;
+                w = p1 > p2 ? m.team1 : m.team2;
+                l = p1 > p2 ? m.team2 : m.team1;
+            }
+            if (w && !w.match(/^[WL]\d+$/)) { // bare løs om vinner er kjent lagnavn
+                numWinner[m.num] = w;
+                numLoser[m.num]  = l;
+            }
+        });
+    }
+
+    function resolve(code, depth) {
+        if (!code || depth > 10) return code;
+        const mw = code.match(/^W(\d+)$/);
+        if (mw) { const n = parseInt(mw[1]); return numWinner[n] ? resolve(numWinner[n], depth+1) : code; }
+        const ml = code.match(/^L(\d+)$/);
+        if (ml) { const n = parseInt(ml[1]); return numLoser[n]  ? resolve(numLoser[n],  depth+1) : code; }
+        return code;
+    }
+
+    MATCHES.forEach(m => {
+        if (m.type === 'g') return;
+        const r1 = resolve(m.team1, 0);
+        const r2 = resolve(m.team2, 0);
+        if (r1 !== m.team1) { m.team1 = r1; m.flag1 = TEAMS[r1]?.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${TEAMS[r1].flag_id}"/></svg>` : (TEAMS[r1]?.flag || m.flag1); }
+        if (r2 !== m.team2) { m.team2 = r2; m.flag2 = TEAMS[r2]?.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${TEAMS[r2].flag_id}"/></svg>` : (TEAMS[r2]?.flag || m.flag2); }
+    });
+}
+
+// ── Resultater fra openfootball ───────────────────────────────────────────────
+async function fetchResults() {
+    const status = document.getElementById('fetch-status');
+    status.textContent = 'Henter resultater…';
+
+    const ctrl = new AbortController();
+    const tid  = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+
+    try {
+        const res = await fetch(API_URL, { signal: ctrl.signal });
+        clearTimeout(tid);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        // Bygg oppslag fra API-data: dato|team1|team2 → kampdata
+        const apiByKey = {};
+        const apiByDate = {}; // dato → [kampdata] for KO-kamper med ukjente lag
+        (data.matches || []).forEach(m => {
+            const key = `${m.date}|${m.team1}|${m.team2}`;
+            apiByKey[key] = m;
+            if (!apiByDate[m.date]) apiByDate[m.date] = [];
+            apiByDate[m.date].push(m);
+        });
+
+        let n = 0;
+        MATCHES.forEach(m => {
+            // Direkte treff: lagnavn stemmer allerede
+            let api = apiByKey[`${m.isoDate}|${m.team1}|${m.team2}`];
+
+            // Ingen direkte treff: for KO-kamper, finn API-kamp på samme dato
+            // der team1/team2 er kjente lagnavn (API har oppdatert fra "2E" til "Ecuador")
+            if (!api && m.type !== 'g') {
+                const candidates = (apiByDate[m.isoDate] || []).filter(a =>
+                    a.score &&
+                    // Lagnavn — ikke posisjonskode
+                    !a.team1.match(/^[123][A-L]/) && !a.team1.match(/^[WL]\d/) &&
+                    // Ikke allerede matchet av en annen kamp
+                    !MATCHES.some(o => o !== m && o.isoDate === m.isoDate && o.team1 === a.team1 && o.team2 === a.team2)
+                );
+                if (candidates.length === 1) api = candidates[0];
+            }
+
+            if (api) {
+                // Oppdater teamnavn og flagg hvis API har lagnavn vi ikke hadde
+                if (api.team1 && api.team1 !== m.team1 && !api.team1.match(/^[123WL]/)) {
+                    m.team1 = api.team1;
+                    m.flag1 = TEAMS[api.team1]?.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${TEAMS[api.team1].flag_id}"/></svg>` : (TEAMS[api.team1]?.flag || m.flag1);
+                }
+                if (api.team2 && api.team2 !== m.team2 && !api.team2.match(/^[123WL]/)) {
+                    m.team2 = api.team2;
+                    m.flag2 = TEAMS[api.team2]?.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${TEAMS[api.team2].flag_id}"/></svg>` : (TEAMS[api.team2]?.flag || m.flag2);
+                }
+                if (api.score) { m.score = api.score; n++; }
+            }
+        });
+
+        // Etter at scores er satt: resolve W/L-koder til faktiske lagnavn
+        // Openfootball bruker lagnavn direkte ("Spain", "Argentina") i sine data,
+        // og våre MATCHES har W{num} for fremtidige KO-kamper.
+        // Når vi vet hvem som vant #99, oppdaterer vi team1/team2 i #100 etc.
+        resolveKOTeams();
+
+        const now = new Date().toLocaleTimeString('no', { hour:'2-digit', minute:'2-digit' });
+        status.textContent = n > 0 ? `${n} resultater — ${now}` : `Oppdatert ${now}`;
+
+        buildTimeline();
+        buildTable();
+        buildGroups();
+        updateNorwayBanner();
+        buildNorwaySchedule();
+        updateHeaderHeight();
+        NORWAY_POTENTIAL_MATCHES = new Set(getNorwayPotentialMatches().map(m => m.num));
+
+    } catch (err) {
+        clearTimeout(tid);
+        status.textContent = err.name === 'AbortError' ? 'Tidsavbrudd' : '';
+        console.warn('fetchResults:', err.message);
+    }
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+function openModal(m) {
+    const sc = m.score;
+    const st = STADIUMS[m.v] || {};
+
+    let scoreHtml = '';
+    if (sc && sc.ft) {
+        scoreHtml = `<div class="modal-score">${sc.ft[0]} – ${sc.ft[1]}</div>`;
+        const extra = [];
+        if (sc.et) extra.push(`e.f. ${sc.et[0]}–${sc.et[1]}`);
+        if (sc.p)  extra.push(`str. ${sc.p[0]}–${sc.p[1]}`);
+        if (extra.length) scoreHtml += `<div class="modal-goals">${extra.join(' · ')}</div>`;
+
+        const fmtGoals = (goals) => (goals||[]).map(g => {
+            const pen = g.penalty ? ' (str.)' : '';
+            const own = g.owngoal ? ' (selvmål)' : '';
+            const off = g.offset  ? `+${g.offset}` : '';
+            return `${g.name} ${g.minute}${off}'${pen}${own}`;
+        }).join('<br>');
+
+        const g1 = fmtGoals(m.score.goals1);
+        const g2 = fmtGoals(m.score.goals2);
+        if (g1 || g2) {
+            scoreHtml += `<div class="modal-goals" style="text-align:left;display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.5rem">
+                <div>${g1}</div><div style="text-align:right">${g2}</div>
+            </div>`;
+        }
+    } else {
+        // Ingen score ennå — vis kun tid og dato (ikke dobbelt)
+        scoreHtml = `<div class="modal-score no-score">Ikke spilt</div>`;
+    }
+
+    const grpLabel = m.grp.length === 1 ? `Gruppe ${m.grp}` :
+        ({ R32:'16-delsfinale', R16:'Åttedelsfinale', QF:'Kvartfinale', SF:'Semifinale', '3P':'Bronsefinale', FIN:'Finale' })[m.grp] || m.grp;
+
+    // Vis kampnummer i modal for sluttspillkamper der neste runde refererer W{num}
+    const numRef = m.num != null && m.type !== 'g' &&
+        MATCHES.some(x => x.num != null && !x.score?.ft &&
+            (x.team1 === `W${m.num}` || x.team2 === `W${m.num}` ||
+             x.team1 === `L${m.num}` || x.team2 === `L${m.num}`))
+        ? m.num : null;
+
+    // Beregn lokal tid fra CEST (UTC+2) og stadionets UTC-offset
+    function localTime(cestT, tzStr) {
+        if (!tzStr) return null;
+        const m = tzStr.match(/UTC([+-]\d+)/);
+        if (!m) return null;
+        const offset = parseInt(m[1]);
+        // CEST = UTC+2, lokal = UTC+offset
+        let localH = Math.floor(cestT) % 24 + (offset - 2);
+        const localMin = Math.round((cestT % 1) * 60);
+        localH = ((localH % 24) + 24) % 24;
+        const tzName = { '-7':'PDT', '-6':'MDT/CST', '-5':'CDT', '-4':'EDT' }[String(offset)] || tzStr;
+        return `${String(localH).padStart(2,'0')}:${String(localMin).padStart(2,'0')} ${tzName}`;
+    }
+    const localT = localTime(m.t, st.tz);
+
+    document.getElementById('modal-content').innerHTML = `
+        <div class="modal-grp">${grpLabel}${numRef ? `<span class="modal-match-num"> · Kamp #${numRef}</span>` : ''}</div>
+        <div class="modal-teams">
+            <div class="modal-team">
+                <span class="modal-flag">${m.flag1}</span>
+                <span class="modal-name">${m.team1}</span>
+            </div>
+            <span class="modal-vs">–</span>
+            <div class="modal-team">
+                <span class="modal-flag">${m.flag2}</span>
+                <span class="modal-name">${m.team2}</span>
+            </div>
+        </div>
+        ${scoreHtml}
+        <div class="modal-meta">
+            <div class="modal-meta-row">
+                <i class="bi bi-clock"></i>
+                <span class="modal-time-block">
+                    <span class="modal-time-big">${fmtT(m.t)} CEST${nextDayBadge(m.t, m.isoDate)}${localT ? ` · ${localT}` : ''}</span>
+                    <span class="modal-time-sub">${m.day} ${m.date}</span>
+                </span>
+                ${m.tv ? `<span class="modal-tv modal-tv-${m.tv.toLowerCase().replace(/\s/g,'-')}">${m.tv}</span>` : ''}
+            </div>
+            <div class="modal-meta-row"><i class="bi bi-geo-alt"></i><span>${st.name || m.ground}</span></div>
+            <div class="modal-meta-row"><i class="bi bi-people"></i><span>${st.cap ? st.cap.toLocaleString('no') + ' plasser' : m.ground}</span></div>
+            <div class="modal-meta-row"><i class="bi bi-pin-map"></i><span>${st.city || m.ground}${st.country ? ', ' + st.country : ''}</span></div>
+            ${st.region ? `<div class="modal-meta-row"><i class="bi bi-globe-americas"></i><span>${st.region} Region</span></div>` : ''}
+        </div>
+        <div class="modal-share">
+            <button class="modal-share-btn" onclick="closeModal();openVenueModal('${m.v}')">
+                <i class="bi bi-building"></i> Arena
+            </button>
+            ${!m.team1.match(/^[WL]\d|^\d/) ? `<button class="modal-share-btn" onclick="closeModal();openTeamModal('${m.team1}')">
+                ${m.flag1}
+            </button>` : ''}
+            ${!m.team2.match(/^[WL]\d|^\d/) ? `<button class="modal-share-btn" onclick="closeModal();openTeamModal('${m.team2}')">
+                ${m.flag2}
+            </button>` : ''}
+            <button id="share-btn" class="modal-share-btn" onclick="shareMatch(_modalMatch)">
+                <i class="bi bi-share"></i>
+            </button>
+        </div>
+    `;
+    document.getElementById('modal').style.display = 'flex';
+    window._modalMatch = m; // brukes av shareMatch-knappen
+    // Legg til norway-match-klasse hvis det er en Norge-kamp
+    const modalEl = document.querySelector('.modal');
+    if (modalEl) {
+        const isNorwayMatch = m.team1 === 'Norway' || m.team2 === 'Norway';
+        modalEl.classList.toggle('norway-match', isNorwayMatch);
+    }
+    // Oppdater hash i URL
+    const hash = m.num ? `#kamp-${m.num}` : `#${m.isoDate}-${m.team1.replace(/\s/g,'-')}-${m.team2.replace(/\s/g,'-')}`;
+    history.replaceState(null, '', hash);
+    document.addEventListener('keydown', onModalKey);
+}
+
+function closeModal(e) {
+    if (e && e.target !== document.getElementById('modal')) return;
+    document.getElementById('modal').style.display = 'none';
+    document.removeEventListener('keydown', onModalKey);
+    history.replaceState(null, '', location.pathname);
+}
+
+function onModalKey(e) {
+    if (e.key === 'Escape') {
+        document.getElementById('modal').style.display = 'none';
+        document.removeEventListener('keydown', onModalKey);
+    }
+}
+
+// ── Deling via URL/hash ───────────────────────────────────────────────────────
+function shareMatch(m) {
+    const hash = m.num ? `#kamp-${m.num}` : `#${m.isoDate}-${m.team1.replace(/\s/g,'-')}-${m.team2.replace(/\s/g,'-')}`;
+    // Bruk pre-generert kamp-side for rike embeds
+    const slug = m.num
+        ? String(m.num)
+        : `${m.isoDate}-${m.team1.replace(/[^a-zA-Z0-9]/g,'-')}-${m.team2.replace(/[^a-zA-Z0-9]/g,'-')}`;
+    const url = `${location.origin}/kamp/${slug}.html`;
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(() => {
+            const btn = document.getElementById('share-btn');
+            if (btn) { btn.innerHTML = '<i class="bi bi-check"></i>'; setTimeout(() => { btn.innerHTML = '<i class="bi bi-share"></i>'; }, 2000); }
+        });
+    } else {
+        prompt('Kopier lenken:', url);
+    }
+    history.replaceState(null, '', hash);
+}
+
+// ── Del hele siden ────────────────────────────────────────────────────────────
+function shareApp() {
+    const url   = location.origin + location.pathname;
+    const title = 'FIFA VM 2026 – Kampprogram';
+    const text  = 'Se alle kampene, stillingene og sluttspillet for VM 2026 med norsk tid.';
+    const btn   = document.querySelector('.header-share-btn');
+
+    function flash() {
+        if (!btn) return;
+        btn.innerHTML = '<i class="bi bi-check"></i>';
+        setTimeout(() => { btn.innerHTML = '<i class="bi bi-share"></i>'; }, 2000);
+    }
+
+    if (navigator.share) {
+        navigator.share({ title, text, url }).catch(() => {});
+    } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(flash);
+    } else {
+        prompt('Kopier lenken:', url);
+    }
+}
+
+function openModalByHash() {
+    const hash = location.hash;
+    if (!hash) return;
+
+    // Fane-navigasjon — norske og engelske hash-navn
+    const tabMap = {
+        '#tidslinje': 'timeline', '#tab-timeline': 'timeline',
+        '#kamper':    'table',    '#tab-table':    'table',
+        '#grupper':   'groups',   '#tab-groups':   'groups',
+        '#arenaer':   'arenas',   '#tab-arenas':   'arenas',
+        '#arena':     'arenas',   // #arena uten kode → åpne arenaer-fanen
+        '#statistikk':'stats',    '#tab-stats':    'stats',
+        '#sluttspill':'bracket',  '#tab-bracket':  'bracket',
+    };
+    if (tabMap[hash]) {
+        const tabName = tabMap[hash];
+        const btn = document.querySelector(`.tab[onclick*="showTab('${tabName}'"]`);
+        // btn kan være null hvis fanen er skjult (display:none) — kall showTab direkte
+        if (btn) {
+            showTab(tabName, btn);
+        } else {
+            // Skjult fane — aktiver panel direkte uten å sette aktiv tab-knapp
+            ['timeline','table','groups','bracket','stats','arenas'].forEach(n => {
+                const el = document.getElementById('view-'+n);
+                if (el) el.classList.toggle('active', n === tabName);
+            });
+            if (tabName === 'stats' && !document.getElementById('stats-built')) buildStats();
+        }
+        return;
+    }
+
+    // Arena-modal: #arena-NY, #arena-BO etc.
+    const arenaMatch = hash.match(/^#arena-([A-Z]{2})$/);
+    if (arenaMatch) {
+        const btn = document.querySelector(`.tab[onclick*="showTab('arenas'"]`);
+        if (btn) showTab('arenas', btn);
+        setTimeout(() => openVenueModal(arenaMatch[1]), 100);
+        return;
+    }
+
+    // Kampmodal (eksisterende logikk)
+    let match = null;
+    const numMatch = hash.match(/^#kamp-(\d+)$/);
+    if (numMatch) {
+        match = MATCHES.find(m => m.num === parseInt(numMatch[1]));
+    } else {
+        // Format: #2026-06-11-Team1-Team2 (dato er alltid YYYY-MM-DD = 10 tegn)
+        const raw = hash.slice(1); // fjern #
+        if (raw.length > 10 && raw[4] === '-' && raw[7] === '-') {
+            const iso = raw.slice(0, 10);
+            const rest = raw.slice(11); // alt etter datoen og bindestrek
+            // Prøv å matche team1 og team2 fra resten
+            match = MATCHES.find(m => {
+                if (m.isoDate !== iso) return false;
+                const t1 = m.team1.replace(/\s/g, '-');
+                const t2 = m.team2.replace(/\s/g, '-');
+                return rest === `${t1}-${t2}`;
+            });
+            // Fallback: bare dato (første kamp den dagen)
+            if (!match) match = MATCHES.find(m => m.isoDate === iso);
+        }
+    }
+    if (match) openModal(match);
+}
+
+// Hjelpefunksjoner for vertland (USA, Canada, Mexico)
+
+// Returnerer +1-badge HTML om kampen starter etter midnatt (t >= 24)
+function nextDayBadge(t, isoDate) {
+    if (!t || t < 24) return '';
+    const nextDay = new Date(isoDate + 'T12:00:00');
+    nextDay.setDate(nextDay.getDate() + 1);
+    const days = ['søn','man','tir','ons','tor','fre','lør'];
+    const mo   = ['jan','feb','mar','apr','mai','jun','jul','aug','sep','okt','nov','des'];
+    const label = `Natt til ${days[nextDay.getDay()]} ${nextDay.getDate()}. ${mo[nextDay.getMonth()]}`;
+    return `<sup class="next-day-badge" title="${label}" aria-label="${label}">+1</sup>`;
+}
+
+function hostCountryFlag(country) {
+    const ids = { 'USA': 'us', 'Canada': 'ca', 'Mexico': 'mx' };
+    const id = ids[country];
+    return id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${id}"/></svg>` : '';
+}
+
+// ── Stadion-modal ─────────────────────────────────────────────────────────────
+function openVenueModal(code) {
+    const st = STADIUMS[code];
+    if (!st) return;
+    const flag = hostCountryFlag(st.country);
+
+    // Beregn UTC-offset fra tz-streng (f.eks. "UTC-7" → -7)
+    function getOffset(tzStr) {
+        const m = tzStr?.match(/UTC([+-]\d+)/);
+        return m ? parseInt(m[1]) : null;
+    }
+    function localTimeStr(cestT, offset) {
+        if (offset === null) return null;
+        let h = Math.floor(cestT) % 24 + (offset - 2);
+        const min = Math.round((cestT % 1) * 60);
+        h = ((h % 24) + 24) % 24;
+        const tzName = { '-7':'PDT', '-6':'MDT', '-5':'CDT', '-4':'EDT' }[String(offset)] || `UTC${offset}`;
+        return `${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')} ${tzName}`;
+    }
+    const offset = getOffset(st.tz);
+
+    const matches = MATCHES.filter(m => m.v === code);
+    const matchRows = matches.map(m => {
+        const sc = scoreStr(m.score);
+        const isNorway = m.team1 === 'Norway' || m.team2 === 'Norway';
+        const localT = localTimeStr(m.t, offset);
+        return `<div class="venue-match${isNorway ? ' venue-match-norway' : ''}" onclick="closeModal();openModal(MATCHES[${MATCHES.indexOf(m)}])">
+            <span class="venue-match-date">${m.day} ${m.date}</span>
+            <span class="venue-match-teams">${m.flag1} ${m.team1} v ${m.team2} ${m.flag2}</span>
+            <span class="venue-match-time">
+                <span class="venue-match-cest">${fmtT(m.t)}${nextDayBadge(m.t, m.isoDate)}</span>
+                ${localT ? `<span class="venue-match-local">${localT}</span>` : ''}
+            </span>
+            <span class="venue-match-score">${sc || ''}</span>
+        </div>`;
+    }).join('');
+
+    document.getElementById('modal-content').innerHTML = `
+        <div class="modal-grp">${st.region || ''} Region · ${st.tz || ''}</div>
+        <div class="venue-header">
+            <div class="venue-name">${st.name}</div>
+            <div class="venue-city">${flag} ${st.city}${st.country ? ', ' + st.country : ''}</div>
+        </div>
+        <div class="modal-meta" style="margin-bottom:.75rem">
+            <div class="modal-meta-row"><i class="bi bi-people"></i><span>${st.cap ? st.cap.toLocaleString('no') + ' plasser' : ''}</span></div>
+        </div>
+        <div class="venue-matches-title">Kamper (${matches.length})</div>
+        <div class="venue-matches">${matchRows}</div>
+    `;
+    document.getElementById('modal').style.display = 'flex';
+    document.querySelector('.modal')?.classList.remove('norway-match');
+    history.replaceState(null, '', `#arena-${code}`);
+    document.addEventListener('keydown', onModalKey);
+}
+
+// ── Gruppe-modal ──────────────────────────────────────────────────────────────
+function openGroupModal(grp) {
+    const matches = MATCHES.filter(m => m.grp === grp && m.type === 'g')
+        .sort((a, b) => a.isoDate < b.isoDate ? -1 : a.isoDate > b.isoDate ? 1 : a.t - b.t);
+    if (!matches.length) return;
+
+    const matchRows = matches.map(m => {
+        const sc = scoreStr(m.score);
+        const isNorway = m.team1 === 'Norway' || m.team2 === 'Norway';
+        return `<div class="venue-match${isNorway ? ' venue-match-norway' : ''}" onclick="closeModal();openModal(MATCHES[${MATCHES.indexOf(m)}])">
+            <span class="venue-match-date">${m.day} ${m.date}</span>
+            <span class="venue-match-teams">${m.flag1} ${m.team1} v ${m.team2} ${m.flag2}</span>
+            <span class="venue-match-time">
+                <span class="venue-match-cest">${fmtT(m.t)}${nextDayBadge(m.t, m.isoDate)}</span>
+            </span>
+            <span class="venue-match-score">${sc || ''}</span>
+        </div>`;
+    }).join('');
+
+    document.getElementById('modal-content').innerHTML = `
+        <div class="modal-grp">Gruppe ${grp}</div>
+        <div class="venue-matches-title">Kamper (${matches.length})</div>
+        <div class="venue-matches">${matchRows}</div>
+        <div class="modal-share">
+            <button class="modal-share-btn" onclick="setGroupFilter('${grp}'); showTab('timeline', document.querySelector('.tab')); closeModal();">
+                <i class="bi bi-funnel"></i> Vis i tidslinje
+            </button>
+        </div>
+    `;
+    document.getElementById('modal').style.display = 'flex';
+    document.querySelector('.modal')?.classList.remove('norway-match');
+    document.addEventListener('keydown', onModalKey);
+}
+
+// ── Lag-modal ─────────────────────────────────────────────────────────────────
+function openTeamModal(teamName) {
+    const t = TEAMS[teamName];
+    if (!t) return;
+    const isFav = FAVORITE_TEAMS.includes(teamName);
+    const teamMatches = MATCHES.filter(m => m.team1 === teamName || m.team2 === teamName);
+
+    // Bygg kamp-rader med hviledag-gap mellom kamper
+    let matchRows = '';
+    for (let i = 0; i < teamMatches.length; i++) {
+        if (i > 0) {
+            const prev = teamMatches[i - 1];
+            const curr = teamMatches[i];
+            const prevDate = new Date(prev.isoDate + 'T12:00:00');
+            const currDate = new Date(curr.isoDate + 'T12:00:00');
+            const diffDays = Math.round((currDate - prevDate) / 86400000);
+            if (diffDays > 1) {
+                matchRows += `<div class="team-match-gap">— ${diffDays - 1} dager hvile —</div>`;
+            }
+        }
+        const m = teamMatches[i];
+        const sc = scoreStr(m.score);
+        const isNorway = m.team1 === 'Norway' || m.team2 === 'Norway';
+        matchRows += `<div class="venue-match${isNorway ? ' venue-match-norway' : ''}" onclick="closeModal();openModal(MATCHES[${MATCHES.indexOf(m)}])">
+            <span class="venue-match-date">${m.day} ${m.date}</span>
+            <span class="venue-match-teams">${m.flag1} ${m.team1} v ${m.team2} ${m.flag2}</span>
+            <span class="venue-match-time">
+                <span class="venue-match-cest">${fmtT(m.t)}${nextDayBadge(m.t, m.isoDate)}</span>
+            </span>
+            <span class="venue-match-score">${sc || ''}</span>
+        </div>`;
+    }
+
+    const grpLabel = t.group ? `Gruppe ${t.group}` : '';
+    const confLabel = t.confederation || '';
+
+    document.getElementById('modal-content').innerHTML = `
+        <div class="modal-grp">${grpLabel}${grpLabel && confLabel ? ' · ' : ''}${confLabel}</div>
+        <div class="team-header">
+            <div class="team-flag-lg">${t.flag_id ? `<svg class="flag-svg" style="width:2.5rem;height:1.875rem" aria-hidden="true"><use href="#${t.flag_id}"/></svg>` : (t.flag || '')}</div>
+            <div class="team-info">
+                <div class="team-name-lg">${teamName}</div>
+                <div class="team-meta">${grpLabel}${grpLabel && confLabel ? ' · ' : ''}${confLabel}</div>
+            </div>
+        </div>
+        <div class="venue-matches-title">Kamper (${teamMatches.length})</div>
+        <div class="venue-matches">${matchRows}</div>
+        <div class="modal-share">
+            <button class="modal-share-btn fav-btn ${isFav ? 'fav-active' : ''}" onclick="toggleFavorite('${teamName}')">
+                <i class="bi bi-heart${isFav ? '-fill' : ''}"></i> ${isFav ? 'Favoritt' : 'Legg til'}
+            </button>
+            <button class="modal-share-btn" onclick="setTeamFilter('${teamName}'); showTab('timeline', document.querySelector('.tab')); closeModal();">
+                <i class="bi bi-funnel"></i> Vis i tidslinje
+            </button>
+        </div>
+    `;
+    document.getElementById('modal').style.display = 'flex';
+    document.querySelector('.modal')?.classList.remove('norway-match');
+    if (teamName === 'Norway') {
+        document.querySelector('.modal')?.classList.add('norway-match');
+    }
+    document.addEventListener('keydown', onModalKey);
+}
+
+// ── Favoritter ────────────────────────────────────────────────────────────────
+function toggleFavorite(teamName) {
+    const idx = FAVORITE_TEAMS.indexOf(teamName);
+    if (idx >= 0) FAVORITE_TEAMS.splice(idx, 1);
+    else FAVORITE_TEAMS.push(teamName);
+    saveFavorites();
+    // Re-render modal med oppdatert state
+    openTeamModal(teamName);
+    // Re-render tidslinje og tabell for å oppdatere highlights
+    buildTimeline();
+    buildTable();
+    buildGroups();
+}
+
+// ── Filter ────────────────────────────────────────────────────────────────────
+function setTeamFilter(teamName) {
+    ACTIVE_FILTER = { type: 'team', value: teamName };
+    buildTimeline();
+    buildTable();
+    buildBracket();
+    renderFilterPill();
+}
+
+function setGroupFilter(grp) {
+    ACTIVE_FILTER = { type: 'group', value: grp };
+    buildTimeline();
+    buildTable();
+    buildBracket();
+    renderFilterPill();
+}
+
+function setFavoritesFilter() {
+    ACTIVE_FILTER = { type: 'favorites' };
+    buildTimeline();
+    buildTable();
+    buildBracket();
+    renderFilterPill();
+}
+
+function clearFilter() {
+    ACTIVE_FILTER = null;
+    buildTimeline();
+    buildTable();
+    buildBracket();
+    renderFilterPill();
+}
+
+function toggleHighlights() {
+    HIGHLIGHTS_ON = !HIGHLIGHTS_ON;
+    saveHighlights();
+    buildTimeline();
+    buildTable();
+    buildGroups();
+    buildBracket();
+    renderTlToolbar();
+    renderBracketToolbar();
+}
+
+function renderTlToolbar() {
+    let bar = document.getElementById('tl-toolbar');
+    if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'tl-toolbar';
+        bar.className = 'tl-toolbar';
+        const hint = document.getElementById('tl-hint');
+        hint.after(bar);
+    }
+
+    // Grupper A–L
+    const groups = 'ABCDEFGHIJKL'.split('');
+    // Alle lag sortert etter gruppe
+    const teams = Object.entries(TEAMS)
+        .filter(([, t]) => !t._alias && t.group);
+
+    // Sortering: Norge øverst → favoritter → alfabetisk
+    const favTeams = teams
+        .filter(([name]) => name !== 'Norway' && FAVORITE_TEAMS.includes(name))
+        .sort((a, b) => a[0].localeCompare(b[0]));
+    const otherTeams = teams
+        .filter(([name]) => name !== 'Norway' && !FAVORITE_TEAMS.includes(name))
+        .sort((a, b) => a[0].localeCompare(b[0]));
+
+    const activeGrp = ACTIVE_FILTER?.type === 'group' ? ACTIVE_FILTER.value : null;
+    const activeTeam = ACTIVE_FILTER?.type === 'team' ? ACTIVE_FILTER.value : null;
+
+    bar.innerHTML = `
+        <div class="tl-toolbar-left">
+            <div class="tl-filter-wrap">
+                <button class="tl-filter-btn${ACTIVE_FILTER ? ' active' : ''}" onclick="toggleTlFilterMenu()" id="tl-filter-toggle" aria-expanded="false">
+                    <i class="bi bi-funnel"></i>
+                    <span>${ACTIVE_FILTER
+                        ? (ACTIVE_FILTER.type === 'team'
+                            ? `${TEAMS[ACTIVE_FILTER.value]?.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${TEAMS[ACTIVE_FILTER.value].flag_id}"/></svg>` : (TEAMS[ACTIVE_FILTER.value]?.flag || '')} ${ACTIVE_FILTER.value}`
+                            : ACTIVE_FILTER.type === 'favorites'
+                            ? `<i class="bi bi-heart-fill" style="margin-right:.3em"></i>Favoritter`
+                            : `Gruppe ${ACTIVE_FILTER.value}`)
+                        : 'Filter'}</span>
+                </button>
+                <div class="tl-filter-menu" id="tl-filter-menu" style="display:none">
+                    <div class="tl-filter-section">Grupper</div>
+                    <div class="tl-filter-groups">
+                        ${groups.map(g => `<button class="tl-filter-grp${activeGrp === g ? ' selected' : ''}" onclick="setGroupFilter('${g}');closeTlFilterMenu()">Gr. ${g}</button>`).join('')}
+                    </div>
+                    <div class="tl-filter-section">Lag</div>
+                    <div class="tl-filter-teams">
+                        <button class="tl-filter-team${activeTeam === 'Norway' ? ' selected' : ''}" onclick="setTeamFilter('Norway');closeTlFilterMenu()">${TEAMS['Norway']?.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${TEAMS['Norway'].flag_id}"/></svg>` : '🇳🇴'} Norway</button>
+                        ${favTeams.length > 0 ? `
+                        <div class="tl-filter-divider"></div>
+                        ${FAVORITE_TEAMS.filter(n => n !== 'Norway').length > 0 ? `<button class="tl-filter-team tl-filter-favorites${ACTIVE_FILTER?.type === 'favorites' ? ' selected' : ''}" onclick="setFavoritesFilter();closeTlFilterMenu()"><i class="bi bi-heart-fill"></i> Favoritter (${FAVORITE_TEAMS.filter(n => n !== 'Norway').length})</button>` : ''}
+                        ${favTeams.map(([name, t]) => `<button class="tl-filter-team${activeTeam === name ? ' selected' : ''}" onclick="setTeamFilter('${name}');closeTlFilterMenu()">${t.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${t.flag_id}"/></svg>` : (t.flag || '')} ${name}</button>`).join('')}` : ''}
+                        <div class="tl-filter-divider"></div>
+                        ${otherTeams.map(([name, t]) => `<button class="tl-filter-team${activeTeam === name ? ' selected' : ''}" onclick="setTeamFilter('${name}');closeTlFilterMenu()">${t.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${t.flag_id}"/></svg>` : (t.flag || '')} ${name}</button>`).join('')}
+                    </div>
+                </div>
+            </div>
+            ${ACTIVE_FILTER ? `<button class="tl-filter-clear-btn" onclick="clearFilter()" aria-label="Fjern filter"><i class="bi bi-x"></i> Nullstill</button>` : ''}
+        </div>
+        <div class="tl-toolbar-right">
+            <button class="tl-highlight-toggle${TL_EXPANDED ? ' on' : ''}" onclick="toggleTlExpanded()" title="${TL_EXPANDED ? 'Kompakt visning' : 'Utvidet visning'}">
+                <i class="bi bi-layout-text-sidebar-reverse"></i>
+            </button>
+            <button class="tl-highlight-toggle${HIGHLIGHTS_ON ? ' on' : ''}" onclick="toggleHighlights()" title="${HIGHLIGHTS_ON ? 'Skru av highlight' : 'Skru på highlight'}">
+                <i class="bi bi-heart${HIGHLIGHTS_ON ? '-fill' : ''}"></i>
+            </button>
+        </div>
+    `;
+}
+
+function toggleTlExpanded() {
+    TL_EXPANDED = !TL_EXPANDED;
+    saveTlExpanded();
+    buildTimeline();
+    renderTlToolbar();
+}
+
+function renderTblToolbar() {
+    const bar = document.getElementById('tbl-toolbar');
+    if (!bar) return;
+    // Gjenbruk samme struktur som tidslinje-toolbar, men med annen menu-ID
+    const activeGrp  = ACTIVE_FILTER?.type === 'group' ? ACTIVE_FILTER.value : null;
+    const activeTeam = ACTIVE_FILTER?.type === 'team'  ? ACTIVE_FILTER.value : null;
+    const groups = 'ABCDEFGHIJKL'.split('');
+    const favTeams2 = Object.entries(TEAMS)
+        .filter(([name, t]) => !t._alias && t.group && name !== 'Norway' && FAVORITE_TEAMS.includes(name))
+        .sort((a, b) => a[0].localeCompare(b[0]));
+    const otherTeams2 = Object.entries(TEAMS)
+        .filter(([name, t]) => !t._alias && t.group && name !== 'Norway' && !FAVORITE_TEAMS.includes(name))
+        .sort((a, b) => a[0].localeCompare(b[0]));
+
+    bar.className = 'tl-toolbar';
+    bar.innerHTML = `
+        <div class="tl-toolbar-left">
+            <div class="tl-filter-wrap">
+                <button class="tl-filter-btn${ACTIVE_FILTER ? ' active' : ''}" onclick="toggleTblFilterMenu()" id="tbl-filter-toggle" aria-expanded="false">
+                    <i class="bi bi-funnel"></i>
+                    <span>${ACTIVE_FILTER
+                        ? (ACTIVE_FILTER.type === 'team'
+                            ? `${TEAMS[ACTIVE_FILTER.value]?.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${TEAMS[ACTIVE_FILTER.value].flag_id}"/></svg>` : (TEAMS[ACTIVE_FILTER.value]?.flag || '')} ${ACTIVE_FILTER.value}`
+                            : ACTIVE_FILTER.type === 'favorites'
+                            ? `<i class="bi bi-heart-fill" style="margin-right:.3em"></i>Favoritter`
+                            : `Gruppe ${ACTIVE_FILTER.value}`)
+                        : 'Filter'}</span>
+                </button>
+                <div class="tl-filter-menu" id="tbl-filter-menu" style="display:none">
+                    <div class="tl-filter-section">Grupper</div>
+                    <div class="tl-filter-groups">
+                        ${groups.map(g => `<button class="tl-filter-grp${activeGrp === g ? ' selected' : ''}" onclick="setGroupFilter('${g}');closeTblFilterMenu()">Gr. ${g}</button>`).join('')}
+                    </div>
+                    <div class="tl-filter-section">Lag</div>
+                    <div class="tl-filter-teams">
+                        <button class="tl-filter-team${activeTeam === 'Norway' ? ' selected' : ''}" onclick="setTeamFilter('Norway');closeTblFilterMenu()">${TEAMS['Norway']?.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${TEAMS['Norway'].flag_id}"/></svg>` : '🇳🇴'} Norway</button>
+                        ${favTeams2.length > 0 ? `<div class="tl-filter-divider"></div>${FAVORITE_TEAMS.filter(n => n !== 'Norway').length > 0 ? `<button class="tl-filter-team tl-filter-favorites${ACTIVE_FILTER?.type === 'favorites' ? ' selected' : ''}" onclick="setFavoritesFilter();closeTblFilterMenu()"><i class="bi bi-heart-fill"></i> Favoritter (${FAVORITE_TEAMS.filter(n => n !== 'Norway').length})</button>` : ''}${favTeams2.map(([name, t]) => `<button class="tl-filter-team${activeTeam === name ? ' selected' : ''}" onclick="setTeamFilter('${name}');closeTblFilterMenu()">${t.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${t.flag_id}"/></svg>` : (t.flag || '')} ${name}</button>`).join('')}` : ''}
+                        <div class="tl-filter-divider"></div>
+                        ${otherTeams2.map(([name, t]) => `<button class="tl-filter-team${activeTeam === name ? ' selected' : ''}" onclick="setTeamFilter('${name}');closeTblFilterMenu()">${t.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${t.flag_id}"/></svg>` : (t.flag || '')} ${name}</button>`).join('')}
+                    </div>
+                </div>
+            </div>
+            ${ACTIVE_FILTER ? `<button class="tl-filter-clear-btn" onclick="clearFilter()"><i class="bi bi-x"></i> Nullstill</button>` : ''}
+        </div>
+        <div class="tl-toolbar-right">
+            <button class="tl-highlight-toggle${TBL_REST_DAYS ? ' on' : ''}" onclick="toggleTblRestDays()" title="${TBL_REST_DAYS ? 'Skjul hviledager' : 'Vis hviledager'}">
+                <i class="bi bi-calendar-minus"></i>
+            </button>
+            <button class="tl-highlight-toggle${HIGHLIGHTS_ON ? ' on' : ''}" onclick="toggleHighlights()" title="${HIGHLIGHTS_ON ? 'Skru av highlight' : 'Skru på highlight'}">
+                <i class="bi bi-heart${HIGHLIGHTS_ON ? '-fill' : ''}"></i>
+            </button>
+        </div>
+    `;
+}
+
+function toggleTblRestDays() {
+    TBL_REST_DAYS = !TBL_REST_DAYS;
+    saveTblRestDays();
+    buildTable();
+    renderTblToolbar();
+}
+
+function toggleTblFilterMenu() {
+    const menu = document.getElementById('tbl-filter-menu');
+    const wrap = document.getElementById('tbl-filter-wrap') || menu?.closest('.tl-filter-wrap');
+    const btn  = document.getElementById('tbl-filter-toggle');
+    if (!menu) return;
+    const open = menu.style.display !== 'none';
+    menu.style.display = open ? 'none' : 'block';
+    btn?.setAttribute('aria-expanded', String(!open));
+    if (!open) {
+        const handler = (e) => {
+            if (wrap && wrap.contains(e.target)) return;
+            closeTblFilterMenu();
+            document.removeEventListener('pointerdown', handler, true);
+        };
+        setTimeout(() => document.addEventListener('pointerdown', handler, true), 0);
+    }
+}
+
+function closeTblFilterMenu() {
+    const menu = document.getElementById('tbl-filter-menu');
+    const btn  = document.getElementById('tbl-filter-toggle');
+    if (menu) menu.style.display = 'none';
+    btn?.setAttribute('aria-expanded', 'false');
+}
+
+function toggleTlFilterMenu() {
+    const menu = document.getElementById('tl-filter-menu');
+    const wrap = document.getElementById('tl-filter-wrap') || menu?.closest('.tl-filter-wrap');
+    const btn  = document.getElementById('tl-filter-toggle');
+    if (!menu) return;
+    const open = menu.style.display !== 'none';
+    menu.style.display = open ? 'none' : 'block';
+    btn?.setAttribute('aria-expanded', String(!open));
+    if (!open) {
+        const handler = (e) => {
+            if (wrap && wrap.contains(e.target)) return;
+            closeTlFilterMenu();
+            document.removeEventListener('pointerdown', handler, true);
+        };
+        setTimeout(() => document.addEventListener('pointerdown', handler, true), 0);
+    }
+}
+
+function closeTlFilterMenu() {
+    const menu = document.getElementById('tl-filter-menu');
+    const btn  = document.getElementById('tl-filter-toggle');
+    if (menu) menu.style.display = 'none';
+    btn?.setAttribute('aria-expanded', 'false');
+}
+
+function renderFilterPill() {
+    // Fjernet — filter vises i toolbar på tidslinje og tabell
+    const pill = document.getElementById('filter-pill');
+    if (pill) pill.remove();
+}
+
+// ── Tidslinje ─────────────────────────────────────────────────────────────────
+// Dato-kolonne-bredde: smal på mobil, normal på desktop
+function getDateColWidth() {
+    return window.innerWidth <= 700 ? 52 : 90;
+}
+
+function buildTimeline() {
+    const tl = document.getElementById('tl');
+    tl.innerHTML = '';
+    tl.style.setProperty('--cols', TL_COLS);
+    const dateCol = getDateColWidth();
+
+    // Bygg tidsakse i den ytre sticky-wrapperen (utenfor overflow-elementet)
+    const axisOuter = document.getElementById('tl-axis-outer');
+    if (axisOuter) {
+        axisOuter.innerHTML = '';
+        axisOuter.style.setProperty('--cols', TL_COLS);
+        axisOuter.className = 'tl-axis';
+        axisOuter.style.gridTemplateColumns = `${dateCol}px repeat(${TL_COLS}, 1fr)`;
+        axisOuter.innerHTML = `<div class="tl-axis-label">CEST</div>`;
+
+        for (let i = 0; i < TL_COLS; i++) {
+            const t      = TL_START + i * TL_STEP;
+            const h      = Math.floor(t) % 24;
+            const isHalf = (t % 1) !== 0;
+            const isMid  = h === 0 && !isHalf;
+            const cls    = isMid ? 'midnight' : isHalf ? 'half' : 'whole';
+            const timeLabel = isHalf ? '' : String(h).padStart(2,'0') + ':00';
+            const cell = document.createElement('div');
+            cell.className = `tl-axis-hour ${cls}`;
+            cell.textContent = timeLabel;
+            axisOuter.appendChild(cell);
+        }
+
+        // Bredde synkroniseres via JS etter at tl-inner er ferdig lagt ut.
+        // tl-inner er i .tl-wrap (overflow:auto), tl-axis-outer er i .tl-axis-wrap —
+        // de er i separate containere, så 1fr beregnes ulikt. Vi kopierer offsetWidth.
+        const tlInner = document.getElementById('tl');
+        function syncAxisWidth() {
+            if (!axisOuter || !tlInner) return;
+            // Bruk offsetWidth på tl-inner — dette er den faktiske renderte bredden
+            // inkl. alle kolonner, uavhengig av overflow
+            const w = tlInner.offsetWidth;
+            if (w > 100) {
+                axisOuter.style.width = w + 'px';
+                axisOuter.style.minWidth = w + 'px';
+            }
+        }
+        // Kjør etter at DOM er ferdig rendret
+        requestAnimationFrame(() => {
+            syncAxisWidth();
+            requestAnimationFrame(syncAxisWidth); // dobbel rAF for mobil
+        });
+        if (window._axisResizeObserver) window._axisResizeObserver.disconnect();
+        window._axisResizeObserver = new ResizeObserver(() => requestAnimationFrame(syncAxisWidth));
+        if (tlInner) window._axisResizeObserver.observe(tlInner);
+
+        // Synkroniser horisontal scroll mellom aksen og innholdet
+        // Bruker en navngitt funksjon slik at vi kan fjerne den ved rebuild
+        const tlWrap = document.getElementById('tl-wrap');
+        const axisWrap = document.getElementById('tl-axis-wrap');
+        if (tlWrap && axisWrap) {
+            // Fjern gammel listener hvis den finnes
+            if (tlWrap._axisScrollHandler) {
+                tlWrap.removeEventListener('scroll', tlWrap._axisScrollHandler);
+            }
+            tlWrap._axisScrollHandler = () => {
+                axisWrap.scrollLeft = tlWrap.scrollLeft;
+            };
+            tlWrap.addEventListener('scroll', tlWrap._axisScrollHandler, { passive: true });
+
+            // Fjern gamle touch-listeners
+            if (tlWrap._touchStartHandler) {
+                tlWrap.removeEventListener('touchstart', tlWrap._touchStartHandler);
+                tlWrap.removeEventListener('touchmove',  tlWrap._touchMoveHandler);
+            }
+            // overflow-y: hidden på .tl-wrap hindrer vertikal scroll fysisk.
+            // Ingen ekstra touch-logikk nødvendig.
+        }
+    }
+
+    const days = groupByDay(MATCHES);
+    let lastType = null, rowAlt = false;
+    const secLabels = {
+        g:'Gruppespill',
+        r32:'16-delsfinaler',
+        r16:'Åttedelsfinaler',
+        qf:'Kvartfinaler',
+        sf:'Semifinaler',
+        fin:'Finale'
+    };
+
+    const matchDates = new Set(days.map(d => d.isoDate));
+    const firstDate  = new Date(days[0].isoDate + 'T12:00:00');
+    const lastDate   = new Date(days[days.length-1].isoDate + 'T12:00:00');
+
+    const allDays = [];
+    const cursor  = new Date(firstDate);
+    while (cursor <= lastDate) {
+        const iso = cursor.toISOString().slice(0,10);
+        allDays.push(matchDates.has(iso)
+            ? { type:'match', data: days.find(d => d.isoDate === iso) }
+            : { type:'rest', iso });
+        cursor.setDate(cursor.getDate() + 1);
+    }
+
+    // ── Hjelpefunksjoner ───────────────────────────────────────────────────────
+    function matchesFilter(m) {
+        if (!ACTIVE_FILTER) return true;
+        if (ACTIVE_FILTER.type === 'team') return m.team1 === ACTIVE_FILTER.value || m.team2 === ACTIVE_FILTER.value;
+        if (ACTIVE_FILTER.type === 'group') return m.grp === ACTIVE_FILTER.value;
+        if (ACTIVE_FILTER.type === 'favorites') return FAVORITE_TEAMS.some(t => m.team1 === t || m.team2 === t);
+        return true;
+    }
+
+    function collapseRestGaps(arr) {
+        const secLabelsKO = {
+            r32:'16-delsfinaler', r16:'Åttedelsfinaler',
+            qf:'Kvartfinaler', sf:'Semifinaler', fin:'Finale'
+        };
+        const out = [];
+        let restStart = null, restEnd = null;
+        let currentGapType = null; // KO-type for nåværende gap-seksjon
+
+        function flushGap() {
+            if (!restStart) return;
+            const s = new Date(restStart + 'T12:00:00');
+            const d = new Date(restEnd   + 'T12:00:00');
+            out.push({ type: 'rest-gap', iso: restStart, days: Math.round((d - s) / 86400000) + 1, sectionType: currentGapType });
+            restStart = null; restEnd = null;
+        }
+
+        for (const e of arr) {
+            if (e.type === 'rest') {
+                // Finn hvilken KO-type denne datoen tilhører (fra allDays)
+                const origDay = days.find(d => d.isoDate === e.iso);
+                const dayType = origDay?.type || null;
+                const isNewKOType = dayType && secLabelsKO[dayType] && dayType !== currentGapType;
+
+                if (isNewKOType && restStart) {
+                    // Ny KO-seksjon — flush forrige gap og start ny
+                    flushGap();
+                    currentGapType = dayType;
+                } else if (!restStart) {
+                    currentGapType = dayType || currentGapType;
+                }
+
+                if (!restStart) restStart = e.iso;
+                restEnd = e.iso;
+            } else {
+                flushGap();
+                currentGapType = null;
+                out.push(e);
+            }
+        }
+        flushGap();
+        return out;
+    }
+
+    // ── Kategoriser dager ────────────────────────────────────────────────────
+    // past:     alle kamper ferdigspilt
+    // upcoming: ikke ferdigspilt ennå
+    // Finn siste fortidsdag (forrige kampdag) og skill den ut
+    const nowMs = Date.now();
+
+    function isDayPast(isoDate) {
+        const dayMatches = MATCHES.filter(m => m.isoDate === isoDate);
+        if (!dayMatches.length) return isoDate < new Date().toISOString().slice(0,10);
+        const lastStart = Math.max(...dayMatches.map(m => cestToDate(m.isoDate, m.t).getTime()));
+        return nowMs > lastStart + MATCH_DUR * 3600000;
+    }
+
+    // Potensielle kamper for aktivt filter — Map<num, {match, via}>
+    const activeBracketPaths = ACTIVE_FILTER?.type === 'team'
+        ? getTeamBracketPaths(ACTIVE_FILTER.value)
+        : ACTIVE_FILTER?.type === 'group'
+        ? (() => {
+            // Slå sammen bracket-paths for alle lag i gruppen
+            const combined = new Map();
+            const grpTeams = Object.entries(TEAMS)
+                .filter(([, t]) => !t._alias && t.group === ACTIVE_FILTER.value)
+                .map(([name]) => name);
+            grpTeams.forEach(teamName => {
+                getTeamBracketPaths(teamName).forEach((val, num) => {
+                    if (!combined.has(num)) combined.set(num, val);
+                    else {
+                        const ex = combined.get(num);
+                        if (!ex.via.includes(val.via)) ex.via += ' / ' + val.via;
+                    }
+                });
+            });
+            return combined;
+        })()
+        : ACTIVE_FILTER?.type === 'favorites'
+        ? (() => {
+            const combined = new Map();
+            FAVORITE_TEAMS.forEach(teamName => {
+                getTeamBracketPaths(teamName).forEach((val, num) => {
+                    if (!combined.has(num)) combined.set(num, val);
+                    else {
+                        const ex = combined.get(num);
+                        if (!ex.via.includes(val.via)) ex.via += ' / ' + val.via;
+                    }
+                });
+            });
+            return combined;
+        })()
+        : new Map();
+    const activePotentialNums = new Set(
+        [...activeBracketPaths.keys()]
+            .filter(n => n != null)
+            .filter(n => {
+                const m = MATCHES.find(x => x.num === n);
+                if (!m) return true;
+                if (ACTIVE_FILTER?.type === 'team') {
+                    // Ekskluder kamper der filterlaget faktisk spiller
+                    return m.team1 !== ACTIVE_FILTER.value && m.team2 !== ACTIVE_FILTER.value;
+                }
+                if (ACTIVE_FILTER?.type === 'group') {
+                    // Ekskluder kamper der et lag fra gruppen faktisk spiller
+                    const grpTeams = Object.entries(TEAMS)
+                        .filter(([, t]) => !t._alias && t.group === ACTIVE_FILTER.value)
+                        .map(([name]) => name);
+                    return !grpTeams.some(name => m.team1 === name || m.team2 === name);
+                }
+                if (ACTIVE_FILTER?.type === 'favorites') {
+                    return !FAVORITE_TEAMS.some(name => m.team1 === name || m.team2 === name);
+                }
+                return true;
+            })
+    );
+
+    let effectiveDays = allDays;
+
+    // Hjelpefunksjon for gruppe-filter: KO-kamper der et gruppe-lag spiller
+    function matchesFilterKO(m) {
+        if (!ACTIVE_FILTER) return false;
+        if (matchesFilter(m)) return true;
+        if (ACTIVE_FILTER.type === 'group') {
+            const grpTeams = Object.entries(TEAMS)
+                .filter(([, t]) => !t._alias && t.group === ACTIVE_FILTER.value)
+                .map(([name]) => name);
+            return grpTeams.some(name => m.team1 === name || m.team2 === name);
+        }
+        return false;
+    }
+
+    if (ACTIVE_FILTER) {
+        const potentialNums = activePotentialNums;
+
+        function matchesFilterOrPotential(m) {
+            if (matchesFilter(m)) return true;
+            return potentialNums.size > 0 && potentialNums.has(m.num);
+        }
+
+        // Finn kampdag-datoer som er relevante for dette filteret
+        // For gruppe-filter: inkluder alle KO-kamper der en gruppe-lag spiller
+        function matchesFilterDirect(m) {
+            return matchesFilterKO(m);
+        }
+
+        // Finn kampdag-datoer som er relevante for dette filteret
+        // Dag-level: kun dager der laget faktisk spiller (direkte filter)
+        // Potensielle KO-dager legges til separat under
+        const filterMatchDates = new Set(
+            days.filter(d => d.matches.some(matchesFilterDirect)).map(d => d.isoDate)
+        );
+        // KO-dager med potensielle kamper
+        const potentialMatchDates = new Set(
+            days.filter(d => d.matches.some(m => potentialNums.has(m.num))).map(d => d.isoDate)
+        );
+        const allRelevantDates = new Set([...filterMatchDates, ...potentialMatchDates]);
+
+        if (allRelevantDates.size === 0) {
+            effectiveDays = allDays; // Ingen treff — vis alt ufiltrert
+        } else {
+            const sortedDates = [...allRelevantDates].sort();
+            // Strekk alltid til siste kampdag i turneringen (ikke bare lagets siste kamp)
+            const lastTournamentISO = allDays[allDays.length - 1]?.type === 'match'
+                ? allDays[allDays.length - 1].data.isoDate
+                : allDays.filter(e => e.type === 'match').pop()?.data.isoDate;
+            const lastFilterISO = lastTournamentISO || sortedDates[sortedDates.length - 1];
+
+            // Ta med alle dager fra start til siste relevante kampdag
+            effectiveDays = allDays.filter(e => {
+                const iso = e.type === 'match' ? e.data.isoDate : e.iso;
+                return iso <= lastFilterISO;
+            });
+
+            // Konverter dager uten relevante kamper til hviledag-rader.
+            // Dager med potensielle KO-kamper beholdes som kamprad (kun den potensielle
+            // kampblokken vises, dimming skjer i buildDayEntry for andre kamper).
+            effectiveDays = effectiveDays.map(e => {
+                if (e.type !== 'match') return e;
+                const iso = e.data.isoDate;
+                if (filterMatchDates.has(iso) || potentialMatchDates.has(iso)) return e;
+                return { type: 'rest', iso };
+            });
+
+            // Kollapser påfølgende hviledag-rader til rest-gap
+            effectiveDays = collapseRestGaps(effectiveDays);
+        }
+    }
+
+    // Del effectiveDays i past/future.
+    function entryIso(e) {
+        if (e.type === 'match') return e.data.isoDate;
+        return e.iso;
+    }
+
+    const pastDays   = effectiveDays.filter(e => isDayPast(entryIso(e)));
+    const futureDays = effectiveDays.filter(e => !isDayPast(entryIso(e)));
+
+    // Finn siste kampdag i fortid
+    const lastPastMatchDay = [...pastDays].reverse().find(e => e.type === 'match');
+    const prevDayISO = lastPastMatchDay?.data?.isoDate;
+
+    // Ved aktivt filter: vis alle pastDays i rekkefølge uten å skjule noe bak knapp.
+    // Uten filter: skjul alt eldre enn forrige kampdag bak "Last inn"-knapp.
+    let olderDays, prevDayEntries;
+    if (ACTIVE_FILTER) {
+        olderDays = [];
+        prevDayEntries = pastDays; // vis alle fortidsdager i rekkefølge
+    } else {
+        olderDays = pastDays.filter(e => {
+            if (e.type === 'rest-gap') return false;
+            return entryIso(e) !== prevDayISO;
+        });
+        prevDayEntries = pastDays.filter(e => {
+            if (e.type === 'rest-gap') return true;
+            return entryIso(e) === prevDayISO;
+        });
+    }
+
+    // ── Bygg "Last inn tidligere kamper"-knapp ────────────────────────────────
+    if (olderDays.length > 0) {
+        const totalMatches = olderDays.filter(e => e.type === 'match')
+            .reduce((s, e) => s + e.data.matches.length, 0);
+        const firstEntry = olderDays.find(e => e.type === 'match');
+        const lastEntry  = [...olderDays].reverse().find(e => e.type === 'match');
+        const rangeLabel = firstEntry && lastEntry && firstEntry !== lastEntry
+            ? `${firstEntry.data.date} – ${lastEntry.data.date}`
+            : firstEntry ? firstEntry.data.date : '';
+
+        const loadGroup = document.createElement('div');
+        loadGroup.className = 'tl-load-group';
+
+        const loadBtn = document.createElement('button');
+        loadBtn.className = 'tl-load-btn';
+        loadBtn.innerHTML = `<i class="bi bi-chevron-up"></i> Last inn tidligere kamper (${totalMatches}) — ${rangeLabel}`;
+        loadBtn.addEventListener('click', () => {
+            loadGroup.classList.add('open');
+            loadBtn.style.display = 'none';
+        });
+        loadGroup.appendChild(loadBtn);
+
+        const loadContent = document.createElement('div');
+        loadContent.className = 'tl-load-content';
+        olderDays.forEach(entry => buildDayEntry(entry, loadContent, true));
+        loadGroup.appendChild(loadContent);
+        tl.appendChild(loadGroup);
+    }
+
+    // ── Forrige kampdag — alltid synlig, dempet ───────────────────────────────
+    // Ved aktivt filter: legg til "Gruppespill"-overskrift aller først om første relevante type er 'g'
+    if (ACTIVE_FILTER) {
+        const firstMatchType = effectiveDays.find(e => e.type === 'match')?.data?.type;
+        if (firstMatchType === 'g' && lastType !== 'g') {
+            const sec = document.createElement('div');
+            sec.className = 'tl-section';
+            sec.innerHTML = `<span>Gruppespill</span>`;
+            tl.appendChild(sec);
+            lastType = 'g';
+        }
+    }
+    prevDayEntries.forEach(entry => buildDayEntry(entry, tl, true));
+
+    // ── Fremtidige dager ──────────────────────────────────────────────────────
+    futureDays.forEach(entry => buildDayEntry(entry, tl, false));
+
+    // Render toolbar (filter + highlight-switch) over tidslinjen
+    renderTlToolbar();
+    renderTblToolbar();
+
+    function buildDayEntry(entry, container, isPast) {
+        if (entry.type === 'rest') {
+            const restRow = document.createElement('div');
+            restRow.className = 'tl-rest';
+            restRow.style.gridTemplateColumns = `${dateCol}px 1fr`;
+            const d = new Date(entry.iso + 'T12:00:00');
+            const dayName = ['Søn','Man','Tir','Ons','Tor','Fre','Lør'][d.getDay()];
+            const mo = ['jan','feb','mar','apr','mai','jun','jul','aug','sep','okt','nov','des'];
+            restRow.innerHTML = `<div class="tl-rest-label"><strong>${dayName}</strong> ${d.getDate()}. ${mo[d.getMonth()]}</div><div class="tl-rest-line"></div>`;
+            container.appendChild(restRow);
+            return;
+        }
+
+        if (entry.type === 'rest-gap') {
+            // Vis seksjonsoverskrift for KO-runden som begynner i dette gapet
+            const secLabelsKO = {
+                r32:'16-delsfinaler', r16:'Åttedelsfinaler',
+                qf:'Kvartfinaler', sf:'Semifinaler', fin:'Finale'
+            };
+            if (entry.sectionType && secLabelsKO[entry.sectionType] && entry.sectionType !== lastType) {
+                const sec = document.createElement('div');
+                sec.className = 'tl-section';
+                sec.innerHTML = `<span>${secLabelsKO[entry.sectionType]}</span>`;
+                container.appendChild(sec);
+                lastType = entry.sectionType;
+            }
+
+            // Vis én tl-rest-rad per dag i gapet
+            const startD = new Date(entry.iso + 'T12:00:00');
+            const mo = ['jan','feb','mar','apr','mai','jun','jul','aug','sep','okt','nov','des'];
+            const dayNames = ['Søn','Man','Tir','Ons','Tor','Fre','Lør'];
+            for (let d = 0; d < entry.days; d++) {
+                const cur = new Date(startD);
+                cur.setDate(cur.getDate() + d);
+                const restRow = document.createElement('div');
+                restRow.className = 'tl-rest';
+                restRow.style.gridTemplateColumns = `${dateCol}px 1fr`;
+                restRow.innerHTML = `<div class="tl-rest-label"><strong>${dayNames[cur.getDay()]}</strong> ${cur.getDate()}. ${mo[cur.getMonth()]}</div><div class="tl-rest-line"></div>`;
+                container.appendChild(restRow);
+            }
+            return;
+        }
+
+        const day = entry.data;
+        if (day.type !== lastType) {
+            const lbl = secLabels[day.type];
+            if (lbl) {
+                const sec = document.createElement('div');
+                sec.className = 'tl-section';
+                sec.innerHTML = `<span>${lbl}</span>`;
+                container.appendChild(sec);
+            }
+            lastType = day.type; rowAlt = false;
+        }
+
+        const sorted  = [...day.matches].sort((a,b) => a.t - b.t);
+        const rowEnds = [];
+        const placed  = sorted.map(m => {
+            let ri = 0;
+            while (rowEnds[ri] !== undefined && rowEnds[ri] > m.t - 0.05) ri++;
+            rowEnds[ri] = m.t + MATCH_DUR;
+            return { ...m, ri };
+        });
+
+        const typeClass = {
+            g: rowAlt ? 'type-g-b' : 'type-g-a',
+            r32:'type-ko', r16:'type-ko',
+            qf:'type-sf', sf:'type-sf',
+            fin:'type-fin'
+        }[day.type] || 'type-g-a';
+        rowAlt = !rowAlt;
+
+        const row = document.createElement('div');
+        row.className = `tl-row ${typeClass}${isPast ? ' past' : ''}`;
+        const BLOCK_GAP = TL_EXPANDED ? 54 : 40;
+        row.style.minHeight = (BLOCK_GAP + (rowEnds.length - 1) * BLOCK_GAP) + 'px';
+        row.style.gridTemplateColumns = `${dateCol}px 1fr`;
+        row.innerHTML = `<div class="tl-date"><strong>${day.day}</strong>${day.date}</div>`;
+
+        const area = document.createElement('div');
+        area.className = 'tl-matches';
+        area.style.position = 'relative';
+
+        const grid = document.createElement('div');
+        grid.className = 'tl-grid';
+        grid.style.setProperty('--cols', TL_COLS);
+        for (let i = 0; i < TL_COLS; i++) {
+            const t      = TL_START + i * TL_STEP;
+            const h      = Math.floor(t) % 24;
+            const isHalf = (t % 1) !== 0;
+            const isMid  = h === 0 && !isHalf;
+            grid.innerHTML += `<div class="tl-grid-col${isMid?' midnight':isHalf?' half':''}"></div>`;
+        }
+        area.appendChild(grid);
+
+        placed.forEach(m => {
+            const sc  = scoreStr(m.score);
+            const st  = STADIUMS[m.v] || {};
+            const tip = `${m.flag1} ${m.team1} v ${m.team2} ${m.flag2} — ${fmtT(m.t)} — ${st.name||m.ground}`;
+            const isNorway = m.team1 === 'Norway' || m.team2 === 'Norway';
+            const potentialNorway = HIGHLIGHTS_ON && !isNorway && NORWAY_POTENTIAL_MATCHES.has(m.num);
+            const isFavMatch = HIGHLIGHTS_ON && !isNorway && (FAVORITE_TEAMS.includes(m.team1) || FAVORITE_TEAMS.includes(m.team2));
+            const isNorwayHighlight = HIGHLIGHTS_ON && isNorway;
+            const isPotentialFilter = ACTIVE_FILTER && activePotentialNums.has(m.num);
+            const isDimmed = ACTIVE_FILTER && !matchesFilter(m) && !isPotentialFilter && !matchesFilterKO(m);
+            const viaLabel = isPotentialFilter ? (activeBracketPaths.get(m.num)?.via || '') : '';
+
+            // Vis kampnummer (#90) hvis W{num} refereres i en fremtidig uspilt kamp
+            const showNum = m.num != null && m.type !== 'g' &&
+                MATCHES.some(x => x.num != null && !x.score?.ft &&
+                    (x.team1 === `W${m.num}` || x.team2 === `W${m.num}` ||
+                     x.team1 === `L${m.num}` || x.team2 === `L${m.num}`));
+
+            const block = document.createElement('div');
+            block.className = `tl-match c-${m.grp}${sc?' has-score':''}${isNorwayHighlight?' norway':''}${potentialNorway?' norway-potential':''}${isFavMatch?' fav-match':''}${isDimmed?' dimmed':''}${TL_EXPANDED?' expanded':''}`;
+            block.style.cssText = `left:${tlPct(m.t)}%;width:${tlW()}%;top:${3+m.ri*BLOCK_GAP}px`;
+            block.title = tip;
+            const city = st.city || m.ground || '';
+            const footerHtml = TL_EXPANDED
+                ? `<div class="tl-match-footer">${city ? `<span class="tl-match-city">${city}</span>` : ''}${m.tv ? `<span class="tl-match-tv tl-tv-${m.tv.toLowerCase()}">${m.tv}</span>` : ''}</div>`
+                : '';
+            block.innerHTML =
+                `<div class="tl-match-main">` +
+                `<span class="tl-match-time">${fmtT(m.t)}</span>` +
+                (viaLabel ? `<span class="tl-match-via">${viaLabel}</span>` : '') +
+                `<span class="tl-flag">${m.flag1}</span>` +
+                `<span class="tl-match-name">${m.team1} v ${m.team2}</span>` +
+                `<span class="tl-flag" style="margin-left:2px">${m.flag2}</span>` +
+                (sc ? `<span class="tl-match-score">${sc}</span>` : '') +
+                `</div>` +
+                footerHtml;
+            block.addEventListener('click', () => openModal(m));
+            area.appendChild(block);
+
+            // Kampnummer-badge utenfor blokken (ikke påvirket av overflow:hidden)
+            if (showNum) {
+                const numBadge = document.createElement('div');
+                numBadge.className = 'tl-match-num';
+                numBadge.textContent = `#${m.num}`;
+                numBadge.style.cssText = `left:calc(${tlPct(m.t)}% + ${tlW()}%);top:${3+m.ri*BLOCK_GAP+8}px`;
+                area.appendChild(numBadge);
+            }
+        });
+
+        row.appendChild(area);
+        container.appendChild(row);
+    } // end buildDayEntry
+
+} // end buildTimeline
+
+// ── Tabell ────────────────────────────────────────────────────────────────────
+function buildTable() {
+    const tbl = document.getElementById('tbl');
+    const nowMs = Date.now();
+
+    function isDayPast(isoDate) {
+        const dayMatches = MATCHES.filter(m => m.isoDate === isoDate);
+        if (!dayMatches.length) return isoDate < new Date().toISOString().slice(0,10);
+        const lastStart = Math.max(...dayMatches.map(m => cestToDate(m.isoDate, m.t).getTime()));
+        return nowMs > lastStart + MATCH_DUR * 3600000;
+    }
+
+    const secLabels = {
+        g:'Gruppespill', r32:'16-delsfinaler', r16:'Åttedelsfinaler',
+        qf:'Kvartfinaler', sf:'Semifinaler', fin:'Finale'
+    };
+
+    // ── Filter-logikk ─────────────────────────────────────────────────────────
+    const filterBracketPaths = ACTIVE_FILTER?.type === 'team'
+        ? getTeamBracketPaths(ACTIVE_FILTER.value)
+        : ACTIVE_FILTER?.type === 'group'
+        ? (() => {
+            const combined = new Map();
+            Object.entries(TEAMS).filter(([, t]) => !t._alias && t.group === ACTIVE_FILTER.value)
+                .forEach(([name]) => getTeamBracketPaths(name).forEach((v, n) => { if (!combined.has(n)) combined.set(n, v); }));
+            return combined;
+        })()
+        : ACTIVE_FILTER?.type === 'favorites'
+        ? (() => {
+            const combined = new Map();
+            FAVORITE_TEAMS.forEach(name => {
+                getTeamBracketPaths(name).forEach((v, n) => { if (!combined.has(n)) combined.set(n, v); });
+            });
+            return combined;
+        })()
+        : new Map();
+
+    const filterPotentialNums = new Set(
+        [...filterBracketPaths.keys()].filter(n => n != null).filter(n => {
+            const m = MATCHES.find(x => x.num === n);
+            if (!m) return true;
+            if (ACTIVE_FILTER?.type === 'team') return m.team1 !== ACTIVE_FILTER.value && m.team2 !== ACTIVE_FILTER.value;
+            if (ACTIVE_FILTER?.type === 'group') {
+                const grpTeams = Object.entries(TEAMS).filter(([, t]) => !t._alias && t.group === ACTIVE_FILTER.value).map(([n]) => n);
+                return !grpTeams.some(name => m.team1 === name || m.team2 === name);
+            }
+            if (ACTIVE_FILTER?.type === 'favorites') {
+                return !FAVORITE_TEAMS.some(name => m.team1 === name || m.team2 === name);
+            }
+            return true;
+        })
+    );
+
+    function matchRowFilter(m) {
+        if (!ACTIVE_FILTER) return true;
+        if (ACTIVE_FILTER.type === 'team') return m.team1 === ACTIVE_FILTER.value || m.team2 === ACTIVE_FILTER.value;
+        if (ACTIVE_FILTER.type === 'group') return m.grp === ACTIVE_FILTER.value;
+        if (ACTIVE_FILTER.type === 'favorites') return FAVORITE_TEAMS.some(t => m.team1 === t || m.team2 === t);
+        return true;
+    }
+
+    function matchRowKO(m) {
+        if (!ACTIVE_FILTER) return false;
+        if (matchRowFilter(m)) return true;
+        if (filterPotentialNums.has(m.num)) return true;
+        if (ACTIVE_FILTER.type === 'group') {
+            const grpTeams = Object.entries(TEAMS).filter(([, t]) => !t._alias && t.group === ACTIVE_FILTER.value).map(([n]) => n);
+            return grpTeams.some(name => m.team1 === name || m.team2 === name);
+        }
+        return false;
+    }
+
+    function shouldShowMatch(m) {
+        return !ACTIVE_FILTER || matchRowFilter(m) || matchRowKO(m);
+    }
+
+    // ── Grupper kamper per kampdag ─────────────────────────────────────────────
+    const byDate = {};
+    MATCHES.forEach((m, i) => {
+        if (!ACTIVE_FILTER || shouldShowMatch(m)) {
+            if (!byDate[m.isoDate]) byDate[m.isoDate] = [];
+            byDate[m.isoDate].push({ m, i });
+        }
+    });
+
+    // Ved filter: strekk til turneringens slutt (som i tidslinje)
+    let allDates = Object.keys(byDate).sort();
+    if (ACTIVE_FILTER && allDates.length > 0) {
+        const lastTournamentDate = MATCHES[MATCHES.length - 1]?.isoDate;
+        if (lastTournamentDate && lastTournamentDate > allDates[allDates.length - 1]) {
+            // Legg til tomme datoer frem til turneringens slutt
+            // (vises som seksjonsoverskrifter uten kamper)
+            const cursor = new Date(allDates[allDates.length - 1] + 'T12:00:00');
+            const last   = new Date(lastTournamentDate + 'T12:00:00');
+            while (cursor < last) {
+                cursor.setDate(cursor.getDate() + 1);
+                const iso = cursor.toISOString().slice(0,10);
+                if (!byDate[iso]) byDate[iso] = []; // tom dag — vises kun hvis KO-type skifter
+                if (!allDates.includes(iso)) allDates.push(iso);
+            }
+            allDates.sort();
+        }
+    }
+
+    const pastDates   = allDates.filter(d => isDayPast(d));
+    const futureDates = allDates.filter(d => !isDayPast(d));
+
+    // Finn forrige kampdag (siste fortidsdag med faktiske kamper)
+    const prevDate = [...pastDates].reverse().find(d => byDate[d]?.length > 0) || null;
+    const olderDates = ACTIVE_FILTER ? [] : pastDates.filter(d => d !== prevDate);
+
+    function buildRows(dates, isPast, startFrom) {
+        let html = '';
+        let lastType = null, alt = false;
+        let lastDisplayedDate = null;
+
+        if (!dates.length) return html;
+
+        // Hvis hviledager er på: bygg komplett kalenderrekke fra startFrom til siste dato
+        const mo = ['jan','feb','mar','apr','mai','jun','jul','aug','sep','okt','nov','des'];
+        const dayNames = ['Søn','Man','Tir','Ons','Tor','Fre','Lør'];
+        const allCalDates = [];
+        if (TBL_REST_DAYS) {
+            const start = new Date((startFrom || dates[0]) + 'T12:00:00');
+            const end   = new Date(dates[dates.length - 1] + 'T12:00:00');
+            const cur   = new Date(start);
+            while (cur <= end) {
+                allCalDates.push(cur.toISOString().slice(0, 10));
+                cur.setDate(cur.getDate() + 1);
+            }
+        } else {
+            allCalDates.push(...dates);
+        }
+
+        // Skriv seksjonsoverskrift for første kamptype øverst — før hviledag-rader
+        const firstEntryDate = allCalDates.find(d => (byDate[d] || []).length > 0);
+        if (firstEntryDate) {
+            const firstType = MATCHES.find(m => m.isoDate === firstEntryDate)?.type;
+            if (firstType && secLabels[firstType]) {
+                html += `<tr class="tr-sec"><td colspan="8">${secLabels[firstType]}</td></tr>`;
+                lastType = firstType; alt = false;
+            }
+        }
+
+        allCalDates.forEach(date => {
+            const entries = byDate[date] || [];
+            const hasEntries = entries.length > 0;
+
+            if (!hasEntries) {
+                if (!TBL_REST_DAYS) return;
+                // Hviledag-rad
+                const d = new Date(date + 'T12:00:00');
+                html += `<tr class="tr-rest-day"><td class="tc-day tc-rest-day-label">${dayNames[d.getDay()]} ${d.getDate()}. ${mo[d.getMonth()]}</td><td colspan="7" class="tc-rest-day-line"></td></tr>`;
+                return;
+            }
+
+            // Seksjonsoverskrift ved type-skifte (ikke ved første gang — allerede skrevet over)
+            const dateType = MATCHES.find(m => m.isoDate === date)?.type;
+            if (dateType && dateType !== lastType && secLabels[dateType]) {
+                html += `<tr class="tr-sec"><td colspan="8">${secLabels[dateType]}</td></tr>`;
+                lastType = dateType; alt = false;
+            }
+
+            entries.forEach(({ m, i }) => {
+                if (m.type !== lastType) { lastType = m.type; alt = false; }
+                const trClass = {
+                    g: alt ? 'tr-b' : 'tr-a',
+                    r32:'tr-ko', r16:'tr-ko', qf:'tr-sf', sf:'tr-sf', fin:'tr-fin'
+                }[m.type] || 'tr-a';
+                alt = !alt;
+                const isNorway = m.team1 === 'Norway' || m.team2 === 'Norway';
+                const showDate = lastDisplayedDate !== m.isoDate;
+                lastDisplayedDate = m.isoDate;
+                const sc = scoreStr(m.score);
+                const st = STADIUMS[m.v] || {};
+                const tip = `${st.name||m.ground}${st.cap?' · '+st.cap.toLocaleString('no'):''}`;
+                const norClass = (HIGHLIGHTS_ON && isNorway) ? ' tr-norway' : '';
+                const isFav = HIGHLIGHTS_ON && !isNorway && (FAVORITE_TEAMS.includes(m.team1) || FAVORITE_TEAMS.includes(m.team2));
+                const favClass = isFav ? ' tr-fav' : '';
+                const pastClass = isPast ? ' tr-past' : '';
+                const isPotential = ACTIVE_FILTER && filterPotentialNums.has(m.num);
+                const viaLabel = isPotential ? (filterBracketPaths.get(m.num)?.via || '') : '';
+                const matchMeta = sc
+                    ? `<span class="tc-match-meta">${sc} · ${st.city || m.ground}</span>`
+                    : `<span class="tc-match-meta">${fmtT(m.t)}${nextDayBadge(m.t, m.isoDate)} · ${st.city || m.ground}${viaLabel ? ` <span class="tc-via">${viaLabel}</span>` : ''}</span>`;
+                const venFlag = st.cc ? `<svg class="flag-svg tc-ven-flag" aria-hidden="true"><use href="#${st.cc}"/></svg>` : '';
+                const venName = st.name || m.ground;
+                const venRegion = st.region ? `<span class="tc-ven-region">${st.region}</span>` : '';
+                const numPrefix = m.num != null ? `<span class="tc-num-inline">#${m.num}</span>` : '';
+                const numCell = `<td class="tc-num">${m.num != null ? '#'+m.num : ''}</td>`;
+                const tvCell = m.tv ? `<td class="tc-tv"><span class="tc-tv-badge tc-tv-${m.tv.toLowerCase().replace(/\s/g,'-')}">${m.tv}</span></td>` : `<td class="tc-tv"></td>`;
+                const regionLabel = st.region ? `${st.region} Region` : '';
+                const regionCell = `<td class="tc-region">${regionLabel ? `<span class="tc-region-badge tc-region-${(st.region||'').toLowerCase()}">${regionLabel}</span>` : ''}</td>`;
+                html += `<tr class="${trClass}${norClass}${favClass}${pastClass}${isPotential ? ' tr-potential' : ''}" onclick="openModal(MATCHES[${i}])">
+                    <td class="tc-day">${showDate ? m.day+'<br>'+m.date : ''}</td>
+                    <td class="tc-match">
+                        <div class="tc-match-teams">${m.flag1} ${m.team1} v ${m.team2} ${m.flag2}</div>
+                        ${matchMeta}
+                    </td>
+                    <td class="tc-score">${sc}</td>
+                    <td class="tc-grp"><span class="c-${m.grp} tc-grp-badge">${m.grp}</span></td>
+                    <td class="tc-ven" title="${tip}">${venFlag}<span class="tc-ven-name">${venName}</span></td>
+                    ${regionCell}
+                    ${numCell}
+                    ${tvCell}
+                </tr>`;
+            });
+        });
+        return html;
+    }
+
+    // Turneringens første dato — startpunkt for hviledagsrader
+    const tournamentFirstDate = MATCHES.find(m => m.type === 'g')?.isoDate || allDates[0];
+
+    // Bygg HTML
+    let fullHtml = '';
+
+    // "Last inn tidligere kamper"-knapp (kun uten filter)
+    if (!ACTIVE_FILTER && olderDates.length > 0) {
+        const totalOlder = olderDates.reduce((s, d) => s + (byDate[d]?.length || 0), 0);
+        const firstDate = byDate[olderDates[0]]?.[0]?.m;
+        const lastDate  = byDate[olderDates[olderDates.length-1]]?.[0]?.m;
+        const rangeLabel = firstDate && lastDate && firstDate !== lastDate
+            ? `${firstDate.day} ${firstDate.date} – ${lastDate.day} ${lastDate.date}`
+            : firstDate ? `${firstDate.day} ${firstDate.date}` : '';
+        fullHtml += `<tr class="tr-load-row" id="tbl-load-row">
+            <td colspan="8">
+                <button class="tl-load-btn" onclick="document.getElementById('tbl-older').style.display='';document.getElementById('tbl-load-row').style.display='none'">
+                    <i class="bi bi-chevron-up"></i> Last inn tidligere kamper (${totalOlder}) — ${rangeLabel}
+                </button>
+            </td>
+        </tr>
+        <tbody id="tbl-older" style="display:none">${buildRows(olderDates, true, tournamentFirstDate)}</tbody>
+        <tbody id="tbl-main">`;
+    } else {
+        fullHtml += `<tbody id="tbl-main">`;
+    }
+
+    // Ved filter: vis alle fortidsdager i rekkefølge
+    if (ACTIVE_FILTER) {
+        fullHtml += buildRows(pastDates, true, tournamentFirstDate);
+    } else if (prevDate) {
+        fullHtml += buildRows([prevDate], true, tournamentFirstDate);
+    }
+
+    // Fremtidige kamper — starter fra turneringens første dag når filter er på
+    fullHtml += buildRows(futureDates, false, ACTIVE_FILTER ? tournamentFirstDate : undefined);
+    fullHtml += `</tbody>`;
+
+    tbl.innerHTML = fullHtml;
+    renderTblToolbar();
+}
+function buildGroups() {
+    const standings = {};
+    MATCHES.forEach(m => {
+        if (m.type !== 'g' || !m.score?.ft) return;
+        const g = m.grp;
+        if (!standings[g]) standings[g] = {};
+        const [s1, s2] = m.score.ft;
+        const init = () => ({ pts:0, gf:0, ga:0, played:0 });
+        if (!standings[g][m.team1]) standings[g][m.team1] = init();
+        if (!standings[g][m.team2]) standings[g][m.team2] = init();
+        standings[g][m.team1].gf += s1; standings[g][m.team1].ga += s2; standings[g][m.team1].played++;
+        standings[g][m.team2].gf += s2; standings[g][m.team2].ga += s1; standings[g][m.team2].played++;
+        if (s1 > s2)      standings[g][m.team1].pts += 3;
+        else if (s1 < s2) standings[g][m.team2].pts += 3;
+        else              { standings[g][m.team1].pts += 1; standings[g][m.team2].pts += 1; }
+    });
+
+    const grpMap = {};
+    Object.entries(TEAMS).forEach(([name, t]) => {
+        if (t._alias) return;
+        if (!grpMap[t.group]) grpMap[t.group] = [];
+        grpMap[t.group].push({ name, ...t });
+    });
+
+    const hasAnyResults = Object.keys(standings).length > 0;
+    const colorMap = { A:'c-A',B:'c-B',C:'c-C',D:'c-D',E:'c-E',F:'c-F',G:'c-G',H:'c-H',I:'c-I',J:'c-J',K:'c-K',L:'c-L' };
+
+    // Beregn region per gruppe fra kampdata
+    const grpRegion = {};
+    MATCHES.filter(m => m.type === 'g').forEach(m => {
+        if (!grpRegion[m.grp] && STADIUMS[m.v]?.region) grpRegion[m.grp] = STADIUMS[m.v].region;
+    });
+
+    // Samle alle treere for å finne beste 4
+    const allThirds = [];
+
+    let html = '';
+    Object.keys(grpMap).sort().forEach(g => {
+        const teams = grpMap[g];
+        const st = standings[g] || {};
+        const hasResults = Object.keys(st).length > 0; // per gruppe
+
+        if (hasResults) {
+            teams.sort((a, b) => {
+                const sa = st[a.name] || { pts:0, gf:0, ga:0 };
+                const sb = st[b.name] || { pts:0, gf:0, ga:0 };
+                if (sb.pts !== sa.pts) return sb.pts - sa.pts;
+                if ((sb.gf-sb.ga) !== (sa.gf-sa.ga)) return (sb.gf-sb.ga) - (sa.gf-sa.ga);
+                return sb.gf - sa.gf;
+            });
+        }
+
+        // Finn treeren i denne gruppen (index 2 etter sortering)
+        if (hasResults && teams.length >= 3) {
+            const third = teams[2];
+            const s = st[third.name] || { pts:0, gf:0, ga:0 };
+            allThirds.push({ name: third.name, flag: third.flag, group: g, ...s });
+        }
+
+        html += `<div class="group-card">
+            <div class="group-title ${colorMap[g]||''}" onclick="openGroupModal('${g}')" style="cursor:pointer">Gruppe ${g}</div>
+            <div class="group-body">`;
+        if (hasResults) {
+            html += `<div class="group-team group-header-row">
+                <span class="group-pos"></span>
+                <span class="group-flag" style="visibility:hidden">🏳</span>
+                <span class="group-name"></span>
+                <span class="group-stats"><span class="group-gd">MF</span><span class="group-pts">P</span></span>
+                <span class="group-fav-slot"></span>
+            </div>`;
+        }
+        teams.forEach((t, idx) => {
+            const s   = st[t.name] || null;
+            const gd  = s ? (s.gf - s.ga > 0 ? '+' : '') + (s.gf - s.ga) : '';
+            const pts = s ? s.pts : '';
+            const statsHtml = s
+                ? `<span class="group-stats"><span class="group-gd">${gd}</span><span class="group-pts">${pts}</span></span>`
+                : '';
+            const isNor = t.name === 'Norway' ? ' norway-team' : '';
+            const isFav = FAVORITE_TEAMS.includes(t.name);
+            const showFavHeart = HIGHLIGHTS_ON && isFav;
+            const favHeart = showFavHeart ? '<i class="bi bi-heart-fill group-fav-heart"></i>' : '';
+
+            // Plasserings-farge: 1+2 = grønn, 3 = gul, 4 = rød
+            let posClass = '';
+            let posIcon = '';
+            if (hasResults) {
+                if (idx === 0 || idx === 1) { posClass = ' pos-advance'; posIcon = ''; }
+                else if (idx === 2)          { posClass = ' pos-third';   posIcon = ''; }
+                else                         { posClass = ' pos-out';     posIcon = ''; }
+            }
+
+            html += `<div class="group-team${isNor}${posClass}" onclick="openTeamModal('${t.name}')">
+                <span class="group-flag">${t.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${t.flag_id}"/></svg>` : (t.flag || '')}</span>
+                <span class="group-name">${t.name}</span>
+                ${statsHtml}
+                <span class="group-fav-slot">${favHeart}</span>
+            </div>`;
+        });
+        html += `</div>`;
+        const region = grpRegion[g];
+        if (region) {
+            html += `<div class="group-region group-region-${region.toLowerCase()}">${region} Region</div>`;
+        }
+        html += `</div>`;
+    });
+
+    const groupsEl = document.getElementById('groups');
+    groupsEl.innerHTML = html;
+
+    // Beste treere — vis under gruppe-griddet
+    let thirdEl = document.getElementById('best-thirds');
+    if (!thirdEl) {
+        thirdEl = document.createElement('div');
+        thirdEl.id = 'best-thirds';
+        groupsEl.after(thirdEl);
+    }
+
+    if (hasAnyResults && allThirds.length > 0) {
+        // Sorter treere: poeng → målforskjell → mål scoret
+        allThirds.sort((a, b) => {
+            if (b.pts !== a.pts) return b.pts - a.pts;
+            if ((b.gf-b.ga) !== (a.gf-a.ga)) return (b.gf-b.ga) - (a.gf-a.ga);
+            return b.gf - a.gf;
+        });
+
+        const rows = allThirds.map((t, i) => {
+            const advancing = i < 4;
+            const gd = (t.gf - t.ga > 0 ? '+' : '') + (t.gf - t.ga);
+            return `<div class="third-row${advancing ? ' third-advancing' : ''}">
+                <span class="third-pos">${i+1}</span>
+                <span class="third-flag">${t.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${t.flag_id}"/></svg>` : (t.flag || '')}</span>
+                <span class="third-name">${t.name}</span>
+                <span class="third-group">Gr. ${t.group}</span>
+                <span class="third-stats"><span class="third-gd">${gd}</span><span class="third-pts">${t.pts}p</span><span class="third-gf">${t.gf} mål</span></span>
+            </div>`;
+        }).join('');
+
+        thirdEl.innerHTML = `
+            <div class="thirds-section">
+                <button class="thirds-toggle" onclick="this.parentElement.classList.toggle('open')" aria-expanded="false">
+                    <span class="thirds-title">Beste treere</span>
+                    <i class="bi bi-chevron-down thirds-chevron"></i>
+                </button>
+                <div class="thirds-body">
+                    <div class="thirds-note">4 av ${allThirds.length} treere går videre · Rangert etter poeng, målforskjell og mål scoret</div>
+                    <div class="thirds-list">${rows}</div>
+                </div>
+            </div>`;
+    } else {
+        thirdEl.innerHTML = '';
+    }
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+function showTab(name, btn) {
+    ['timeline','table','groups','bracket','stats','arenas'].forEach(n => {
+        const el = document.getElementById('view-'+n);
+        if (el) el.classList.toggle('active', n === name);
+    });
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    // Oppdater URL-hash ved fanebytte
+    const tabHash = { timeline: '#tidslinje', table: '#kamper', groups: '#grupper', arenas: '#arenaer', stats: '#statistikk', bracket: '#sluttspill' };
+    if (tabHash[name]) history.replaceState(null, '', tabHash[name]);
+    // Bygg faner ved første besøk
+    if (name === 'stats'   && !document.getElementById('stats-built'))   buildStats();
+    if (name === 'arenas'  && !document.getElementById('arenas-built'))  buildArenas();
+    if (name === 'map'     && !document.getElementById('map-built'))     buildMap();
+    if (name === 'bracket' && !document.getElementById('bracket-built')) buildBracket();
+}
+
+// ── KO-bracket ────────────────────────────────────────────────────────────────
+function renderBracketToolbar() {
+    let bar = document.getElementById('bracket-toolbar');
+    if (!bar) return;
+
+    const groups = 'ABCDEFGHIJKL'.split('');
+    const teams = Object.entries(TEAMS)
+        .filter(([, t]) => !t._alias && t.group);
+    const favTeams = teams
+        .filter(([name]) => name !== 'Norway' && FAVORITE_TEAMS.includes(name))
+        .sort((a, b) => a[0].localeCompare(b[0]));
+    const otherTeams = teams
+        .filter(([name]) => name !== 'Norway' && !FAVORITE_TEAMS.includes(name))
+        .sort((a, b) => a[0].localeCompare(b[0]));
+
+    const activeGrp  = ACTIVE_FILTER?.type === 'group' ? ACTIVE_FILTER.value : null;
+    const activeTeam = ACTIVE_FILTER?.type === 'team'  ? ACTIVE_FILTER.value : null;
+
+    bar.className = 'tl-toolbar';
+    bar.innerHTML = `
+        <div class="tl-toolbar-left">
+            <div class="tl-filter-wrap">
+                <button class="tl-filter-btn${ACTIVE_FILTER ? ' active' : ''}" onclick="toggleBracketFilterMenu()" id="bracket-filter-toggle" aria-expanded="false">
+                    <i class="bi bi-funnel"></i>
+                    <span>${ACTIVE_FILTER
+                        ? (ACTIVE_FILTER.type === 'team'
+                            ? `${TEAMS[ACTIVE_FILTER.value]?.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${TEAMS[ACTIVE_FILTER.value].flag_id}"/></svg>` : (TEAMS[ACTIVE_FILTER.value]?.flag || '')} ${ACTIVE_FILTER.value}`
+                            : ACTIVE_FILTER.type === 'favorites'
+                            ? `<i class="bi bi-heart-fill" style="margin-right:.3em"></i>Favoritter`
+                            : `Gruppe ${ACTIVE_FILTER.value}`)
+                        : 'Filter'}</span>
+                </button>
+                <div class="tl-filter-menu" id="bracket-filter-menu" style="display:none">
+                    <div class="tl-filter-section">Grupper</div>
+                    <div class="tl-filter-groups">
+                        ${groups.map(g => `<button class="tl-filter-grp${activeGrp === g ? ' selected' : ''}" onclick="setGroupFilter('${g}');closeBracketFilterMenu()">Gr. ${g}</button>`).join('')}
+                    </div>
+                    <div class="tl-filter-section">Lag</div>
+                    <div class="tl-filter-teams">
+                        <button class="tl-filter-team${activeTeam === 'Norway' ? ' selected' : ''}" onclick="setTeamFilter('Norway');closeBracketFilterMenu()">${TEAMS['Norway']?.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${TEAMS['Norway'].flag_id}"/></svg>` : '🇳🇴'} Norway</button>
+                        ${favTeams.length > 0 ? `<div class="tl-filter-divider"></div>${FAVORITE_TEAMS.filter(n => n !== 'Norway').length > 0 ? `<button class="tl-filter-team tl-filter-favorites${ACTIVE_FILTER?.type === 'favorites' ? ' selected' : ''}" onclick="setFavoritesFilter();closeBracketFilterMenu()"><i class="bi bi-heart-fill"></i> Favoritter (${FAVORITE_TEAMS.filter(n => n !== 'Norway').length})</button>` : ''}${favTeams.map(([name, t]) => `<button class="tl-filter-team${activeTeam === name ? ' selected' : ''}" onclick="setTeamFilter('${name}');closeBracketFilterMenu()">${t.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${t.flag_id}"/></svg>` : (t.flag || '')} ${name}</button>`).join('')}` : ''}
+                        <div class="tl-filter-divider"></div>
+                        ${otherTeams.map(([name, t]) => `<button class="tl-filter-team${activeTeam === name ? ' selected' : ''}" onclick="setTeamFilter('${name}');closeBracketFilterMenu()">${t.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${t.flag_id}"/></svg>` : (t.flag || '')} ${name}</button>`).join('')}
+                    </div>
+                </div>
+            </div>
+            ${ACTIVE_FILTER ? `<button class="tl-filter-clear-btn" onclick="clearFilter()" aria-label="Fjern filter"><i class="bi bi-x"></i> Nullstill</button>` : ''}
+        </div>
+        <div class="tl-toolbar-right">
+            <button class="tl-highlight-toggle${HIGHLIGHTS_ON ? ' on' : ''}" onclick="toggleHighlights()" title="${HIGHLIGHTS_ON ? 'Skru av highlight' : 'Skru på highlight'}">
+                <i class="bi bi-heart${HIGHLIGHTS_ON ? '-fill' : ''}"></i>
+            </button>
+        </div>
+    `;
+}
+
+function toggleBracketFilterMenu() {
+    const menu = document.getElementById('bracket-filter-menu');
+    const wrap = document.getElementById('bracket-filter-wrap') || menu?.closest('.tl-filter-wrap');
+    const btn  = document.getElementById('bracket-filter-toggle');
+    if (!menu) return;
+    const open = menu.style.display !== 'none';
+    menu.style.display = open ? 'none' : 'block';
+    btn?.setAttribute('aria-expanded', String(!open));
+    if (!open) {
+        const handler = (e) => {
+            if (wrap && wrap.contains(e.target)) return;
+            closeBracketFilterMenu();
+            document.removeEventListener('pointerdown', handler, true);
+        };
+        setTimeout(() => document.addEventListener('pointerdown', handler, true), 0);
+    }
+}
+
+function closeBracketFilterMenu() {
+    const menu = document.getElementById('bracket-filter-menu');
+    const btn  = document.getElementById('bracket-filter-toggle');
+    if (menu) menu.style.display = 'none';
+    btn?.setAttribute('aria-expanded', 'false');
+}
+
+function buildBracket() {
+    const el = document.getElementById('view-bracket');
+    if (!el) return;
+
+    el.innerHTML = '<div id="bracket-toolbar"></div><div id="bracket-built"></div>';
+    renderBracketToolbar();
+
+    // ── Layout-konstantar ──────────────────────────────────────────────────────
+    const isMobile  = window.innerWidth <= 700;
+    const isTiny    = window.innerWidth <= 480;
+    // CARD_H: fiks høyde sett via CSS (2 team-rader + header + meta = 68px desktop, 62px tiny)
+    const CARD_H    = isTiny ? 62 : 68;
+    const GAP       = isTiny ? 8  : 10;   // garantert luft mellom kort
+    const TOP_PAD   = isTiny ? 6  : 8;    // luft mellom header og første kort
+    const SLOT_H    = CARD_H + GAP;
+    const ROUND_W   = isTiny ? 52 : isMobile ? 88 : 110;
+    const CONN_W    = isTiny ? 12 : isMobile ? 20 : 32;
+    const HEADER_H  = el._bracketHeaderH || 42;
+
+    // Publiser CARD_H som CSS-variabel så .bracket-match-empty kan bruke den
+    el.style.setProperty('--bracket-card-h', CARD_H + 'px');
+
+    // ── Kampnummer per halvdel ─────────────────────────────────────────────────
+    // Rekkefølge: r32L[i*2] og r32L[i*2+1] er feeders for r16L[i]
+    // 89=W74vW77, 90=W73vW75, 91=W76vW78, 92=W79vW80
+    // 97=W89vW90, 99=W91vW92  → venstre QF
+    const r32L = [74, 77, 73, 75, 76, 78, 79, 80];
+    const r16L = [89, 90, 91, 92];
+    const qfL  = [97, 99];
+    const sfL  = [101];
+
+    // 93=W83vW84, 94=W81vW82, 95=W86vW88, 96=W85vW87
+    // 98=W93vW94, 100=W95vW96 → høyre QF
+    const sfR  = [102];
+    const qfR  = [98, 100];
+    const r16R = [93, 94, 95, 96];
+    const r32R = [83, 84, 81, 82, 86, 88, 85, 87];
+
+    // Sentrum
+    const finNums = [104, 103]; // 104=FIN øverst, 103=3P under
+
+    // ── Y-posisjonar ──────────────────────────────────────────────────────────
+    const matchY = {}; // num → y-px
+
+    // Venstre: R32 er grunnlinja (offset med TOP_PAD for luft under header)
+    r32L.forEach((num, i) => { matchY[num] = TOP_PAD + i * SLOT_H; });
+
+    // Venstre: sentrering av seinare rundar mellom kjeldekampane
+    r16L.forEach((num, i) => {
+        matchY[num] = (matchY[r32L[i * 2]] + matchY[r32L[i * 2 + 1]]) / 2;
+    });
+    qfL.forEach((num, i) => {
+        matchY[num] = (matchY[r16L[i * 2]] + matchY[r16L[i * 2 + 1]]) / 2;
+    });
+    sfL.forEach((num, i) => {
+        matchY[num] = (matchY[qfL[i * 2]] + matchY[qfL[i * 2 + 1]]) / 2;
+    });
+
+    // Høgre: same y-posisjonar som venstre (speilbilde av slot-oppsettet)
+    r32R.forEach((num, i) => { matchY[num] = TOP_PAD + i * SLOT_H; });
+    r16R.forEach((num, i) => {
+        matchY[num] = (matchY[r32R[i * 2]] + matchY[r32R[i * 2 + 1]]) / 2;
+    });
+    qfR.forEach((num, i) => {
+        matchY[num] = (matchY[r16R[i * 2]] + matchY[r16R[i * 2 + 1]]) / 2;
+    });
+    sfR.forEach((num, i) => {
+        matchY[num] = (matchY[qfR[i * 2]] + matchY[qfR[i * 2 + 1]]) / 2;
+    });
+
+    // Sentrum: Finale øverst/sentrert, 3P (bronsefinale) under og dempet
+    const containerH = TOP_PAD + 7 * SLOT_H + CARD_H;
+    matchY[104] = containerH / 2 - CARD_H / 2 - 4;   // Finale sentrert
+    matchY[103] = containerH / 2 + CARD_H / 2 + 12;  // 3P under Finale
+
+    // ── Filter-hjelpedata (eige scope — buildTimeline har sitt eige) ──────────
+    const bkActivePaths = ACTIVE_FILTER?.type === 'team'
+        ? getTeamBracketPaths(ACTIVE_FILTER.value)
+        : ACTIVE_FILTER?.type === 'group'
+        ? (() => {
+            const combined = new Map();
+            Object.entries(TEAMS)
+                .filter(([, t]) => !t._alias && t.group === ACTIVE_FILTER.value)
+                .forEach(([name]) => getTeamBracketPaths(name).forEach((v, n) => {
+                    if (!combined.has(n)) combined.set(n, v);
+                }));
+            return combined;
+        })()
+        : ACTIVE_FILTER?.type === 'favorites'
+        ? (() => {
+            const combined = new Map();
+            FAVORITE_TEAMS.forEach(name => {
+                getTeamBracketPaths(name).forEach((v, n) => {
+                    if (!combined.has(n)) combined.set(n, v);
+                });
+            });
+            return combined;
+        })()
+        : new Map();
+
+    const activePotentialNums = new Set(
+        [...bkActivePaths.keys()].filter(n => n != null).filter(n => {
+            const m = MATCHES.find(x => x.num === n);
+            if (!m) return true;
+            if (ACTIVE_FILTER?.type === 'team') {
+                return m.team1 !== ACTIVE_FILTER.value && m.team2 !== ACTIVE_FILTER.value;
+            }
+            if (ACTIVE_FILTER?.type === 'group') {
+                const grpTeams = Object.entries(TEAMS)
+                    .filter(([, t]) => !t._alias && t.group === ACTIVE_FILTER.value)
+                    .map(([nm]) => nm);
+                return !grpTeams.some(nm => m.team1 === nm || m.team2 === nm);
+            }
+            if (ACTIVE_FILTER?.type === 'favorites') {
+                return !FAVORITE_TEAMS.some(name => m.team1 === name || m.team2 === name);
+            }
+            return true;
+        })
+    );
+
+    // ── Hjelpefunksjon: bygg matchkart-HTML ───────────────────────────────────
+    function matchCard(m) {
+        if (!m) return '<div class="bracket-match bracket-match-empty"></div>';
+
+        const idx = MATCHES.indexOf(m);
+        const sc  = m.score;
+        const st  = STADIUMS[m.v] || {};
+        const city = st.city || m.ground || '';
+
+        // Avgjerd kven som vann
+        let winner = null, loser = null;
+        if (sc?.ft) {
+            const [g1, g2] = sc.ft;
+            if (g1 !== g2) {
+                winner = g1 > g2 ? 'team1' : 'team2';
+                loser  = g1 > g2 ? 'team2' : 'team1';
+            } else if (sc.p) {
+                const [p1, p2] = sc.p;
+                winner = p1 > p2 ? 'team1' : 'team2';
+                loser  = p1 > p2 ? 'team2' : 'team1';
+            }
+        }
+
+        const s1 = sc?.ft ? String(sc.ft[0]) : '';
+        const s2 = sc?.ft ? String(sc.ft[1]) : '';
+
+        const rawT1 = m.team1 || '';
+        const rawT2 = m.team2 || '';
+        const isCode1 = rawT1.match(/^[WL]\d+$/) || rawT1.match(/^[123][A-L]/) || rawT1.match(/^3[A-L\/]+$/);
+        const isCode2 = rawT2.match(/^[WL]\d+$/) || rawT2.match(/^[123][A-L]/) || rawT2.match(/^3[A-L\/]+$/);
+
+        // Vis FIFA-kode (3 bokstavar) eller kortform av posisjonskoden
+        const label1 = isCode1 ? rawT1 : (TEAMS[rawT1]?.fifa_code || rawT1.slice(0, 3).toUpperCase());
+        const label2 = isCode2 ? rawT2 : (TEAMS[rawT2]?.fifa_code || rawT2.slice(0, 3).toUpperCase());
+        const flag1  = isCode1 ? '' : m.flag1;
+        const flag2  = isCode2 ? '' : m.flag2;
+
+        const isNorway    = rawT1 === 'Norway' || rawT2 === 'Norway';
+        const isFavMatch  = HIGHLIGHTS_ON && !isNorway &&
+            (FAVORITE_TEAMS.includes(rawT1) || FAVORITE_TEAMS.includes(rawT2));
+        const isNorwayHl  = HIGHLIGHTS_ON && isNorway;
+
+        // Filter-dimming: dempe kort som ikke er relevante for aktivt filter
+        const isFilterActive = !!ACTIVE_FILTER;
+        let isDimmed = false;
+        if (isFilterActive) {
+            if (ACTIVE_FILTER.type === 'team') {
+                isDimmed = rawT1 !== ACTIVE_FILTER.value && rawT2 !== ACTIVE_FILTER.value
+                    && !activePotentialNums.has(m.num);
+            } else if (ACTIVE_FILTER.type === 'group') {
+                const grpTeams = Object.entries(TEAMS)
+                    .filter(([, t]) => !t._alias && t.group === ACTIVE_FILTER.value)
+                    .map(([n]) => n);
+                isDimmed = !grpTeams.some(n => rawT1 === n || rawT2 === n)
+                    && !activePotentialNums.has(m.num);
+            } else if (ACTIVE_FILTER.type === 'favorites') {
+                isDimmed = !FAVORITE_TEAMS.some(n => rawT1 === n || rawT2 === n)
+                    && !activePotentialNums.has(m.num);
+            }
+        }
+
+        const cardCls = [
+            'bracket-match',
+            m.num === 103 ? 'bracket-match-3p'    : '',
+            m.num === 104 ? 'bracket-match-fin'    : '',
+            isNorwayHl    ? 'bracket-match-norway' : '',
+            isFavMatch    ? 'bracket-match-fav'    : '',
+            isDimmed      ? 'bracket-match-dimmed' : '',
+        ].filter(Boolean).join(' ');
+
+        const t1Cls = ['bracket-team team1',
+            winner === 'team1' ? 'bracket-winner' : '',
+            loser  === 'team1' ? 'bracket-loser'  : '',
+            rawT1 === 'Norway' ? 'bracket-norway'  : '',
+        ].filter(Boolean).join(' ');
+        const t2Cls = ['bracket-team team2',
+            winner === 'team2' ? 'bracket-winner' : '',
+            loser  === 'team2' ? 'bracket-loser'  : '',
+            rawT2 === 'Norway' ? 'bracket-norway'  : '',
+        ].filter(Boolean).join(' ');
+
+        let typeBadge = '';
+        if (m.num === 103) typeBadge = '<span class="bracket-type-badge badge-3p">3P</span>';
+        if (m.num === 104) typeBadge = '<span class="bracket-type-badge badge-fin">FIN</span>';
+
+        const timeStr = m.t != null ? fmtT(m.t) : '';
+        const fullName1 = isCode1 ? rawT1 : rawT1;
+        const fullName2 = isCode2 ? rawT2 : rawT2;
+
+        const numStr  = m.num != null ? `#${m.num}` : '';
+        const dateStr = m.day && m.date ? `${m.day} ${m.date}` : '';
+        // Kort datoformat: "05.07" fra isoDate
+        const dateShort = m.isoDate ? m.isoDate.slice(8) + '.' + m.isoDate.slice(5,7) : '';
+        // Kun time-del av klokkeslett: "21" fra "21:00"
+        const timeShort = timeStr ? timeStr.split(':')[0] : '';
+
+        const headerParts = [numStr, city].filter(Boolean);
+        // Full header: #89 · Miami  — skjules på tiny
+        // Tiny header: dato · tid   — vises kun på tiny
+        const matchHeader = headerParts.length || dateStr
+            ? `<div class="bracket-match-header bk-hdr-full">${headerParts.join(' · ')}</div>` +
+              `<div class="bracket-match-header bk-hdr-tiny"><span class="bracket-meta-date">${dateShort}</span><span class="bracket-meta-time">${timeShort}</span></div>`
+            : '';
+
+        const footerParts = [dateStr, timeStr].filter(Boolean);
+        // Full footer: dato · tid   — skjules på tiny
+        // Tiny footer: by           — vises kun på tiny
+        const footerFull = footerParts.length
+            ? `<div class="bracket-meta bk-meta-full"><span class="bracket-meta-date">${dateStr}</span>${timeStr ? `<span class="bracket-meta-time">${timeStr}${nextDayBadge(m.t, m.isoDate)}</span>` : ''}</div>`
+            : '';
+        const footerTiny = city
+            ? `<div class="bracket-meta bk-meta-tiny"><span class="bracket-meta-city">${city}</span></div>`
+            : '';
+
+        return `<div class="${cardCls}" onclick="openModal(MATCHES[${idx}])" title="${fullName1} v ${fullName2}${timeStr ? ' · ' + timeStr : ''}${city ? ' · ' + city : ''}">
+            ${typeBadge}
+            ${matchHeader}
+            <div class="${t1Cls}">
+                ${flag1 ? `<span class="bracket-flag">${flag1}</span>` : ''}
+                <span class="bracket-name">${label1}</span>
+                <span class="bracket-flag-code">${label1}</span>
+                <span class="bracket-score">${s1}</span>
+            </div>
+            <div class="${t2Cls}">
+                ${flag2 ? `<span class="bracket-flag">${flag2}</span>` : ''}
+                <span class="bracket-name">${label2}</span>
+                <span class="bracket-flag-code">${label2}</span>
+                <span class="bracket-score">${s2}</span>
+            </div>
+            ${footerFull}${footerTiny}
+        </div>`;
+    }
+
+    // ── Hjelpefunksjon: bygg ein kolonne med kort ──────────────────────────────
+    const matchMap = {};
+    MATCHES.forEach(m => { if (m.num != null) matchMap[m.num] = m; });
+
+    function buildCol(label, nums) {
+        const cards = nums.map((num, i) => {
+            const card = matchCard(matchMap[num]);
+            // Beregn gap over dette kortet for å plassere det riktig
+            const y = matchY[num];
+            const prevY = i === 0 ? 0 : matchY[nums[i-1]] + CARD_H;
+            const gap = Math.max(0, y - prevY);
+            return `<div class="bracket-match-spacer" style="height:${gap}px"></div>${card}`;
+        }).join('');
+        return `<div class="bracket-round" style="width:${ROUND_W}px">
+            <div class="bracket-round-header">${label}</div>
+            <div class="bracket-round-cards">${cards}<div style="height:${Math.max(0, containerH - (matchY[nums[nums.length-1]] + CARD_H))}px"></div></div>
+        </div>`;
+    }
+
+    // ── SVG-konnektings: venstre side (liner frå høgre kant → venstre kant) ───
+    // Y-koordinatar er relative til topp av bracket-round-cards (under header).
+    // SVG-en posisjonerast med top=HEADER_H slik at y=0 i SVG = topp av cards.
+    function buildConnectorSVG(fromNums, toNums) {
+        const svgLines = [];
+        const mx = CONN_W / 2;
+        toNums.forEach((toNum, i) => {
+            const topFrom = fromNums[i * 2];
+            const botFrom = fromNums[i * 2 + 1];
+            if (topFrom == null || botFrom == null) return;
+            const y1   = matchY[topFrom] + CARD_H / 2;
+            const y2   = matchY[botFrom] + CARD_H / 2;
+            const yMid = matchY[toNum]   + CARD_H / 2;
+            svgLines.push(
+                `<line x1="0"      y1="${y1}"   x2="${mx}"     y2="${y1}"   class="bc-line"/>`,
+                `<line x1="0"      y1="${y2}"   x2="${mx}"     y2="${y2}"   class="bc-line"/>`,
+                `<line x1="${mx}"  y1="${y1}"   x2="${mx}"     y2="${y2}"   class="bc-line"/>`,
+                `<line x1="${mx}"  y1="${yMid}" x2="${CONN_W}" y2="${yMid}" class="bc-line"/>`
+            );
+        });
+        return `<svg class="bracket-connector-svg" width="${CONN_W}" height="${containerH}" style="overflow:visible;position:absolute;top:${HEADER_H}px;left:0">${svgLines.join('')}</svg>`;
+    }
+
+    // ── SVG-konnektings: høgre side (speilbilde) ──────────────────────────────
+    function buildConnectorSVGRight(fromNums, toNums) {
+        const svgLines = [];
+        const mx = CONN_W / 2;
+        toNums.forEach((toNum, i) => {
+            const topFrom = fromNums[i * 2];
+            const botFrom = fromNums[i * 2 + 1];
+            if (topFrom == null || botFrom == null) return;
+            const y1   = matchY[topFrom] + CARD_H / 2;
+            const y2   = matchY[botFrom] + CARD_H / 2;
+            const yMid = matchY[toNum]   + CARD_H / 2;
+            svgLines.push(
+                `<line x1="${CONN_W}" y1="${y1}"   x2="${mx}"    y2="${y1}"   class="bc-line"/>`,
+                `<line x1="${CONN_W}" y1="${y2}"   x2="${mx}"    y2="${y2}"   class="bc-line"/>`,
+                `<line x1="${mx}"     y1="${y1}"   x2="${mx}"    y2="${y2}"   class="bc-line"/>`,
+                `<line x1="${mx}"     y1="${yMid}" x2="0"        y2="${yMid}" class="bc-line"/>`
+            );
+        });
+        return `<svg class="bracket-connector-svg" width="${CONN_W}" height="${containerH}" style="overflow:visible;position:absolute;top:${HEADER_H}px;left:0">${svgLines.join('')}</svg>`;
+    }
+
+    // ── Hjelpefunksjon: pakk inn SVG-konnektings ──────────────────────────────
+    function connWrap(svg) {
+        return `<div class="bracket-conn-wrap" style="width:${CONN_W}px;height:${containerH + HEADER_H}px">${svg}</div>`;
+    }
+
+    // ── Bygg venstre halvdel (R32 → SF, venstre → høgre) ─────────────────────
+    const leftHalf = [
+        buildCol('16-delsfinale', r32L),
+        connWrap(buildConnectorSVG(r32L, r16L)),
+        buildCol('Åttedelsfinale', r16L),
+        connWrap(buildConnectorSVG(r16L, qfL)),
+        buildCol('Kvartfinale', qfL),
+        connWrap(buildConnectorSVG(qfL, sfL)),
+        buildCol('Semifinale', sfL),
+    ].join('');
+
+    // ── Bygg sentrumskolonne (3P + Finale) ────────────────────────────────────
+    // Sentrum-konnektings: SF venstre → Finale (venstre inn)
+    const centerConnLeft = buildConnectorSVG(sfL, [104]);
+    // Sentrum-konnektings: SF høgre → Finale (høgre inn, speilbilde)
+    const centerConnRight = buildConnectorSVGRight(sfR, [104]);
+
+    const centerCards = finNums.map((num, i) => {
+        const card = matchCard(matchMap[num]);
+        const y = matchY[num];
+        const prevY = i === 0 ? 0 : matchY[finNums[i-1]] + CARD_H;
+        const gap = Math.max(0, y - prevY);
+        return `<div class="bracket-match-spacer" style="height:${gap}px"></div>${card}`;
+    }).join('');
+
+    const centerCol = `<div class="bracket-round" style="width:${ROUND_W}px">
+        <div class="bracket-round-header">Finale</div>
+        <div class="bracket-round-cards">${centerCards}<div style="height:${Math.max(0, containerH - (matchY[finNums[finNums.length-1]] + CARD_H))}px"></div></div>
+    </div>`;
+
+    const center = [
+        connWrap(centerConnLeft),
+        centerCol,
+        connWrap(centerConnRight),
+    ].join('');
+
+    // ── Bygg høgre halvdel (SF → R32, venstre mot høgre etter sentrum) ────────
+    const rightHalf = [
+        buildCol('Semifinale', sfR),
+        connWrap(buildConnectorSVGRight(qfR, sfR)),
+        buildCol('Kvartfinale', qfR),
+        connWrap(buildConnectorSVGRight(r16R, qfR)),
+        buildCol('Åttedelsfinale', r16R),
+        connWrap(buildConnectorSVGRight(r32R, r16R)),
+        buildCol('16-delsfinale', r32R),
+    ].join('');
+
+    // ── Sett saman og skriv til DOM ───────────────────────────────────────────
+    const builtEl = document.getElementById('bracket-built');
+    if (builtEl) {
+        builtEl.innerHTML = `<div class="bracket-container">
+            <div class="bracket-inner">
+                ${leftHalf}
+                ${center}
+                ${rightHalf}
+            </div>
+        </div>`;
+    }
+
+    // Korriger layout etter rendering — mål faktisk header-høyde og rebuild om nødvendig
+    requestAnimationFrame(() => {
+        const hdr   = el.querySelector('.bracket-round-header');
+        if (!hdr) return;
+
+        const actualHdrH = Math.round(hdr.getBoundingClientRect().height);
+        el.style.setProperty('--bracket-header-h', actualHdrH + 'px');
+
+        if (!el._bracketHeaderH) el._bracketHeaderH = 0;
+        if (Math.abs(actualHdrH - el._bracketHeaderH) > 2 && actualHdrH > 0) {
+            el._bracketHeaderH = actualHdrH;
+            buildBracket();
+        }
+    });
+}
+
+// ── Statistikk ────────────────────────────────────────────────────────────────
+function buildStats() {
+    const el = document.getElementById('view-stats');
+    if (!el) return;
+    el.innerHTML = '<div id="stats-built"></div>';
+
+    const played = MATCHES.filter(m => m.score?.ft);
+    if (played.length === 0) {
+        el.innerHTML = '<div id="stats-built"></div><div class="st-empty">Ingen resultater ennå — statistikk vises etter at kampene er spilt.</div>';
+        return;
+    }
+
+    // ── 1. Norge-statistikk ────────────────────────────────────────────────────
+    const norPlayed = played.filter(m => m.team1 === 'Norway' || m.team2 === 'Norway');
+    const norStats = norPlayed.reduce((s, m) => {
+        const isHome = m.team1 === 'Norway';
+        const gf = isHome ? m.score.ft[0] : m.score.ft[1];
+        const ga = isHome ? m.score.ft[1] : m.score.ft[0];
+        s.gf += gf; s.ga += ga;
+        if (gf > ga) s.w++; else if (gf < ga) s.l++; else s.d++;
+        return s;
+    }, { w:0, d:0, l:0, gf:0, ga:0 });
+
+    // ── 2. Toppscorere ─────────────────────────────────────────────────────────
+    // Aggregate goals per scorer (name + team key to distinguish same names)
+    const scorerMap = {}; // key = "name|team" → { name, team, flag, goals, penalties, owngoals }
+    played.forEach(m => {
+        const processGoals = (goals, scoringTeam, concedingTeam) => {
+            (goals || []).forEach(g => {
+                // Own goals: attribute to scorer but count for OTHER team
+                const team = g.owngoal ? concedingTeam : scoringTeam;
+                const key = `${g.name}|${team}`;
+                if (!scorerMap[key]) {
+                    scorerMap[key] = {
+                        name: g.name,
+                        team,
+                        flag: TEAMS[team]?.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${TEAMS[team].flag_id}"/></svg>` : (TEAMS[team]?.flag || ''),
+                        goals: 0,
+                        penalties: 0,
+                        owngoals: 0
+                    };
+                }
+                scorerMap[key].goals++;
+                if (g.penalty) scorerMap[key].penalties++;
+                if (g.owngoal) scorerMap[key].owngoals++;
+            });
+        };
+        processGoals(m.score.goals1, m.team1, m.team2);
+        processGoals(m.score.goals2, m.team2, m.team1);
+    });
+
+    const topScorers = Object.values(scorerMap)
+        .sort((a, b) => b.goals - a.goals || a.name.localeCompare(b.name))
+        .slice(0, 10);
+
+    // Norway scorers for the Norge-kort
+    const norScorerMap = {};
+    norPlayed.forEach(m => {
+        const processNorGoals = (goals, scoringTeam) => {
+            if (scoringTeam !== 'Norway') return;
+            (goals || []).forEach(g => {
+                if (g.owngoal) return; // own goals are by the opponent
+                const key = g.name;
+                norScorerMap[key] = (norScorerMap[key] || 0) + 1;
+            });
+        };
+        processNorGoals(m.score.goals1, m.team1);
+        processNorGoals(m.score.goals2, m.team2);
+        // Also count own goals that benefited Norway (scored by opponent)
+        const oppGoals = m.team1 === 'Norway' ? m.score.goals2 : m.score.goals1;
+        (oppGoals || []).forEach(g => {
+            if (g.owngoal) {
+                // own goal by opponent counts for Norway
+                const key = `${g.name} (selvmål)`;
+                norScorerMap[key] = (norScorerMap[key] || 0) + 1;
+            }
+        });
+    });
+    const norTopScorers = Object.entries(norScorerMap)
+        .sort((a, b) => b[1] - a[1]);
+    const norTopScorerName = norTopScorers[0]?.[0] || null;
+
+    // ── 3. Høyest scorende kamper ──────────────────────────────────────────────
+    const byGoals = played
+        .map(m => ({ m, total: m.score.ft[0] + m.score.ft[1] }))
+        .sort((a, b) => b.total - a.total || a.m.isoDate.localeCompare(b.m.isoDate))
+        .slice(0, 5);
+
+    // ── 4. Flest mål scoret (lag) ──────────────────────────────────────────────
+    const teamGoals = {};
+    played.forEach(m => {
+        teamGoals[m.team1] = (teamGoals[m.team1] || 0) + m.score.ft[0];
+        teamGoals[m.team2] = (teamGoals[m.team2] || 0) + m.score.ft[1];
+    });
+    const topTeams = Object.entries(teamGoals)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 8)
+        .map(([name, g]) => ({ name, goals: g, flag: TEAMS[name]?.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${TEAMS[name].flag_id}"/></svg>` : (TEAMS[name]?.flag || '') }));
+
+    // ── 5. Arenaer ─────────────────────────────────────────────────────────────
+    const venueGoals = {};
+    played.forEach(m => { venueGoals[m.v] = (venueGoals[m.v] || 0) + m.score.ft[0] + m.score.ft[1]; });
+    const topVenues = Object.entries(venueGoals)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([code, g]) => ({ code, goals: g, city: STADIUMS[code]?.city || code }));
+
+    // ── 6. Ekstraomganger og straffespill ──────────────────────────────────────
+    const etCount = played.filter(m => m.score.et).length;
+    const penCount = played.filter(m => m.score.p).length;
+
+    // ── 7. Oversikt ────────────────────────────────────────────────────────────
+    const totalGoals = byGoals.reduce((s, g) => s + g.total, 0) +
+        played.slice(5).reduce((s, m) => s + m.score.ft[0] + m.score.ft[1], 0);
+    // Actually recompute totalGoals properly:
+    const totalGoalsAll = played.reduce((s, m) => s + m.score.ft[0] + m.score.ft[1], 0);
+
+    // ── Build HTML ──────────────────────────────────────────────────────────────
+    let html = '<div id="stats-built"></div>';
+
+    // 1. Norge-kort
+    if (norPlayed.length > 0) {
+        const norScorersList = norTopScorers.map(([name, g]) =>
+            `<span>${name} (${g})</span>`
+        ).join(' · ');
+
+        html += `
+        <div class="st-norway">
+            <div class="st-card-title" style="text-align:center">🇳🇴 Norge — ${norPlayed.length} kamp${norPlayed.length !== 1 ? 'er' : ''} spilt</div>
+            <div class="st-norway-header">
+                <div>
+                    <div class="st-norway-big">${norStats.w}–${norStats.d}–${norStats.l}</div>
+                    <div class="st-norway-label">V / U / T</div>
+                </div>
+                <div>
+                    <div class="st-norway-big">${norStats.gf} – ${norStats.ga}</div>
+                    <div class="st-norway-label">Mål for / mot</div>
+                </div>
+                ${norTopScorerName ? `<div>
+                    <div class="st-norway-big">${norTopScorerName}</div>
+                    <div class="st-norway-label">Toppscorer</div>
+                </div>` : ''}
+            </div>
+            ${norTopScorers.length > 0 ? `<div class="st-norway-scorers">${norScorersList}</div>` : ''}
+        </div>
+        <div class="st-divider"></div>`;
+    }
+
+    html += '<div class="st-grid">';
+
+    // 2. Toppscorere
+    if (topScorers.length > 0) {
+        html += `
+        <div class="st-card">
+            <div class="st-card-title">Toppscorere</div>
+            <div class="st-note" style="padding:.25rem 0 .4rem;border-bottom:1px solid var(--border);margin-bottom:.25rem">Kun kamper med scorer-data</div>`;
+        topScorers.forEach((s, i) => {
+            const isNor = s.team === 'Norway';
+            const notes = [];
+            if (s.penalties > 0) notes.push(`${s.penalties} str.`);
+            if (s.owngoals > 0)  notes.push(`${s.owngoals} selvmål`);
+            html += `<div class="st-row${isNor ? ' norway-scorer' : ''}">
+                <span class="st-rank">${i+1}</span>
+                <span class="st-flag">${s.flag}</span>
+                <span class="st-name">${s.name}${notes.length ? ` <span class="st-note">(${notes.join(', ')})</span>` : ''}</span>
+                <span class="st-team">${s.team}</span>
+                <span class="st-val">${s.goals}</span>
+            </div>`;
+        });
+        html += `</div>`;
+    }
+
+    // 3. Høyest scorende kamper
+    html += `
+    <div class="st-card">
+        <div class="st-card-title">Høyest scorende kamper</div>`;
+    byGoals.forEach(({ m, total }) => {
+        const idx = MATCHES.indexOf(m);
+        html += `<div class="st-row" style="cursor:pointer" onclick="openModal(MATCHES[${idx}])">
+            <span class="st-name">${m.flag1} ${m.team1} v ${m.team2} ${m.flag2}</span>
+            <span class="st-val">${m.score.ft[0]}–${m.score.ft[1]}</span>
+        </div>`;
+    });
+    html += `</div>`;
+
+    // 4. Flest mål scoret (lag)
+    html += `
+    <div class="st-card">
+        <div class="st-card-title">Flest mål scoret (lag)</div>`;
+    topTeams.forEach((t, i) => {
+        html += `<div class="st-row">
+            <span class="st-rank">${i+1}</span>
+            <span class="st-flag">${t.flag}</span>
+            <span class="st-name">${t.name}</span>
+            <span class="st-val">${t.goals}</span>
+        </div>`;
+    });
+    html += `</div>`;
+
+    // 5. Arenaer
+    html += `
+    <div class="st-card">
+        <div class="st-card-title">Arenaer — flest mål</div>`;
+    topVenues.forEach((v, i) => {
+        html += `<div class="st-row" style="cursor:pointer" onclick="openVenueModal('${v.code}')">
+            <span class="st-rank">${i+1}</span>
+            <span class="st-name">${v.city}</span>
+            <span class="st-team">${v.code}</span>
+            <span class="st-val">${v.goals}</span>
+        </div>`;
+    });
+    html += `</div>`;
+
+    // 6. Ekstraomganger og straffespill
+    html += `
+    <div class="st-card">
+        <div class="st-card-title">Ekstraomganger og straffespill</div>
+        <div class="st-row"><span class="st-name">Ekstraomganger</span><span class="st-val">${etCount}</span></div>
+        <div class="st-row"><span class="st-name">Straffesparkkonkurranse</span><span class="st-val">${penCount}</span></div>
+    </div>`;
+
+    // 7. Oversikt
+    html += `
+    <div class="st-card">
+        <div class="st-card-title">Oversikt</div>
+        <div class="st-row"><span class="st-name">Kamper spilt</span><span class="st-val">${played.length} / ${MATCHES.length}</span></div>
+        <div class="st-row"><span class="st-name">Totalt mål</span><span class="st-val">${totalGoalsAll}</span></div>
+        <div class="st-row"><span class="st-name">Snitt mål/kamp</span><span class="st-val">${(totalGoalsAll / played.length).toFixed(1)}</span></div>
+    </div>`;
+
+    html += '</div>'; // .st-grid
+    el.innerHTML = html;
+}
+
+// ── Arenaer ───────────────────────────────────────────────────────────────────
+function buildArenas() {
+    const el = document.getElementById('view-arenas');
+    if (!el) return;
+
+    const regions = [
+        { key: 'Western', label: 'Western Region', tz: 'UTC−7' },
+        { key: 'Central', label: 'Central Region', tz: 'UTC−6/−5' },
+        { key: 'Eastern', label: 'Eastern Region', tz: 'UTC−4' },
+    ];
+    const countryFlags = { 'USA': hostCountryFlag('USA'), 'Canada': hostCountryFlag('Canada'), 'Mexico': hostCountryFlag('Mexico') };
+    const matchCount = {};
+    MATCHES.forEach(m => { matchCount[m.v] = (matchCount[m.v] || 0) + 1; });
+
+    const regionColors = { Western: '#4a9eff', Central: '#ffaa44', Eastern: '#44cc88' };
+    const regionGroups = { Western: 'Gr. D, G', Central: 'Gr. A, E, F, J, K, L', Eastern: 'Gr. B, C, H, I' };
+    const regionMatchCounts = {};
+    Object.entries(STADIUMS).forEach(([code, s]) => {
+        if (!regionMatchCounts[s.region]) regionMatchCounts[s.region] = 0;
+        regionMatchCounts[s.region] += matchCount[code] || 0;
+    });
+    const legend = regions.map(r =>
+        `<div class="map-legend-item">
+            <span class="map-legend-dot" style="background:${regionColors[r.key]}"></span>
+            <div class="map-legend-text">
+                <span class="map-legend-name">${r.label}</span>
+                <span class="map-legend-sub">${regionGroups[r.key]} · ${regionMatchCounts[r.key] || 0} kamper</span>
+            </div>
+        </div>`
+    ).join('');
+
+    let html = `<div id="arenas-built"></div>
+        <div class="map-container" style="margin-bottom:1.5rem">
+            <div class="map-svg-wrap" id="map-svg-wrap"></div>
+            <div class="map-sidebar">
+                <div class="map-legend">${legend}</div>
+                <div class="map-note">Klikk på en arena for å se kampene der</div>
+            </div>
+        </div>`;
+
+    regions.forEach(region => {
+        const arenas = Object.entries(STADIUMS)
+            .filter(([, s]) => s.region === region.key)
+            .sort((a, b) => a[1].city.localeCompare(b[1].city));
+
+        html += `<div class="arenas-region" data-region="${region.key}">
+            <div class="arenas-region-title">${region.label} <span class="arenas-tz">${regions.find(r=>r.key===region.key)?.tz||''}</span> <span class="arenas-groups">${regionGroups[region.key]}</span></div>
+            <div class="arenas-grid">
+            ${arenas.map(([code, s]) => `
+                <div class="arena-card" onclick="openVenueModal('${code}')">
+                    <div class="arena-card-header">
+                        <span class="arena-code v-${code}">${code}</span>
+                        <span class="arena-country">${countryFlags[s.country] || ''} ${s.country}</span>
+                    </div>
+                    <div class="arena-name">${s.name}</div>
+                    <div class="arena-city">${s.city}</div>
+                    <div class="arena-meta">
+                        <span>${s.cap ? s.cap.toLocaleString('no') + ' pl.' : ''}</span>
+                        <span>${matchCount[code] || 0} kamper</span>
+                    </div>
+                </div>`).join('')}
+            </div>
+        </div>`;
+    });
+    el.innerHTML = html;
+
+    // Bruk inlinede SVG-kart fra #map-svg-source (injisert av build.js)
+    const mapSource = document.getElementById('map-svg-source');
+    const wrap = document.getElementById('map-svg-wrap');
+    if (wrap && mapSource) {
+        // Bruk innerHTML i stedet for cloneNode for å unngå dupliserte IDs
+        // som kan forårsake problemer i Edge (filter-referanser etc.)
+        wrap.innerHTML = mapSource.innerHTML;
+        const svgEl = wrap.querySelector('svg');
+        if (svgEl) {
+            svgEl.removeAttribute('id'); // fjern id="arena-map" fra kopien
+        }
+        wrap.querySelectorAll('.arena-dot').forEach(dot => {
+            const code = dot.dataset.code;
+            const cnt = matchCount[code] || 0;
+            const circle = dot.querySelector('circle');
+            if (circle && cnt > 0) {
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', circle.getAttribute('cx'));
+                text.setAttribute('y', parseFloat(circle.getAttribute('cy')) + 3.5);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('font-family', 'Space Mono,monospace');
+                text.setAttribute('font-size', '8');
+                text.setAttribute('fill', 'rgba(0,0,0,.9)');
+                text.setAttribute('font-weight', 'bold');
+                text.textContent = cnt;
+                dot.appendChild(text);
+            }
+        });
+    }
+}
+
+// ── Kart ──────────────────────────────────────────────────────────────────────
+function buildMap() {
+    const el = document.getElementById('view-map');
+    if (!el) return;
+
+    const matchCount = {};
+    MATCHES.forEach(m => { matchCount[m.v] = (matchCount[m.v] || 0) + 1; });
+
+    // Legg til legend og wrapper
+    const regionLabels = { Western: 'Western Region', Central: 'Central Region', Eastern: 'Eastern Region' };
+    const regionColors = { Western: '#4a9eff', Central: '#ffaa44', Eastern: '#44cc88' };
+
+    const legend = Object.entries(regionLabels).map(([key, label]) =>
+        `<span class="map-legend-item"><span class="map-legend-dot" style="background:${regionColors[key]}"></span>${label}</span>`
+    ).join('');
+
+    el.innerHTML = `
+        <div id="map-built"></div>
+        <div class="map-container">
+            <div class="map-legend">${legend}</div>
+            <div class="map-svg-wrap" id="map-svg-wrap">
+                <img src="map.svg" id="map-svg-img" style="display:none">
+            </div>
+            <div class="map-note">Klikk på en arena for å se kampene der</div>
+        </div>
+    `;
+
+    // Hjelpefunksjon: aktiver kart-prikker etter at SVG er i DOM
+    function activateMap() {
+        const wrap = document.getElementById('map-svg-wrap');
+        if (!wrap) return;
+        wrap.querySelectorAll('.arena-dot').forEach(dot => {
+            const code = dot.dataset.code;
+            const cnt = matchCount[code] || 0;
+            const circle = dot.querySelector('circle');
+            if (circle && cnt > 0) {
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', circle.getAttribute('cx'));
+                text.setAttribute('y', parseFloat(circle.getAttribute('cy')) + 3.5);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('font-family', 'Space Mono,monospace');
+                text.setAttribute('font-size', '8');
+                text.setAttribute('fill', 'rgba(0,0,0,.9)');
+                text.setAttribute('font-weight', 'bold');
+                text.textContent = cnt;
+                dot.appendChild(text);
+            }
+        });
+    }
+
+    // Foretrekk inlinert SVG (bygget inn i HTML av build.js, unngår fetch/CORS)
+    const inlineSource = document.getElementById('map-svg-source');
+    if (inlineSource) {
+        const wrap = document.getElementById('map-svg-wrap');
+        if (wrap) {
+            wrap.innerHTML = inlineSource.innerHTML;
+            wrap.querySelector('svg')?.removeAttribute('id');
+            activateMap();
+        }
+        return;
+    }
+
+    // Fallback: fetch (fungerer over HTTP, men ikke alltid via file:// på Windows/Edge)
+    fetch('map.svg')
+        .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
+        .then(svgText => {
+            const wrap = document.getElementById('map-svg-wrap');
+            if (!wrap) return;
+            wrap.innerHTML = svgText;
+            activateMap();
+        })
+        .catch(() => {
+            const wrap = document.getElementById('map-svg-wrap');
+            if (wrap) wrap.innerHTML = '<p style="text-align:center;color:var(--muted);padding:2rem">Kart ikke tilgjengelig</p>';
+        });
+}
+
+// ── Hopp til i dag ────────────────────────────────────────────────────────────
+function scrollToToday() {
+    // Bytt til tidslinje-fanen hvis ikke aktiv
+    const tlPanel = document.getElementById('view-timeline');
+    if (!tlPanel.classList.contains('active')) {
+        const tlBtn = document.querySelector('.tab[onclick*="timeline"]');
+        if (tlBtn) showTab('timeline', tlBtn);
+    }
+    // Finn første rad som tilhører dagens dato eller fremover
+    const todayISO = new Date().toISOString().slice(0, 10);
+    const tl = document.getElementById('tl');
+    if (!tl) return;
+
+    // Finn første .tl-row eller .tl-section som ikke er i en kollapsgruppe
+    const rows = tl.querySelectorAll('.tl-row:not(.past), .tl-section, .tl-collapsed-group');
+    const firstFuture = rows[0];
+    if (firstFuture) {
+        firstFuture.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+// ── Norges vei ────────────────────────────────────────────────────────────────
+function buildNorwaySchedule() {
+    const el = document.getElementById('norway-schedule');
+    const inner = document.getElementById('norway-schedule-inner');
+    if (!el || !inner) return;
+
+    const norMatches = MATCHES.filter(m => m.team1 === 'Norway' || m.team2 === 'Norway');
+    if (!norMatches.length) { el.style.display = 'none'; return; }
+
+    const now = Date.now();
+    inner.innerHTML = norMatches.map(m => {
+        const opp = m.team1 === 'Norway' ? m.team2 : m.team1;
+        const oppFlag = m.team1 === 'Norway' ? m.flag2 : m.flag1;
+        const sc = scoreStr(m.score);
+        const isPast = cestToDate(m.isoDate, m.t).getTime() + MATCH_DUR * 3600000 < now;
+        const isLive = !isPast && cestToDate(m.isoDate, m.t).getTime() <= now;
+        const st = STADIUMS[m.v] || {};
+        const idx = MATCHES.indexOf(m);
+        return `<span class="nor-sched-item${isPast?' past':''}${isLive?' live':''}" onclick="openModal(MATCHES[${idx}])" title="${m.day} ${m.date} · ${st.city || m.ground}">
+            ${oppFlag} ${opp}
+            <span class="nor-sched-score">${sc || fmtT(m.t)}</span>
+        </span>`;
+    }).join('<span class="nor-sched-sep">·</span>');
+
+    el.style.display = 'block';
+    updateHeaderHeight();
+}
+// Beregn hvilke KO-kamper Norge kan ende opp i basert på gruppe I
+// Bracket-logikk: 1I → R32 #77, 2I → R32 #78
+function getNorwayPotentialMatches() {
+    return getNorwayPotentialMatchesForTeam('Norway');
+}
+
+// ── Bracket-analyse ───────────────────────────────────────────────────────────
+// getTeamBracketPaths(teamName)
+// Returnerer Map<num, { match, via }> der 'via' er en lesbar etikett som
+// forklarer hvilken gruppeplassering som fører til denne kampen.
+// F.eks. via="1I" for gruppevinner, "2I" for andreplass, "3I" for treerplass.
+// Deles videre nedover bracketen som "Via 1I → W77" osv.
+function getTeamBracketPaths(teamName) {
+    const teamData = TEAMS[teamName];
+    if (!teamData?.group) return new Map();
+
+    const grp = teamData.group;
+
+    // ── Sjekk om laget allerede er i KO-runden ────────────────────────────────
+    // Finn en spilt KO-kamp der laget deltok
+    const koPlayed = MATCHES.filter(m =>
+        m.num != null && m.type !== 'g' && m.score?.ft &&
+        (m.team1 === teamName || m.team2 === teamName)
+    );
+
+    if (koPlayed.length > 0) {
+        // Finn siste spilte KO-kamp
+        const lastKo = koPlayed[koPlayed.length - 1];
+        const [g1, g2] = lastKo.score.ft;
+        const winner = g1 > g2 ? lastKo.team1 : g2 > g1 ? lastKo.team2 :
+            (lastKo.score.p ? (lastKo.score.p[0] > lastKo.score.p[1] ? lastKo.team1 : lastKo.team2) : null);
+
+        if (winner !== teamName) return new Map(); // Laget er ute
+
+        // Laget vant — finn neste kamp via MATCHES_RAW (har W/L-koder intakt)
+        // MATCHES kan ha resolved teamnavn via resolveKOTeams, så vi bruker num-kjeden
+        const result = new Map();
+        function followBracketKO(startNum, via) {
+            // Finn kamp i MATCHES_RAW der W{startNum} er team1 eller team2
+            const rawNext = MATCHES_RAW.find(m =>
+                m.num != null && (m.team1 === `W${startNum}` || m.team2 === `W${startNum}`)
+            );
+            if (!rawNext) return;
+            // Finn tilsvarende kamp i MATCHES (for oppdatert score/teamnavn)
+            const liveNext = MATCHES.find(m => m.num === rawNext.num);
+            if (!liveNext || liveNext.score?.ft) return; // allerede spilt
+            if (result.has(liveNext.num)) return;
+            result.set(liveNext.num, { match: liveNext, via });
+            followBracketKO(liveNext.num, via);
+        }
+        followBracketKO(lastKo.num, teamName);
+        return result;
+    }
+
+    // ── Ellers: beregn fra gruppeplassering ───────────────────────────────────
+
+    // Standings
+    const stMap = {};
+    MATCHES.filter(m => m.grp === grp && m.type === 'g').forEach(m => {
+        const init = () => ({ pts:0, gf:0, ga:0, played:0, remaining:0 });
+        if (!stMap[m.team1]) stMap[m.team1] = init();
+        if (!stMap[m.team2]) stMap[m.team2] = init();
+        if (m.score?.ft) {
+            const [s1, s2] = m.score.ft;
+            stMap[m.team1].gf+=s1; stMap[m.team1].ga+=s2; stMap[m.team1].played++;
+            stMap[m.team2].gf+=s2; stMap[m.team2].ga+=s1; stMap[m.team2].played++;
+            if (s1>s2)      stMap[m.team1].pts+=3;
+            else if (s1<s2) stMap[m.team2].pts+=3;
+            else { stMap[m.team1].pts++; stMap[m.team2].pts++; }
+        } else {
+            stMap[m.team1].remaining++;
+            stMap[m.team2].remaining++;
+        }
+    });
+
+    if (!stMap[teamName]) return new Map();
+    const myStats = stMap[teamName];
+    const allGroupDone = Object.values(stMap).every(s => s.remaining === 0);
+    const myMaxPts = myStats.pts + myStats.remaining * 3;
+
+    // Bestem mulige grupplasseringer
+    const possiblePositions = new Set();
+    if (allGroupDone) {
+        const sorted = Object.entries(stMap).sort((a,b) => {
+            if (b[1].pts!==a[1].pts) return b[1].pts-a[1].pts;
+            if ((b[1].gf-b[1].ga)!==(a[1].gf-a[1].ga)) return (b[1].gf-b[1].ga)-(a[1].gf-a[1].ga);
+            return b[1].gf-a[1].gf;
+        });
+        const finalPos = sorted.findIndex(([n]) => n===teamName)+1;
+        if (finalPos===4) return new Map();
+        possiblePositions.add(Math.min(finalPos, 3));
+    } else {
+        // Ingen spilte kamper: alle plasseringer mulige
+        if (myStats.played === 0) {
+            possiblePositions.add(1);
+            possiblePositions.add(2);
+            possiblePositions.add(3);
+        } else {
+            const aboveCount = Object.entries(stMap)
+                .filter(([n]) => n!==teamName)
+                .filter(([,s]) => s.pts > myMaxPts).length;
+            if (aboveCount===0) possiblePositions.add(1);
+            if (aboveCount<=1)  possiblePositions.add(2);
+            if (aboveCount<=2)  possiblePositions.add(3);
+        }
+    }
+    if (possiblePositions.size===0) return new Map();
+
+    // result: Map<num, { match, via }> — kun kamper med gyldig num (KO-kamper)
+    const result = new Map();
+
+    function followBracket(m, via) {
+        if (!m || m.num == null) return; // Gruppespill og ukjente kamper har num=null — ignorer
+        if (result.has(m.num)) {
+            const existing = result.get(m.num);
+            if (!existing.via.includes(via)) existing.via += ' / ' + via;
+            return;
+        }
+        result.set(m.num, { match: m, via });
+        const winCode = `W${m.num}`;
+        const next = MATCHES.find(x => !x.score?.ft && (x.team1===winCode || x.team2===winCode));
+        if (next) followBracket(next, via);
+    }
+
+    for (const pos of possiblePositions) {
+        const posLabel = `${pos}${grp}`;
+        if (pos===3) {
+            MATCHES.filter(m =>
+                m.type==='r32' && !m.score?.ft && (
+                    (m.team1.match(/^3[A-L\/]+$/) && m.team1.replace('3','').split('/').includes(grp)) ||
+                    (m.team2.match(/^3[A-L\/]+$/) && m.team2.replace('3','').split('/').includes(grp))
+                )
+            ).forEach(r32 => followBracket(r32, posLabel));
+        } else {
+            const r32 = MATCHES.find(m =>
+                m.type==='r32' && !m.score?.ft &&
+                (m.team1===posLabel || m.team2===posLabel)
+            );
+            if (r32) followBracket(r32, posLabel);
+        }
+    }
+
+    return result;
+}
+
+// Alias — returnerer bare match-objekter, sortert på dato
+function getNorwayPotentialMatchesForTeam(teamName) {
+    const paths = getTeamBracketPaths(teamName);
+    return [...paths.values()]
+        .map(({match}) => match)
+        .sort((a,b) => a.isoDate<b.isoDate?-1:a.isoDate>b.isoDate?1:(a.t||0)-(b.t||0));
+}
+
+// ── Tema ──────────────────────────────────────────────────────────────────────
+const themes = ['system','light','dark'];
+const icons  = { system:'◐', light:'○', dark:'●' };
+const tlabels = { system:'System', light:'Dag', dark:'Natt' };
+let currentTheme = localStorage.getItem('theme') || 'system';
+
+function applyTheme(t) {
+    const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.setAttribute('data-theme', t==='system'?(dark?'dark':'light'):t);
+    document.getElementById('theme-icon').textContent = icons[t];
+    document.getElementById('theme-label').textContent = tlabels[t];
+}
+function cycleTheme() {
+    currentTheme = themes[(themes.indexOf(currentTheme)+1) % themes.length];
+    localStorage.setItem('theme', currentTheme);
+    applyTheme(currentTheme);
+}
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (currentTheme === 'system') applyTheme('system');
+});
+applyTheme(currentTheme);
+
+// ── CRT-modus (easter egg) ────────────────────────────────────────────────────
+let crtOn = localStorage.getItem('crtMode') === '1';
+if (crtOn) document.body.classList.add('crt-mode');
+
+function toggleCRT() {
+    crtOn = !crtOn;
+    document.body.classList.toggle('crt-mode', crtOn);
+    localStorage.setItem('crtMode', crtOn ? '1' : '0');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+MATCHES = buildMatches(MATCHES_RAW, null);
+resolveKOTeams(); // Løs W/L-koder basert på eventuelle scores i MATCHES_RAW
+
+// Sett --header-h CSS-variabel slik at tl-axis-wrap sticky top er korrekt
+function updateHeaderHeight() {
+    const h = document.querySelector('.site-header')?.offsetHeight || 0;
+    document.documentElement.style.setProperty('--header-h', h + 'px');
+}
+updateHeaderHeight();
+window.addEventListener('resize', () => {
+    updateHeaderHeight();
+    buildTimeline();
+});
+// Oppdater header-høyde etter at alt er rendret (fonter, bilder osv.)
+window.addEventListener('load', updateHeaderHeight);
+
+buildTimeline();
+buildTable();
+buildGroups();
+updateNorwayBanner();
+updateCountdown();
+checkLive();
+NORWAY_POTENTIAL_MATCHES = new Set(getNorwayPotentialMatches().map(m => m.num));
+
+// Åpne modal hvis URL har hash ved innlasting
+requestAnimationFrame(() => requestAnimationFrame(openModalByHash));
+
+// Oppdater hvert sekund
+setInterval(() => {
+    updateCountdown();
+    updateNorwayBanner();
+    checkLive();
+}, 1000);
+
+if (location.protocol === 'https:' || location.protocol === 'http:') {
+    fetchResults();
+}

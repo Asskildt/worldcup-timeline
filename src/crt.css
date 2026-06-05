@@ -1,0 +1,252 @@
+/*
+ * ═══════════════════════════════════════════════════════════
+ *  CRT EASTER EGG — crt.css
+ *  Aktiveres via body.crt-mode
+ *
+ *  Alle justerbare verdier samlet øverst under "TUNING".
+ *  Endre variablene der — ikke lenger ned i filen.
+ * ═══════════════════════════════════════════════════════════
+ */
+
+/* ───────────────────────────────────────────────────────────
+   TUNING — juster disse for å endre styrken på effektene
+   ─────────────────────────────────────────────────────────── */
+:root {
+    /* Scanlines */
+    --crt-scanline-height: 5px;         /* Høyde på én scanline-syklus (linje + mellomrom) */
+    --crt-scanline-opacity: 0.08;       /* Hvor mørke linjene er  [0 = usynlig, 1 = svart] */
+
+    /* Chromatic aberration (RGB-split på tekst) */
+    --crt-aberration-x: 1.6px;         /* Horisontal forskyvning av rød/blå kanal */
+    --crt-aberration-y: 0.5px;         /* Vertikal forskyvning */
+    --crt-aberration-alpha: 0.65;      /* Styrke på fargekanalene [0–1] */
+
+    /* Phosphor-glød på tekst */
+    --crt-glow-tight: 5px;             /* Stram glød rett rundt tekst */
+    --crt-glow-tight-alpha: 0.55;
+    --crt-glow-wide: 18px;             /* Bred, diffus glød */
+    --crt-glow-wide-alpha: 0.12;
+
+    /* Sterkere glød på headings */
+    --crt-glow-heading-tight: 8px;
+    --crt-glow-heading-tight-alpha: 0.7;
+    --crt-glow-heading-wide: 28px;
+    --crt-glow-heading-wide-alpha: 0.18;
+
+    /* Vignette (mørkere kanter) */
+    --crt-vignette-start: 40%;         /* Hvor langt inn vignettet starter */
+    --crt-vignette-opacity: 0.40;      /* Hvor mørkt kantene blir */
+
+    /* Glasstint (varm gulaktig farging) */
+    --crt-tint-alpha: 0.06;            /* Styrke på ambertinten [0 = ingen, 0.15 = tydelig] */
+
+    /* Barrel distortion (buet skjerm) */
+    --crt-barrel-perspective: 600px;   /* Lavere = mer buning */
+
+    /* Flimmer */
+    --crt-flicker-speed: 5s;           /* Syklustid for flimmer-animasjonen */
+    --crt-flicker-min: 0.92;           /* Laveste opasitet under flimmer [0 = svart, 1 = ingen flimmer] */
+
+    /* Horisontal jitter (ustabil synkronisering) */
+    --crt-jitter-speed: 8s;            /* Hvor ofte jitteret skjer */
+    --crt-jitter-amplitude: 1.5px;       /* Maks horisontal forskyvning [0px = ingen jitter] */
+
+    /* Bilde/video-filter */
+    --crt-media-sepia: 0.28;           /* Lett gulning av bilder */
+    --crt-media-contrast: 1.12;
+    --crt-media-brightness: 0.88;
+    --crt-media-saturate: 0.65;
+}
+
+
+/* ───────────────────────────────────────────────────────────
+   OVERLAY — scanlines, vignette og tint
+   ─────────────────────────────────────────────────────────── */
+
+.crt-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    display: none;
+}
+
+body.crt-mode .crt-overlay {
+    display: block;
+}
+
+/* Lag 1: Scanlines */
+.crt-overlay::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent                            0px,
+        transparent                            calc(var(--crt-scanline-height) * 0.55),
+        rgba(0, 0, 0, var(--crt-scanline-opacity)) calc(var(--crt-scanline-height) * 0.55),
+        rgba(0, 0, 0, var(--crt-scanline-opacity)) var(--crt-scanline-height)
+    );
+    animation: crtFlicker var(--crt-flicker-speed) infinite alternate;
+}
+
+/* Lag 2: Vignette + glasstint */
+.crt-overlay::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(
+            ellipse at 50% 45%,
+            transparent var(--crt-vignette-start),
+            rgba(0, 0, 0, var(--crt-vignette-opacity)) 100%
+        ),
+        /* Varm amber-tint — gammelt CRT-glass */
+        linear-gradient(
+            rgba(255, 190, 60, var(--crt-tint-alpha)),
+            rgba(255, 190, 60, var(--crt-tint-alpha))
+        );
+}
+
+
+/* ───────────────────────────────────────────────────────────
+   BARREL DISTORTION — buet skjerm
+   ─────────────────────────────────────────────────────────── */
+
+body.crt-mode {
+    perspective: var(--crt-barrel-perspective);
+    overflow-x: hidden;
+    background: var(--bg) !important; /* hindrer hvit stripe bak rotert container */
+}
+
+body.crt-mode .container {
+    animation: crtJitter var(--crt-jitter-speed) infinite !important;
+}
+
+/* Modal skal ikke påvirkes av CRT perspective/jitter */
+body.crt-mode .modal-backdrop {
+    transform: none !important;
+    animation: none !important;
+}
+
+
+/* ───────────────────────────────────────────────────────────
+   PHOSPHOR GLOW + CHROMATIC ABERRATION — all tekst
+   ─────────────────────────────────────────────────────────── */
+
+body.crt-mode * {
+    text-shadow:
+        /* Rød kanal — forskjøvet høyre/ned */
+         var(--crt-aberration-x)  var(--crt-aberration-y) 0
+            rgba(255, 60, 30, var(--crt-aberration-alpha)),
+        /* Blå kanal — forskjøvet venstre/opp */
+        calc(var(--crt-aberration-x) * -1) calc(var(--crt-aberration-y) * -1) 0
+            rgba(40, 100, 255, var(--crt-aberration-alpha)),
+        /* Stram fosforglød */
+        0 0 var(--crt-glow-tight)
+            rgba(255, 255, 255, var(--crt-glow-tight-alpha)),
+        /* Bred diffus glød */
+        0 0 var(--crt-glow-wide)
+            rgba(255, 255, 255, var(--crt-glow-wide-alpha));
+    animation: crtFlicker var(--crt-flicker-speed) infinite alternate;
+}
+
+/* Headings og labels — mer intens */
+body.crt-mode .cell-title,
+body.crt-mode .logo,
+body.crt-mode .cell-label,
+body.crt-mode .vm-banner-title,
+body.crt-mode .collapsible-toggle {
+    text-shadow:
+        var(--crt-aberration-x)  var(--crt-aberration-y) 0
+            rgba(255, 60, 30, calc(var(--crt-aberration-alpha) * 1.4)),
+        calc(var(--crt-aberration-x) * -1) calc(var(--crt-aberration-y) * -1) 0
+            rgba(40, 100, 255, calc(var(--crt-aberration-alpha) * 1.4)),
+        0 0 var(--crt-glow-heading-tight)
+            rgba(255, 255, 255, var(--crt-glow-heading-tight-alpha)),
+        0 0 var(--crt-glow-heading-wide)
+            rgba(255, 255, 255, var(--crt-glow-heading-wide-alpha));
+}
+
+
+/* ───────────────────────────────────────────────────────────
+   BILDER OG VIDEO
+   ─────────────────────────────────────────────────────────── */
+
+body.crt-mode video,
+body.crt-mode img:not(.footer-logo):not(.header-logo-img):not(.footer-site-logo):not(.vm-banner-logo) {
+    filter:
+        sepia(var(--crt-media-sepia))
+        contrast(var(--crt-media-contrast))
+        brightness(var(--crt-media-brightness))
+        saturate(var(--crt-media-saturate));
+}
+
+
+/* ───────────────────────────────────────────────────────────
+   ? KNAPP I FOOTER — matcher .theme-toggle i style.css
+   ─────────────────────────────────────────────────────────── */
+
+.crt-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    background: none;
+    border: 1px solid var(--border);
+    padding: .28rem .55rem;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    font-size: .6rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.crt-toggle:hover {
+    color: var(--text-sec);
+    border-color: var(--muted);
+}
+
+body.crt-mode .crt-toggle {
+    color: var(--text-sec);
+    border-color: var(--muted);
+    text-shadow:
+        0 0 6px rgba(255, 255, 255, 0.5),
+        0 0 14px rgba(255, 255, 255, 0.2);
+}
+
+
+/* ───────────────────────────────────────────────────────────
+   ANIMASJONER
+   ─────────────────────────────────────────────────────────── */
+
+/* Flimmer — simulerer ustabil høyspenning */
+@keyframes crtFlicker {
+    0%   { opacity: 1; }
+    2%   { opacity: var(--crt-flicker-min); }
+    4%   { opacity: 0.98; }
+    5%   { opacity: 1; }
+    40%  { opacity: 0.97; }
+    42%  { opacity: var(--crt-flicker-min); }
+    44%  { opacity: 1; }
+    70%  { opacity: 0.99; }
+    72%  { opacity: calc(var(--crt-flicker-min) + 0.05); }
+    74%  { opacity: 1; }
+    100% { opacity: 0.98; }
+}
+
+/* Jitter — horisontal forflytning, som ustabil horizontal sync */
+@keyframes crtJitter {
+    0%,  3%,  6%, 20%, 23%, 60%, 63%, 90%, 93%, 100% {
+        transform: translateX(0px);
+    }
+    1%  { transform: translateX(calc(var(--crt-jitter-amplitude) * -0.75)); }
+    2%  { transform: translateX(calc(var(--crt-jitter-amplitude) * 0.5)); }
+    21% { transform: translateX(var(--crt-jitter-amplitude)); }
+    22% { transform: translateX(calc(var(--crt-jitter-amplitude) * -0.25)); }
+    61% { transform: translateX(calc(var(--crt-jitter-amplitude) * -1)); }
+    62% { transform: translateX(calc(var(--crt-jitter-amplitude) * 0.75)); }
+    91% { transform: translateX(calc(var(--crt-jitter-amplitude) * 0.5)); }
+    92% { transform: translateX(calc(var(--crt-jitter-amplitude) * -0.5)); }
+}

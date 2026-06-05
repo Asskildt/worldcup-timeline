@@ -1,0 +1,15 @@
+{
+  "name": "fotball-vm",
+  "version": "1.0.0",
+  "description": "FIFA VM 2026 kampprogram — fotballvm.asskildt.eu",
+  "scripts": {
+    "build": "node build.js",
+    "build:test": "node build.js --test",
+    "build:all": "node build.js && node build.js --test",
+    "watch": "nodemon --watch src --ext html,css,js,json --exec 'node build.js'",
+    "watch:test": "nodemon --watch src --ext html,css,js,json --exec 'node build.js --test'"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}

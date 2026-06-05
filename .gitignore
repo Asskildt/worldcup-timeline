@@ -1,0 +1,10 @@
+dist/
+dist-test/
+node_modules/
+inspo/
+test/
+*.mov
+*.mp4
+*.MP4
+Flags.svg
+!src/flags.svg

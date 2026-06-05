@@ -1,0 +1,9 @@
+    <!-- Tema settes før render for å unngå flash -->
+    <script>
+        (function() {
+            const s = localStorage.getItem('theme') || 'system';
+            const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.setAttribute('data-theme',
+                s === 'system' ? (dark ? 'dark' : 'light') : s);
+        })();
+    </script>

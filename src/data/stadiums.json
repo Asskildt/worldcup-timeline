@@ -1,0 +1,181 @@
+{
+  "name": "World Cup 2026",
+  "stadiums": [
+    {
+      "code": "VA",
+      "city": "Vancouver",
+      "country": "Canada",
+      "region": "Western",
+      "timezone": "UTC-7",
+      "cc": "ca",
+      "name": "BC Place",
+      "capacity": 54500,
+      "coords": "49°16'36\"N 123°6'43\"W"
+    },
+    {
+      "code": "SE",
+      "city": "Seattle",
+      "country": "USA",
+      "region": "Western",
+      "timezone": "UTC-7",
+      "cc": "us",
+      "name": "Lumen Field",
+      "capacity": 69000,
+      "coords": "47°35'43\"N 122°19'54\"W"
+    },
+    {
+      "code": "SF",
+      "city": "San Francisco Bay Area",
+      "country": "USA",
+      "region": "Western",
+      "timezone": "UTC-7",
+      "cc": "us",
+      "name": "Levi's Stadium",
+      "capacity": 70909,
+      "coords": "37.403°N 121.970°W"
+    },
+    {
+      "code": "LA",
+      "city": "Los Angeles",
+      "country": "USA",
+      "region": "Western",
+      "timezone": "UTC-7",
+      "cc": "us",
+      "name": "SoFi Stadium",
+      "capacity": 70240,
+      "coords": "33.953°N 118.339°W"
+    },
+    {
+      "code": "GD",
+      "city": "Guadalajara",
+      "country": "Mexico",
+      "region": "Central",
+      "timezone": "UTC-6",
+      "cc": "mx",
+      "name": "Estadio Akron",
+      "capacity": 48071,
+      "coords": "20°40'54\"N 103°27'46\"W"
+    },
+    {
+      "code": "MX",
+      "city": "Mexico City",
+      "country": "Mexico",
+      "region": "Central",
+      "timezone": "UTC-6",
+      "cc": "mx",
+      "name": "Estadio Azteca",
+      "capacity": 87523,
+      "coords": "19°18'11\"N 99°09'02\"W"
+    },
+    {
+      "code": "MO",
+      "city": "Monterrey",
+      "country": "Mexico",
+      "region": "Central",
+      "timezone": "UTC-6",
+      "cc": "mx",
+      "name": "Estadio BBVA",
+      "capacity": 53460,
+      "coords": "25°40'9\"N 100°14'40\"W"
+    },
+    {
+      "code": "KA",
+      "city": "Kansas City",
+      "country": "USA",
+      "region": "Central",
+      "timezone": "UTC-5",
+      "cc": "us",
+      "name": "Arrowhead Stadium",
+      "capacity": 76640,
+      "coords": "39°2'56\"N 94°29'2\"W"
+    },
+    {
+      "code": "DA",
+      "city": "Dallas",
+      "country": "USA",
+      "region": "Central",
+      "timezone": "UTC-5",
+      "cc": "us",
+      "name": "AT&T Stadium",
+      "capacity": 92967,
+      "coords": "32°44'52\"N 97°5'34\"W"
+    },
+    {
+      "code": "HO",
+      "city": "Houston",
+      "country": "USA",
+      "region": "Central",
+      "timezone": "UTC-5",
+      "cc": "us",
+      "name": "NRG Stadium",
+      "capacity": 72220,
+      "coords": "29°41'5\"N 95°24'39\"W"
+    },
+    {
+      "code": "TO",
+      "city": "Toronto",
+      "country": "Canada",
+      "region": "Eastern",
+      "timezone": "UTC-4",
+      "cc": "ca",
+      "name": "BMO Field",
+      "capacity": 45736,
+      "coords": "43°38'0\"N 79°25'07\"W"
+    },
+    {
+      "code": "BO",
+      "city": "Boston",
+      "country": "USA",
+      "region": "Eastern",
+      "timezone": "UTC-4",
+      "cc": "us",
+      "name": "Gillette Stadium",
+      "capacity": 70000,
+      "coords": "42.091°N 71.264°W"
+    },
+    {
+      "code": "NY",
+      "city": "New York/New Jersey",
+      "country": "USA",
+      "region": "Eastern",
+      "timezone": "UTC-4",
+      "cc": "us",
+      "name": "MetLife Stadium",
+      "capacity": 87157,
+      "coords": "40°48'48.7\"N 74°4'27.7\"W"
+    },
+    {
+      "code": "PH",
+      "city": "Philadelphia",
+      "country": "USA",
+      "region": "Eastern",
+      "timezone": "UTC-4",
+      "cc": "us",
+      "name": "Lincoln Financial Field",
+      "capacity": 69328,
+      "coords": "39°54'3\"N 75°10'3\"W"
+    },
+    {
+      "code": "AT",
+      "city": "Atlanta",
+      "country": "USA",
+      "region": "Eastern",
+      "timezone": "UTC-4",
+      "cc": "us",
+      "name": "Mercedes-Benz Stadium",
+      "capacity": 75000,
+      "coords": "33°45'20\"N 84°24'00\"W"
+    },
+    {
+      "code": "MI",
+      "city": "Miami",
+      "country": "USA",
+      "region": "Eastern",
+      "timezone": "UTC-4",
+      "cc": "us",
+      "name": "Hard Rock Stadium",
+      "capacity": 67518,
+      "coords": "25°57'29\"N 80°14'20\"W"
+    }
+  ]
+}

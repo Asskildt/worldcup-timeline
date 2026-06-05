@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+{{head}}
+{{theme-init}}
+</head>
+<body>
+
+<!-- Sticky header: kompakt, alltid synlig -->
+<div class="site-header">
+    <div class="header-top">
+        <div class="header-left"></div>
+        <div class="header-brand">
+            <img src="favicon.svg" class="header-crest" alt="Logo">
+            <span class="header-title">FIFA VM 2026</span>
+            <span class="header-host-flags">
+                <svg class="flag-svg header-host-flag" aria-hidden="true"><use href="#mx"/></svg>
+                <svg class="flag-svg header-host-flag" aria-hidden="true"><use href="#ca"/></svg>
+                <svg class="flag-svg header-host-flag" aria-hidden="true"><use href="#us"/></svg>
+            </span>
+        </div>
+        <div class="header-right">
+            <button class="header-share-btn" onclick="shareApp()" aria-label="Del siden">
+                <i class="bi bi-share"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Info-rad: neste kamp + neste Norge-kamp -->
+    <div class="header-info">
+        <!-- Neste kamp (alltid, uavhengig av VM-start) -->
+        <div class="next-match-row" id="next-match-row">
+            <span class="next-match-info" id="next-match-info"></span>
+            <span id="live-badge" class="live-badge" style="display:none">LIVE</span>
+        </div>
+        <!-- Neste Norge-kamp (kun når det er en annen kamp enn neste generelt) -->
+        <div class="norway-next-row" id="norway-next-row" style="display:none">
+            <img src="nff-crest.png" class="nff-crest-sm" alt="NFF">
+            <span class="norway-next-info" id="norway-next-info"></span>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab active" onclick="showTab('timeline',this)">
+            <i class="bi bi-bar-chart-steps"></i> Tidslinje
+        </button>
+        <button class="tab" onclick="showTab('table',this)">
+            <i class="bi bi-list-ul"></i> Tabell
+        </button>
+        <button class="tab" onclick="showTab('groups',this)">
+            <i class="bi bi-grid-3x3-gap"></i> Grupper
+        </button>
+        <button class="tab" onclick="showTab('arenas',this)">
+            <i class="bi bi-geo-alt"></i> Arenaer
+        </button>
+        <button class="tab" onclick="showTab('bracket',this)">
+            <i class="bi bi-diagram-3"></i> Sluttspill
+        </button>
+        <button class="tab" onclick="showTab('stats',this)" style="display:none">
+            <i class="bi bi-bar-chart"></i> Statistikk
+        </button>
+        <div class="tabs-status">
+            <span id="fetch-status" class="fetch-status"></span>
+        </div>
+    </div>
+
+    <!-- Tidslinje -->
+    <div id="view-timeline" class="tab-panel active">
+        <div class="tl-hint" id="tl-hint">
+            <i class="bi bi-arrow-left-right"></i> Scroll horisontalt for å se alle kamper
+        </div>
+        <div class="tl-axis-wrap" id="tl-axis-wrap">
+            <div class="tl-axis-outer" id="tl-axis-outer"></div>
+        </div>
+        <div class="tl-wrap" id="tl-wrap">
+            <div class="tl-inner" id="tl"></div>
+        </div>
+    </div>
+
+    <!-- Tabell -->
+    <div id="view-table" class="tab-panel">
+        <div id="tbl-toolbar"></div>
+        <div class="tbl-wrap">
+            <table class="schedule" id="tbl"></table>
+        </div>
+    </div>
+
+    <!-- Grupper -->
+    <div id="view-groups" class="tab-panel">
+        <div class="groups-grid" id="groups"></div>
+    </div>
+
+    <!-- Bracket / Sluttspill -->
+    <div id="view-bracket" class="tab-panel">
+        <!-- Bygges av buildBracket() ved første besøk -->
+    </div>
+
+    <!-- Statistikk -->
+    <div id="view-stats" class="tab-panel">
+        <!-- Bygges av buildStats() ved første besøk -->
+    </div>
+
+    <!-- Arenaer -->
+    <div id="view-arenas" class="tab-panel">
+        <!-- Bygges av buildArenas() ved første besøk -->
+    </div>
+
+
+
+{{footer}}
+
+</div>
+
+<!-- Modal -->
+<div id="modal" class="modal-backdrop" style="display:none" onclick="closeModal(event)">
+    <div class="modal" role="dialog" aria-modal="true">
+        <button class="modal-close" onclick="closeModal()" aria-label="Lukk">
+            <i class="bi bi-x-lg"></i>
+        </button>
+        <div id="modal-content"></div>
+    </div>
+</div>
+
+<!-- CRT-overlay (scanlines + vignette) — styres av body.crt-mode -->
+<div class="crt-overlay" aria-hidden="true"></div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
