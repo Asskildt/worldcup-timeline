@@ -45,33 +45,46 @@
 
     <!-- Tabs -->
     <div class="tabs">
-        <button class="tab active" onclick="showTab('timeline',this)">
+        <button class="tab active" id="tab-timeline" onclick="showTab('timeline',this)">
             <i class="bi bi-bar-chart-steps"></i> Tidslinje
         </button>
-        <button class="tab" onclick="showTab('table',this)">
+        <button class="tab" id="tab-table" onclick="showTab('table',this)">
             <i class="bi bi-list-ul"></i> Tabell
         </button>
-        <button class="tab" onclick="showTab('groups',this)">
+        <button class="tab" id="tab-groups" onclick="showTab('groups',this)">
             <i class="bi bi-grid-3x3-gap"></i> Grupper
         </button>
-        <button class="tab" onclick="showTab('arenas',this)">
+        <button class="tab" id="tab-arenas" onclick="showTab('arenas',this)">
             <i class="bi bi-geo-alt"></i> Arenaer
         </button>
-        <button class="tab" onclick="showTab('bracket',this)">
+        <button class="tab" id="tab-bracket" onclick="showTab('bracket',this)">
             <i class="bi bi-diagram-3"></i> Sluttspill
         </button>
         <button class="tab" onclick="showTab('stats',this)" style="display:none">
             <i class="bi bi-bar-chart"></i> Statistikk
         </button>
         <div class="tabs-status">
+            <div class="tz-wrap">
+                <button class="tz-toggle" onclick="toggleLangMenu()" id="lang-toggle" aria-expanded="false">
+                    <span class="tz-label-text">NO</span>
+                </button>
+                <div class="tz-menu" id="lang-menu" style="display:none"></div>
+            </div>
+            <div class="tz-wrap">
+                <button class="tz-toggle" onclick="toggleTZMenu()" id="tz-toggle" aria-expanded="false">
+                    <i class="bi bi-clock"></i> <span id="tz-label">CEST</span>
+                </button>
+                <div class="tz-menu" id="tz-menu" style="display:none"></div>
+            </div>
             <span id="fetch-status" class="fetch-status"></span>
         </div>
+        <div class="tz-backdrop" id="tz-backdrop" style="display:none" onclick="closeTZMenu();closeLangMenu()"></div>
     </div>
 
     <!-- Tidslinje -->
     <div id="view-timeline" class="tab-panel active">
         <div class="tl-hint" id="tl-hint">
-            <i class="bi bi-arrow-left-right"></i> Scroll horisontalt for å se alle kamper
+            <i class="bi bi-arrow-left-right"></i> <span id="tl-hint-text">Scroll horisontalt for å se alle kamper</span>
         </div>
         <div class="tl-axis-wrap" id="tl-axis-wrap">
             <div class="tl-axis-outer" id="tl-axis-outer"></div>

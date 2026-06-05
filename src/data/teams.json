@@ -11,6 +11,7 @@
     },
     {
         "name": "South Africa",
+        "name_no": "Sør-Afrika",
         "continent": "Africa",
         "flag_icon": "🇿🇦",
         "flag_unicode": "\\u{1F1FF}\\u{1F1E6}",
@@ -21,6 +22,7 @@
     },
     {
         "name": "South Korea",
+        "name_no": "Sør-Korea",
         "name_normalised": "Korea Republic",
         "continent": "Asia",
         "flag_icon": "🇰🇷",
@@ -32,6 +34,7 @@
     },
     {
         "name": "Czech Republic",
+        "name_no": "Tsjekkia",
         "name_normalised": "Czechia",
         "continent": "Europe",
         "flag_icon": "🇨🇿",
@@ -53,6 +56,7 @@
     },
     {
         "name": "Bosnia & Herzegovina",
+        "name_no": "Bosnia-Hercegovina",
         "continent": "Europe",
         "flag_icon": "🇧🇦",
         "flag_unicode": "\\u{1F1E7}\\u{1F1E6}",
@@ -165,6 +169,7 @@
     },
     {
         "name": "Germany",
+        "name_no": "Tyskland",
         "continent": "Europe",
         "flag_icon": "🇩🇪",
         "flag_unicode": "\\u{1F1E9}\\u{1F1EA}",
@@ -185,6 +190,7 @@
     },
     {
         "name": "Ivory Coast",
+        "name_no": "Elfenbenskysten",
         "name_normalised": "Cote d'Ivoire",
         "continent": "Africa",
         "flag_icon": "🇨🇮",
@@ -206,6 +212,7 @@
     },
     {
         "name": "Netherlands",
+        "name_no": "Nederland",
         "continent": "Europe",
         "flag_icon": "🇳🇱",
         "flag_unicode": "\\u{1F1F3}\\u{1F1F1}",
@@ -297,6 +304,7 @@
     },
     {
         "name": "Cape Verde",
+        "name_no": "Kapp Verde",
         "name_normalised": "Cabo Verde",
         "continent": "Africa",
         "flag_icon": "🇨🇻",
@@ -308,6 +316,7 @@
     },
     {
         "name": "Saudi Arabia",
+        "name_no": "Saudi-Arabia",
         "continent": "Asia",
         "flag_icon": "🇸🇦",
         "flag_unicode": "\\u{1F1F8}\\u{1F1E6}",
@@ -418,6 +427,7 @@
     },
     {
         "name": "DR Congo",
+        "name_no": "Kongo",
         "name_normalised": "Congo DR",
         "continent": "Africa",
         "flag_icon": "🇨🇩",

@@ -1096,6 +1096,21 @@ footer a { color:var(--muted); text-decoration:none; }
 footer a:hover { color:var(--text-sec); }
 .theme-toggle { display:inline-flex; align-items:center; gap:.35rem; background:none; border:1px solid var(--border); padding:.28rem .55rem; cursor:pointer; font-family:'Space Mono',monospace; font-size:.6rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); transition:color .15s,border-color .15s; }
 .theme-toggle:hover { color:var(--text-sec); border-color:var(--muted); }
+.tz-toggle { background:none; border:1px solid var(--border); padding:.18rem .4rem; cursor:pointer; font-family:'Space Mono',monospace; font-size:.58rem; letter-spacing:.08em; color:var(--muted); transition:color .15s,border-color .15s; display:inline-flex; align-items:center; gap:.3em; }
+.tz-toggle:hover { color:var(--text-sec); border-color:var(--muted); }
+.tz-wrap { position:relative; }
+.tz-menu { background:var(--bg-card); border:1px solid var(--border-mid); box-shadow:3px 3px 0 var(--shadow); z-index:200; min-width:240px; width:max-content; display:flex; flex-direction:column; overflow-y:auto; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
+.tz-menu-item { background:none; border:none; padding:.35rem .6rem; text-align:left; cursor:pointer; font-family:'Space Mono',monospace; font-size:.6rem; color:var(--text-sec); display:grid; grid-template-columns:.7rem 1.4rem 3.2rem 2rem 1fr; align-items:center; gap:.4em; white-space:nowrap; transition:background .1s; width:100%; box-sizing:border-box; }
+.tz-menu-item:hover { background:rgba(255,255,255,.06); }
+.tz-menu-item.selected { color:var(--text); background:var(--norway-dim); }
+.tz-home-star { color:var(--norway); font-size:.55rem; }
+.tz-star-placeholder { display:inline-block; width:.55rem; }
+.tz-flag { width:1.2em; height:.9em; }
+.tz-flag-placeholder { display:inline-block; width:1.2em; }
+.tz-label-text { font-weight:700; }
+.tz-offset { color:var(--muted); font-size:.52rem; text-align:right; }
+.tz-desc { color:var(--muted); font-size:.52rem; overflow:hidden; text-overflow:ellipsis; }
+.lang-menu-item { grid-template-columns:.7rem 1.4rem 3.2rem 1fr; }
 .footer-toggles { display:inline-flex; gap:.25rem; }
 
 /* ── Mobil ─────────────────────────────────────────────────────────────────── */
@@ -1627,6 +1642,19 @@ tr.tr-fav { box-shadow: inset 4px 0 0 var(--gold); }
         border-bottom: 1px solid var(--border);
         justify-content: center;
     }
+    /* Bakgrunns-dimming når en meny er åpen */
+    .tz-backdrop {
+        display: block;
+    }
+}
+
+/* Overlay for å lukke meny ved tap utenfor på mobil */
+.tz-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 199;
+    background: rgba(0,0,0,.35);
 }
 
 /* ── Via-label på potensielle KO-kamp-blokker ─────────────────────────────── */

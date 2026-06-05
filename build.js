@@ -187,6 +187,7 @@ function buildDataJS() {
             code:    t.fifa_code,
             group:   t.group,
             confed:  t.confed,
+            ...(t.name_no ? { name_no: t.name_no } : {}),
         };
         teams[t.name] = entry;
         // Alias for normalisert navn — merkes slik at buildGroups kan filtrere dem ut

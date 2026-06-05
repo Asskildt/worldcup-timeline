@@ -19,6 +19,8 @@
 - Host country flags (USA, Canada, Mexico) in the header
 - Theme toggle (system / light / dark) with shared `localStorage` key (`theme`)
 - Live badge pulses when a match is in progress
+- **Timezone selector** — 9 timezones (CEST to PDT), auto-detected from browser, stored in `localStorage`
+- **Language selector** — Norwegian and English, auto-detected from browser `navigator.language`, stored in `localStorage`
 
 ## Tech stack
 
@@ -185,17 +187,16 @@ Test fixtures: `matches-test-*.json` mirrors exactly what openfootball will deli
 ## Future improvements
 
 ### High priority
-- **app.js modularization** — the file is ~3000 lines. Natural split points: `filter.js`, `timeline.js`, `table.js`, `bracket.js`, `modals.js`, `groups.js`, `ui.js`. Requires either ES modules (import/export) or concatenation in `build.js`. Best time: after the tournament starts, during a natural feature pause.
+- **app.js modularization** — the file is ~3500 lines. Natural split points: `filter.js`, `timeline.js`, `table.js`, `bracket.js`, `modals.js`, `groups.js`, `ui.js`. Requires either ES modules (import/export) or concatenation in `build.js`. Best time: after the tournament starts, during a natural feature pause.
 - **Multi-team filter** — let users select multiple teams in the filter simultaneously. See `ideer.md` for full implementation sketch.
 - **Playoff integration** — `playoff.json` contains qualification matches with results. Could be shown as its own tab or in the team modal.
 
 ### Medium priority
-- **Internationalization** — timezone and language support as a future idea (e.g. show times in local time for non-Norwegian visitors).
 - **Timeline window** — `TL_START`/`TL_END` are hardcoded. Could be computed dynamically from actual match times.
 - **Group filter** — buttons to show only one group in the table view.
+- **More languages** — i18n system is in place. Adding a language requires translating ~120 strings in `app.js` and adding team name translations in `teams.json`.
 
 ### Low priority
-- **Open source prep** — add `LICENSE` (MIT recommended), add GitHub link in footer, clean up history if needed.
 - **OG image** — update `og-image.png` once the site is more complete.
 - **Offline support** — service worker to cache match data.
 
@@ -249,7 +250,21 @@ Norway is hardcoded as the featured team in several places:
 To feature a different team: search for `'Norway'` in `app.js` and replace, and update the NFF crest image if desired.
 
 ### Language
-The UI is in Norwegian. String literals are scattered throughout `app.js` (day names, month names, section headers, modal labels). There is no i18n system — a find-and-replace across `app.js` is the most practical approach for a one-time adaptation.
+The UI supports Norwegian (`no`) and English (`en`) via a built-in i18n system in `app.js`. The language is auto-detected from `navigator.language` on first visit and stored in `localStorage`.
+
+**To add a new language:**
+1. Add a new block to the `i18n` object in `app.js`, copying the `en` block and translating the ~120 strings.
+2. Add the language to the `LANGS` array in `toggleLangMenu()`.
+3. The `t(key)` helper and `toggleLang()` cycle will pick it up automatically.
+
+**Team name translations:**
+Team names are stored in English as keys throughout the codebase (required for matching against openfootball live data). Localised display names are stored as `name_no` in `teams.json` and looked up via the `teamName(name)` helper in `app.js`. To add names for a new language, add a `name_XX` field per team in `teams.json` and update `teamName()` to return it when `LANG === 'XX'`.
+
+**Timezone selector:**
+`TZ_LIST` in `app.js` contains 9 timezones. Each entry has `desc` (Norwegian) and `descEn` (English). Add `descXX` for additional languages and update `toggleTZMenu()` to select the right field.
+
+**Home timezone:**
+The entry with `home: true` in `TZ_LIST` is highlighted with a star. Set this to the timezone that matches your audience. The default is CEST (Norway).
 
 ### Tournament structure
 The KO bracket is hardcoded for 48-team FIFA World Cup (R32 → R16 → QF → SF → FIN). For a different format, `buildBracket()` in `app.js` and the bracket num arrays need to be updated to match the new structure.
