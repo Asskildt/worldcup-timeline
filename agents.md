@@ -5,9 +5,9 @@
 **What is this?** — FIFA World Cup 2026 schedule. A static website showing all 104 matches with Norwegian time (CEST), group standings, and KO bracket. Hosted as a sub-project under `asskildt.eu`.
 
 **Features:**
-- Six views: Timeline (horizontal), Grid (vertical calendar), Table (list), Groups (standings), KO bracket, Arenas
-- Timeline expanded/compact mode
-- Grid compact mode (FIFA codes, narrow columns)
+- Six views: Timeline/Grid (shared tab with transpose button), Table (list), Groups (standings), KO bracket, Arenas
+- Timeline horizontal/vertical mode — auto-detected from screen width (mobile → vertical grid, desktop → horizontal)
+- Compact mode per layout — separate settings, remembered independently
 - Rest-day toggle in table view
 - Live results fetched from openfootball API on page load
 - Click on a match opens a modal with venue info, scorers, extra time, and penalties
@@ -22,6 +22,7 @@
 - Live badge pulses when a match is in progress
 - **Timezone selector** — 9 timezones (CEST to PDT), auto-detected from browser, stored in `localStorage`
 - **Language selector** — Norwegian and English, auto-detected from browser `navigator.language`, stored in `localStorage`
+- **URL parameters** — `?lang=en&tz=EDT` override localStorage on load, then removed from URL
 
 ## Tech stack
 
@@ -159,6 +160,12 @@ npm run watch                # Auto-rebuild on changes (requires nodemon)
 ```bash
 node build.js --test && node build.js
 ```
+
+**To also build the English version (`dist/en/`):**
+```bash
+node build.js && node build.js --lang=en
+```
+The English build must run after the base build since it reuses `dist/data.js`.
 
 **Test scenarios:**
 | Command | Date | Match data | Description |

@@ -2606,3 +2606,12 @@ tr.tr-potential td { font-style: italic; }
     .vg-match { padding: 2px 3px; }
 }
 
+
+/* ── Tidslinje/Rutenett modus-bytte ────────────────────────────────────────── */
+.tl-mode-icon {
+    width: 1rem;
+    height: 1rem;
+    fill: currentColor;
+    display: block;
+}
+

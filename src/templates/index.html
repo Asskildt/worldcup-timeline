@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="no">
+<html lang="{{lang}}">
 <head>
 {{head}}
 {{theme-init}}
@@ -48,9 +48,6 @@
         <button class="tab active" id="tab-timeline" onclick="showTab('timeline',this)">
             <i class="bi bi-bar-chart-steps"></i> Tidslinje
         </button>
-        <button class="tab" id="tab-grid" onclick="showTab('grid',this)">
-            <i class="bi bi-calendar3"></i> Rutenett
-        </button>
         <button class="tab" id="tab-table" onclick="showTab('table',this)">
             <i class="bi bi-list-ul"></i> Tabell
         </button>
@@ -84,32 +81,37 @@
         <div class="tz-backdrop" id="tz-backdrop" style="display:none" onclick="closeTZMenu();closeLangMenu()"></div>
     </div>
 
-    <!-- Tidslinje -->
+    <!-- Tidslinje / Rutenett — deler panel, bytter modus med transponer-knapp -->
     <div id="view-timeline" class="tab-panel active">
-        <div class="tl-hint" id="tl-hint">
-            <i class="bi bi-arrow-left-right"></i> <span id="tl-hint-text">Scroll horisontalt for å se alle kamper</span>
-        </div>
-        <div class="tl-axis-wrap" id="tl-axis-wrap">
-            <div class="tl-axis-outer" id="tl-axis-outer"></div>
-        </div>
-        <div class="tl-wrap" id="tl-wrap">
-            <div class="tl-inner" id="tl"></div>
-        </div>
-    </div>
-
-    <!-- Rutenett (datoer horisontalt, tidspunkter vertikalt) -->
-    <div id="view-grid" class="tab-panel">
-        <div id="vg-toolbar"></div>
-        <div class="vg-outer">
-            <div class="vg-axis-wrap" id="vg-axis-wrap"></div>
-            <div class="vg-header-scroll-wrap" id="vg-header-scroll-wrap">
-                <div class="vg-header-row" id="vg-header-row"></div>
+        <!-- Horisontal tidslinje -->
+        <div id="tl-mode" class="tl-mode-horizontal">
+            <div class="tl-hint" id="tl-hint">
+                <i class="bi bi-arrow-left-right"></i> <span id="tl-hint-text">Scroll horisontalt for å se alle kamper</span>
+            </div>
+            <div class="tl-axis-wrap" id="tl-axis-wrap">
+                <div class="tl-axis-outer" id="tl-axis-outer"></div>
+            </div>
+            <div class="tl-wrap" id="tl-wrap">
+                <div class="tl-inner" id="tl"></div>
             </div>
         </div>
-        <div class="vg-body-outer">
-            <div class="vg-axis-body-wrap" id="vg-axis-body-wrap"></div>
-            <div class="vg-wrap" id="vg-wrap">
-                <div class="vg-inner" id="vg"></div>
+        <!-- Vertikalt rutenett -->
+        <div id="vg-mode" class="tl-mode-vertical" style="display:none">
+            <div class="tl-hint" id="vg-hint">
+                <i class="bi bi-arrow-left-right"></i> <span id="vg-hint-text">Scroll horisontalt for å se alle datoer</span>
+            </div>
+            <div id="vg-toolbar"></div>
+            <div class="vg-outer">
+                <div class="vg-axis-wrap" id="vg-axis-wrap"></div>
+                <div class="vg-header-scroll-wrap" id="vg-header-scroll-wrap">
+                    <div class="vg-header-row" id="vg-header-row"></div>
+                </div>
+            </div>
+            <div class="vg-body-outer">
+                <div class="vg-axis-body-wrap" id="vg-axis-body-wrap"></div>
+                <div class="vg-wrap" id="vg-wrap">
+                    <div class="vg-inner" id="vg"></div>
+                </div>
             </div>
         </div>
     </div>

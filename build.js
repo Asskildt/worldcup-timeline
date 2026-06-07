@@ -22,6 +22,9 @@ const TEST_SCENARIO = testArg
     ? (testArg.includes('=') ? testArg.split('=')[1] : 'default')
     : null;
 
+// Detect --lang=en (bygg engelsk versjon i dist/en/)
+const LANG_BUILD = process.argv.find(a => a.startsWith('--lang='))?.split('=')[1] || null;
+
 // Map scenario name → config file
 const TEST_CONFIG_MAP = {
     'default': 'test-config.json',
@@ -31,7 +34,10 @@ const TEST_CONFIG_MAP = {
 const TEST_CONFIG_FILE = TEST_SCENARIO ? (TEST_CONFIG_MAP[TEST_SCENARIO] || 'test-config.json') : null;
 
 const SRC      = path.join(__dirname, 'src');
-const DIST     = path.join(__dirname, IS_TEST ? 'dist-test' : 'dist');
+const DIST_BASE = IS_TEST ? 'dist-test' : 'dist';
+const DIST     = LANG_BUILD
+    ? path.join(__dirname, DIST_BASE, LANG_BUILD)
+    : path.join(__dirname, DIST_BASE);
 const DATA_DIR = path.join(SRC, 'data');
 
 // ── Hjelpefunksjoner ──────────────────────────────────────────────────────────
@@ -453,7 +459,9 @@ function buildSharePages(matchesRaw, teamsData, stadiumsData) {
 
 function buildHTML(matchesRaw, stadiumsData) {
     const template   = read(path.join(SRC, 'templates', 'index.html'));
-    const head       = read(path.join(SRC, 'partials', 'head.html'));
+    // Velg head-fil basert på --lang=XX flagg
+    const headFile   = LANG_BUILD ? `head-${LANG_BUILD}.html` : 'head.html';
+    const head       = read(path.join(SRC, 'partials', headFile));
     const themeInit  = read(path.join(SRC, 'partials', 'theme-init.html'));
     const footer     = read(path.join(SRC, 'partials', 'footer.html'));
 
@@ -523,6 +531,7 @@ function buildHTML(matchesRaw, stadiumsData) {
 
     let html = template
         .replace('{{head}}',       head.trimEnd())
+        .replace('{{lang}}',       LANG_BUILD || 'no')
         .replace('{{theme-init}}', themeInit.trimEnd())
         .replace('{{footer}}',     footer.trimEnd())
         .replace('{{json-ld}}',    jsonLdScript);
@@ -541,6 +550,16 @@ function buildHTML(matchesRaw, stadiumsData) {
 // ── Kopier statiske filer ─────────────────────────────────────────────────────
 
 function copyStatic() {
+    if (LANG_BUILD) {
+        // Engelske build: kun app.js og data.js — alt annet refereres via ../
+        // data.js kopieres fra base dist (må bygges først uten --lang)
+        copy(path.join(SRC, 'js', 'app.js'), path.join(DIST, 'app.js'));
+        const baseDataJs = path.join(__dirname, DIST_BASE, 'data.js');
+        if (fs.existsSync(baseDataJs)) {
+            copy(baseDataJs, path.join(DIST, 'data.js'));
+        }
+        return;
+    }
     copy(path.join(SRC, 'js', 'app.js'),  path.join(DIST, 'app.js'));
     copy(path.join(SRC, 'style.css'),     path.join(DIST, 'style.css'));
     copy(path.join(SRC, 'crt.css'),       path.join(DIST, 'crt.css'));
@@ -548,6 +567,11 @@ function copyStatic() {
     const faviconSvg = path.join(SRC, 'favicon.svg');
     if (fs.existsSync(faviconSvg)) {
         copy(faviconSvg, path.join(DIST, 'favicon.svg'));
+    }
+    // Kopier transpose-ikon
+    const transposeSvg = path.join(SRC, 'transpose.svg');
+    if (fs.existsSync(transposeSvg)) {
+        copy(transposeSvg, path.join(DIST, 'transpose.svg'));
     }
     // Kopier flags.svg hvis den finnes
     const flagsSvg = path.join(SRC, 'flags.svg');
@@ -582,13 +606,13 @@ Sitemap: https://fotballvm.asskildt.eu/sitemap.xml
 
 // ── Kjør build ────────────────────────────────────────────────────────────────
 
-console.log(`\nBuilding fotball-vm${IS_TEST ? ` [TESTMODUS: ${TEST_SCENARIO}]` : ''}...`);
+console.log(`\nBuilding fotball-vm${IS_TEST ? ` [TESTMODUS: ${TEST_SCENARIO}]` : ''}${LANG_BUILD ? ` [LANG: ${LANG_BUILD}]` : ''}...`);
 try {
-    buildFlagSprite();
+    if (!LANG_BUILD) buildFlagSprite(); // flagg-sprite bygges kun for base
     const { matchesRaw, teamsData, stadiumsData } = buildDataJS();
     buildHTML(matchesRaw, stadiumsData);
     copyStatic();
-    buildSharePages(matchesRaw, teamsData, stadiumsData);
+    if (!LANG_BUILD) buildSharePages(matchesRaw, teamsData, stadiumsData); // kamp-sider kun for base
     console.log('\nDone.\n');
 } catch (err) {
     console.error('\nBuild failed:', err.message);

@@ -32,7 +32,7 @@ Legg til view-panel (etter de andre view-panelene):
 Legg til `'navn'` i fane-arrayen:
 ```javascript
 function showTab(name, btn) {
-    ['timeline','grid','table','groups','bracket','stats','arenas', 'navn'].forEach(n => { … });
+    ['timeline','table','groups','bracket','stats','arenas', 'navn'].forEach(n => { … });
 ```
 
 Legg til `tabHash`-oppføring og lazy build-kall:
@@ -56,8 +56,8 @@ tab_navn: 'Label',
 
 Legg til i tab-array-ene slik at etiketten oppdateres ved språkbytte:
 ```javascript
-const tabIds   = ['timeline','grid','table',…, 'navn'];
-const tabIcons = ['bi-bar-chart-steps','bi-calendar3',…, 'bi-ikon-her'];
+const tabIds   = ['timeline','table',…, 'navn'];
+const tabIcons = ['bi-bar-chart-steps','bi-list-ul',…, 'bi-ikon-her'];
 const tabKeys  = ['tab_timeline','tab_grid','tab_table',…, 'tab_navn'];
 ```
 
@@ -115,6 +115,71 @@ isMatchPast(m)      // true hvis én enkelt kamp er ferdig + buffer
 ```
 
 Buffer er definert som `MATCH_END_BUFFER = 3.0` timer (kampvarighet 2t + 1t for ekstraomganger og forsinkede resultater). `MATCH_DUR * 3600000` brukes kun for LIVE-vinduet (kamp pågår), ikke for "er den ferdig".
+
+---
+
+## Transponer-modus (horisontal ↔ vertikal tidslinje)
+
+Tidslinje og rutenett deler én fane (`view-timeline`). Modusen styres av `TL_MODE`:
+
+```javascript
+let TL_MODE = localStorage.getItem('tlMode') !== null
+    ? localStorage.getItem('tlMode')
+    : (window.innerWidth <= 700 ? 'vertical' : 'horizontal');
+```
+
+**Auto-detect ved første besøk:** mobil (≤700px) → vertikal, desktop → horisontal. Lagres i `localStorage` når brukeren aktivt bytter.
+
+**`applyTlMode(mode?)`** — bytter mellom modusene, lagrer i localStorage, bygger riktig visning:
+```javascript
+applyTlMode('vertical');   // vis rutenett
+applyTlMode('horizontal'); // vis tidslinje
+applyTlMode();             // bruk gjeldende TL_MODE (ved oppstart)
+```
+
+**HTML-struktur:** `#tl-mode` og `#vg-mode` er to `<div>`-er i `view-timeline`, én er synlig om gangen.
+
+**Transponer-knapp:** Inline SVG fra `src/transpose.svg` som `TRANSPOSE_SVG`-konstant. Vises i begge toolbars med `.on`-klasse når vertikal modus er aktiv.
+
+**URL-deling:** `#rutenett`/`#grid` åpner tidslinje-fanen uten å endre modus — enheten bestemmer selv.
+
+---
+
+## Kompakt-tilstand
+
+To uavhengige state-variabler, separate defaults:
+
+```javascript
+let TL_COMPACT = localStorage.getItem('tlCompact') !== null
+    ? localStorage.getItem('tlCompact') === 'true'
+    : false;  // horisontal: utvidet som default
+
+let VG_COMPACT = localStorage.getItem('vgCompact') !== null
+    ? localStorage.getItem('vgCompact') === 'true'
+    : window.innerWidth <= 700;   // kompakt kun på mobil som default
+```
+
+- `TL_COMPACT = false` → tidslinjen viser by/TV-info under kamp-blokker
+- `VG_COMPACT = true` → rutenett bruker FIFA-kode og smalere kolonner
+
+Toggle-funksjoner: `toggleTlCompact()` og `toggleVgCompact()` — separate og uavhengige.
+
+---
+
+## URL-parametere
+
+Leser `?lang=` og `?tz=` ved oppstart, lagrer til `localStorage`, og fjerner fra URL:
+
+```
+?lang=en          → setter språk til engelsk
+?lang=no          → setter norsk
+?tz=EDT           → setter tidssone (label-match, case-insensitive)
+?tz=CEST          → setter CEST
+```
+
+IIFE `applyURLParams()` kjøres etter `LANG` er deklarert. Parameterne fjernes fra URL med `history.replaceState` — ren URL etter lasting.
+
+Styrer **ikke** `TL_MODE` — enheten bestemmer modus uavhengig av URL.
 
 ---
 
@@ -251,6 +316,58 @@ Lagnavn-oversettelse: legg til `name_no` (el. `name_xx`) per lag i `teams.json`,
 
 ---
 
+## Legge til et nytt språk (fullstendig guide)
+
+Eksempel: legge til tysk (`de`). Alle steg må gjøres for å få korrekt embed-preview og URL-deling.
+
+### 1. i18n-blokk i `app.js`
+Kopier `en`-blokken og oversett alle ~120 strenger, inkl. tab-nøkler (`tab_timeline` osv.).
+
+### 2. Lagnavn i `teams.json`
+Legg til `name_de` per lag. `teamName()` i `app.js` returnerer det automatisk når `LANG === 'de'` — legg til et `if (LANG === 'de') return td.name_de || name;`-ledd.
+
+### 3. Språkvelger i `toggleLangMenu()`
+```javascript
+const LANGS = [
+    { code: 'no', label: 'NO', flag: 'no',    name: 'Norsk'   },
+    { code: 'en', label: 'EN', flag: 'gb-eng', name: 'English' },
+    { code: 'de', label: 'DE', flag: 'de',     name: 'Deutsch' },
+];
+```
+
+### 4. `detectLang()` — auto-detect
+```javascript
+if (code === 'de') return 'de';
+```
+
+### 5. `buildShareURL()` — riktig URL ved deling
+```javascript
+const base = lang === 'en' ? origin + '/en/'
+           : lang === 'de' ? origin + '/de/'
+           : origin + '/';
+// Norsk trenger ikke lang-parameter i URL — /de/ setter det via localStorage i head
+if (lang !== 'en' && lang !== 'de') params.set('lang', lang);
+```
+
+### 6. Tab-hashes i `showTab()`
+Legg til `tabHashDe`-objekt og bruk det når `LANG === 'de'`.
+
+### 7. `src/partials/head-de.html`
+Kopier `head-en.html`, oppdater:
+- `<html lang="de">` (via `{{lang}}`-placeholder i template)
+- Oversett `<title>` og `<meta description>`
+- `og:locale="de_DE"`, `og:url` → `/de/`, `canonical` → `/de/`
+- Legg til `hreflang="de"` i alle tre head-filer (`head.html`, `head-en.html`, `head-de.html`)
+- `localStorage.setItem('lang','de')` i inline script
+
+### 8. Build
+```bash
+node build.js && node build.js --lang=en && node build.js --lang=de
+```
+Produserer `dist/de/index.html` med tyske meta-tags. `data.js` og `app.js` kopieres fra base.
+
+---
+
 ## Legge til nytt flagg
 
 1. Last ned SVG fra [flagicons.lipis.dev](https://flagicons.lipis.dev)
@@ -264,13 +381,15 @@ Lagnavn-oversettelse: legg til `name_no` (el. `name_xx`) per lag i `teams.json`,
 
 | Visning | Funksjon | Lazy? | Rebuild ved TZ? | Hash |
 |---------|----------|-------|-----------------|------|
-| Tidslinje (horisontal) | `buildTimeline()` | Nei (alltid) | Ja | `#tidslinje` |
-| Rutenett (vertikal) | `buildVerticalGrid()` | Ja | Ja | `#rutenett` |
-| Tabell | `buildTable()` | Nei (alltid) | Ja | `#kamper` |
-| Grupper | `buildGroups()` | Nei (alltid) | Nei | `#grupper` |
-| KO-bracket | `buildBracket()` | Ja | Nei | `#sluttspill` |
-| Arenaer | `buildArenas()` | Ja | Nei | `#arenaer` |
-| Statistikk | `buildStats()` | Ja | Nei | `#statistikk` |
+| Tidslinje (horisontal) | `buildTimeline()` | Nei (alltid) | Ja | `#tidslinje` / `#timeline` |
+| Rutenett (vertikal) | `buildVerticalGrid()` | Ja | Ja | `#rutenett` / `#grid` (→ tidslinje i vertikal modus) |
+| Tabell | `buildTable()` | Nei (alltid) | Ja | `#kamper` / `#table` |
+| Grupper | `buildGroups()` | Nei (alltid) | Nei | `#grupper` / `#groups` |
+| KO-bracket | `buildBracket()` | Ja | Nei | `#sluttspill` / `#bracket` |
+| Arenaer | `buildArenas()` | Ja | Nei | `#arenaer` / `#venues` |
+| Statistikk | `buildStats()` | Ja | Nei | `#statistikk` / `#stats` |
+
+**Merk:** Tidslinje og rutenett deler `view-timeline`-panelet. `TL_MODE` (`horizontal`/`vertical`) styrer hvilken som vises. Se seksjonen om transponer-modus.
 
 ### Kompakt-modus-mønster
 

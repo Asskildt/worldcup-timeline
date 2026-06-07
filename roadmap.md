@@ -7,6 +7,8 @@ FIFA World Cup 2026 schedule. Live in production at [fotballvm.asskildt.eu](http
 **Implemented:**
 - Timeline, table, and groups view with live results
 - **Grid view** — vertical layout with dates as columns and kick-off times as rows, sticky date header, compact mode (FIFA codes), past/load-more/rest-day logic mirroring the timeline, filter and highlight support
+- **Transpose button** — timeline and grid share one tab, toggle between horizontal/vertical with a single button; auto-detects mobile vs desktop on first visit
+- **URL parameters** — `?lang=en&tz=EDT` override language and timezone on load
 - KO bracket — visual knockout tree from R32 to the final, with match-number badge and via-label
 - Arena map — SVG map of all 16 venues, click to open venue modal
 - TV listings — NRK / TV 2 per match

@@ -16,8 +16,20 @@ let NORWAY_POTENTIAL_MATCHES = new Set(); // kamp-num for potensielle Norge-kamp
 let FAVORITE_TEAMS = JSON.parse(localStorage.getItem('favoriteTeams') || '["Norway"]');
 let ACTIVE_FILTER = null; // { type: 'team'|'group', value: 'Norway'|'A' }
 let HIGHLIGHTS_ON = localStorage.getItem('highlightsOn') !== 'false'; // default true
-let TL_EXPANDED   = localStorage.getItem('tlExpanded')   !== 'false'; // default true
-let TBL_REST_DAYS = localStorage.getItem('tblRestDays')  !== 'false'; // default true
+// Kompakt-tilstand er separat per modus — husket uavhengig
+// horisontal tidslinje: default false (utvidet) på desktop, uendret hvis satt
+// vertikal rutenett:    default true (kompakt) på mobil, uendret hvis satt
+let TL_COMPACT    = localStorage.getItem('tlCompact')  !== null
+    ? localStorage.getItem('tlCompact') === 'true'
+    : false;  // horisontal: utvidet som default
+let VG_COMPACT    = localStorage.getItem('vgCompact')  !== null
+    ? localStorage.getItem('vgCompact') === 'true'
+    : window.innerWidth <= 700;   // kompakt kun på mobil som default
+let TBL_REST_DAYS = localStorage.getItem('tblRestDays') !== 'false'; // default true
+// TL_MODE: auto-detect ved første besøk — mobil (<=700px) → vertikal, desktop → horisontal
+let TL_MODE = localStorage.getItem('tlMode') !== null
+    ? localStorage.getItem('tlMode')
+    : (window.innerWidth <= 700 ? 'vertical' : 'horizontal');
 
 // Tidssoner — offset fra UTC, label, og lokal tidssone-forkortelse
 // HOME_TZ_IDX markerer "standard"-tidssonen for denne installasjon (CEST for norsk versjon)
@@ -224,6 +236,7 @@ const i18n = {
         show_hl:    'Skru på highlight',
         load_more:  'Last inn tidligere kamper',
         scroll_hint:'Scroll horisontalt for å se alle kamper',
+        scroll_hint_vg: 'Scroll horisontalt for å se alle datoer',
         matches:    'kamper',
         matches_n:  (n) => `${n} kamp${n !== 1 ? 'er' : ''} spilt`,
         standings:  'Gruppe',
@@ -316,6 +329,7 @@ const i18n = {
         show_hl:    'Turn on highlights',
         load_more:  'Load earlier matches',
         scroll_hint:'Scroll horizontally to see all matches',
+        scroll_hint_vg: 'Scroll horizontally to see all dates',
         matches:    'matches',
         matches_n:  (n) => `${n} match${n !== 1 ? 'es' : ''} played`,
         standings:  'Group',
@@ -383,6 +397,41 @@ function detectLang() {
 let LANG = (() => {
     const stored = localStorage.getItem('lang');
     return (stored && i18n[stored]) ? stored : detectLang();
+})();
+
+// ── URL-parametere: ?lang= og ?tz= overstyrer localStorage ───────────────────
+// Leses én gang ved oppstart, lagres i localStorage, fjernes fra URL.
+(function applyURLParams() {
+    const params = new URLSearchParams(location.search);
+    let changed = false;
+
+    // ?lang=en | ?lang=no
+    const langParam = params.get('lang');
+    if (langParam && i18n[langParam]) {
+        localStorage.setItem('lang', langParam);
+        LANG = langParam;
+        params.delete('lang');
+        changed = true;
+    }
+
+    // ?tz=CEST | ?tz=EDT | ?tz=PDT etc. (label-match, case-insensitive)
+    const tzParam = params.get('tz');
+    if (tzParam) {
+        const idx = TZ_LIST.findIndex(tz => tz.label.toLowerCase() === tzParam.toLowerCase());
+        if (idx !== -1) {
+            localStorage.setItem('tzIdx', String(idx));
+            TZ_IDX = idx;
+            params.delete('tz');
+            changed = true;
+        }
+    }
+
+    // Fjern parameterne fra URL uten å legge til history-entry
+    if (changed) {
+        const newSearch = params.toString();
+        const newURL = location.pathname + (newSearch ? '?' + newSearch : '') + location.hash;
+        history.replaceState(null, '', newURL);
+    }
 })();
 
 function t(key, ...args) {
@@ -460,9 +509,10 @@ function setLang(code) {
     buildNorwaySchedule();
     renderTlToolbar();
     // Update tab labels
-    const tabIds   = ['timeline','grid','table','groups','arenas','bracket'];
-    const tabIcons = ['bi-bar-chart-steps','bi-calendar3','bi-list-ul','bi-grid-3x3-gap','bi-geo-alt','bi-diagram-3'];
-    const tabKeys  = ['tab_timeline','tab_grid','tab_table','tab_groups','tab_arenas','tab_bracket'];    tabIds.forEach((id, i) => {
+    const tabIds   = ['timeline','table','groups','arenas','bracket'];
+    const tabIcons = ['bi-bar-chart-steps','bi-list-ul','bi-grid-3x3-gap','bi-geo-alt','bi-diagram-3'];
+    const tabKeys  = ['tab_timeline','tab_table','tab_groups','tab_arenas','tab_bracket'];
+    tabIds.forEach((id, i) => {
         const tabBtn = document.getElementById('tab-' + id);
         if (tabBtn) tabBtn.innerHTML = `<i class="bi ${tabIcons[i]}"></i> ${t(tabKeys[i])}`;
     });
@@ -481,9 +531,36 @@ function saveFavorites() {
 function saveHighlights() {
     localStorage.setItem('highlightsOn', String(HIGHLIGHTS_ON));
 }
-function saveTlExpanded() {
-    localStorage.setItem('tlExpanded', String(TL_EXPANDED));
+function saveTlCompact() {
+    localStorage.setItem('tlCompact', String(TL_COMPACT));
 }
+function toggleTlCompact() {
+    TL_COMPACT = !TL_COMPACT;
+    saveTlCompact();
+    buildTimeline();
+    renderTlToolbar();
+}
+
+function applyTlMode(mode) {
+    TL_MODE = mode || TL_MODE;
+    localStorage.setItem('tlMode', TL_MODE);
+    const isVert = TL_MODE === 'vertical';
+    const tlEl = document.getElementById('tl-mode');
+    const vgEl = document.getElementById('vg-mode');
+    if (tlEl) tlEl.style.display = isVert ? 'none' : '';
+    if (vgEl) vgEl.style.display = isVert ? '' : 'none';
+    if (isVert) {
+        buildVerticalGrid();
+    } else {
+        buildTimeline();
+        renderTlToolbar();
+    }
+}
+function toggleTlMode() {
+    applyTlMode(TL_MODE === 'horizontal' ? 'vertical' : 'horizontal');
+}
+// Inline SVG for transpose-ikonet (fra src/transpose.svg)
+const TRANSPOSE_SVG = '<svg class="tl-mode-icon" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M19,26H14V24h5a5.0055,5.0055,0,0,0,5-5V14h2v5A7.0078,7.0078,0,0,1,19,26Z"/><path d="M8,30H4a2.0023,2.0023,0,0,1-2-2V14a2.0023,2.0023,0,0,1,2-2H8a2.0023,2.0023,0,0,1,2,2V28A2.0023,2.0023,0,0,1,8,30ZM4,14V28H8V14Z"/><path d="M28,10H14a2.0023,2.0023,0,0,1-2-2V4a2.0023,2.0023,0,0,1,2-2H28a2.0023,2.0023,0,0,1,2,2V8A2.0023,2.0023,0,0,1,28,10ZM14,4V8H28V4Z"/></svg>';
 function saveTblRestDays() {
     localStorage.setItem('tblRestDays', String(TBL_REST_DAYS));
 }
@@ -944,16 +1021,27 @@ function shareMatch(m) {
 }
 
 // ── Del hele siden ────────────────────────────────────────────────────────────
+// ── Del hele siden ────────────────────────────────────────────────────────────
+// Bygger en del-URL med gjeldende hash og tz. Bruker /en/ som base for engelsk.
+function buildShareURL() {
+    const base   = LANG === 'en' ? location.origin + '/en/' : location.origin + '/';
+    const params = new URLSearchParams();
+    params.set('tz', currentTZ().label);
+    if (LANG !== 'en') params.set('lang', LANG);
+    return base + '?' + params.toString() + location.hash;
+}
+
 function shareApp() {
-    const url   = location.origin + location.pathname;
+    const url   = buildShareURL();
     const title = t('share_page');
     const text  = t('share_text');
     const btn   = document.querySelector('.header-share-btn');
 
     function flash() {
         if (!btn) return;
+        const orig = btn.innerHTML;
         btn.innerHTML = '<i class="bi bi-check"></i>';
-        setTimeout(() => { btn.innerHTML = '<i class="bi bi-share"></i>'; }, 2000);
+        setTimeout(() => { btn.innerHTML = orig; }, 2000);
     }
 
     if (navigator.share) {
@@ -981,18 +1069,17 @@ function openModalByHash() {
         '#sluttspill':'bracket',  '#tab-bracket':  'bracket',  '#bracket':  'bracket',
     };
     if (tabMap[hash]) {
-        const tabName = tabMap[hash];
+        let tabName = tabMap[hash];
+        // grid/rutenett → åpne timeline-fanen (modus velges av enheten, ikke URL)
+        if (tabName === 'grid') tabName = 'timeline';
         const btn = document.querySelector(`.tab[onclick*="showTab('${tabName}'"]`);
-        // btn kan være null hvis fanen er skjult (display:none) — kall showTab direkte
         if (btn) {
             showTab(tabName, btn);
         } else {
-            // Skjult fane — aktiver panel direkte uten å sette aktiv tab-knapp
-            ['timeline','grid','table','groups','bracket','stats','arenas'].forEach(n => {
+            ['timeline','table','groups','bracket','stats','arenas'].forEach(n => {
                 const el = document.getElementById('view-'+n);
                 if (el) el.classList.toggle('active', n === tabName);
             });
-            if (tabName === 'grid'  && !document.getElementById('vg')?.dataset.built) buildVerticalGrid();
             if (tabName === 'stats' && !document.getElementById('stats-built')) buildStats();
         }
         return;
@@ -1327,7 +1414,10 @@ function renderTlToolbar() {
             ${ACTIVE_FILTER ? `<button class="tl-filter-clear-btn" onclick="clearFilter()" aria-label="Fjern filter"><i class="bi bi-x"></i> ${t('reset')}</button>` : ''}
         </div>
         <div class="tl-toolbar-right">
-            <button class="tl-highlight-toggle${TL_EXPANDED ? ' on' : ''}" onclick="toggleTlExpanded()" title="${TL_EXPANDED ? t('compact') : t('expanded_v')}">
+            <button class="tl-highlight-toggle${TL_MODE === 'vertical' ? ' on' : ''}" onclick="toggleTlMode()" title="${TL_MODE === 'vertical' ? t('tab_timeline') : t('tab_grid')}">
+                ${TRANSPOSE_SVG}
+            </button>
+            <button class="tl-highlight-toggle${!TL_COMPACT ? ' on' : ''}" onclick="toggleTlCompact()" title="${!TL_COMPACT ? t('compact') : t('expanded_v')}">
                 <i class="bi bi-layout-text-sidebar-reverse"></i>
             </button>
             <button class="tl-highlight-toggle${HIGHLIGHTS_ON ? ' on' : ''}" onclick="toggleHighlights()" title="${HIGHLIGHTS_ON ? t('hide_hl') : t('show_hl')}">
@@ -1338,10 +1428,7 @@ function renderTlToolbar() {
 }
 
 function toggleTlExpanded() {
-    TL_EXPANDED = !TL_EXPANDED;
-    saveTlExpanded();
-    buildTimeline();
-    renderTlToolbar();
+    toggleTlCompact();
 }
 
 function renderTblToolbar() {
@@ -1915,7 +2002,7 @@ function buildTimeline() {
 
         const row = document.createElement('div');
         row.className = `tl-row ${typeClass}${isPast ? ' past' : ''}`;
-        const BLOCK_GAP = TL_EXPANDED ? 54 : 40;
+        const BLOCK_GAP = TL_COMPACT ? 40 : 54;
         row.style.minHeight = (BLOCK_GAP + (rowEnds.length - 1) * BLOCK_GAP) + 'px';
         row.style.gridTemplateColumns = `${dateCol}px 1fr`;
         row.innerHTML = `<div class="tl-date"><strong>${day.day}</strong>${day.date}</div>`;
@@ -1956,11 +2043,11 @@ function buildTimeline() {
                      x.team1 === `L${m.num}` || x.team2 === `L${m.num}`));
 
             const block = document.createElement('div');
-            block.className = `tl-match c-${m.grp}${sc?' has-score':''}${isNorwayHighlight?' norway':''}${potentialNorway?' norway-potential':''}${isFavMatch?' fav-match':''}${isDimmed?' dimmed':''}${TL_EXPANDED?' expanded':''}`;
+            block.className = `tl-match c-${m.grp}${sc?' has-score':''}${isNorwayHighlight?' norway':''}${potentialNorway?' norway-potential':''}${isFavMatch?' fav-match':''}${isDimmed?' dimmed':''}${!TL_COMPACT?' expanded':''}`;
             block.style.cssText = `left:${tlPct(m.t)}%;width:${tlW()}%;top:${3+m.ri*BLOCK_GAP}px`;
             block.title = tip;
             const city = st.city || m.ground || '';
-            const footerHtml = TL_EXPANDED
+            const footerHtml = !TL_COMPACT
                 ? `<div class="tl-match-footer">${city ? `<span class="tl-match-city">${city}</span>` : ''}${m.tv ? `<span class="tl-match-tv tl-tv-${m.tv.toLowerCase()}">${m.tv}</span>` : ''}</div>`
                 : '';
             block.innerHTML =
@@ -1999,7 +2086,8 @@ const VG_COL_W    = 120; // px normal dag-kolonne
 const VG_COL_W_C  = 72;  // px kompakt dag-kolonne
 const VG_REST_W   = 28;  // px smal hviledags-kolonne
 
-let VG_COMPACT = localStorage.getItem('vgCompact') !== 'false'; // default true
+// VG_SHOW_ALL: true etter at "Last inn tidligere"-knappen er klikket i rutenett
+let VG_SHOW_ALL = false;
 function saveVgCompact() { localStorage.setItem('vgCompact', String(VG_COMPACT)); }
 function toggleVgCompact() { VG_COMPACT = !VG_COMPACT; saveVgCompact(); buildVerticalGrid(); }
 
@@ -2141,7 +2229,7 @@ function buildVerticalGrid() {
     const prevISO     = lastPastM?.data?.isoDate;
 
     let olderDays, prevDayEntries;
-    if (ACTIVE_FILTER) {
+    if (ACTIVE_FILTER || VG_SHOW_ALL) {
         olderDays = [];
         prevDayEntries = pastDays;
     } else {
@@ -2156,6 +2244,9 @@ function buildVerticalGrid() {
         bar.id = 'vg-toolbar';
         document.getElementById('vg-wrap')?.before(bar);
     }
+    // Oppdater hint-tekst
+    const vgHintText = document.getElementById('vg-hint-text');
+    if (vgHintText) vgHintText.textContent = t('scroll_hint_vg');
     const groups        = 'ABCDEFGHIJKL'.split('');
     const teamsArr      = Object.entries(TEAMS).filter(([, td]) => !td._alias && td.group);
     const favTeamsArr   = teamsArr.filter(([n]) => n !== 'Norway' && FAVORITE_TEAMS.includes(n)).sort((a, b) => a[0].localeCompare(b[0]));
@@ -2196,6 +2287,9 @@ function buildVerticalGrid() {
             ${ACTIVE_FILTER ? `<button class="tl-filter-clear-btn" onclick="clearFilter();buildVerticalGrid()" aria-label="Fjern filter"><i class="bi bi-x"></i> ${t('reset')}</button>` : ''}
         </div>
         <div class="tl-toolbar-right">
+            <button class="tl-highlight-toggle${TL_MODE === 'vertical' ? ' on' : ''}" onclick="toggleTlMode()" title="${TL_MODE === 'vertical' ? t('tab_timeline') : t('tab_grid')}">
+                ${TRANSPOSE_SVG}
+            </button>
             <button class="tl-highlight-toggle${VG_COMPACT ? ' on' : ''}" onclick="toggleVgCompact()" title="${VG_COMPACT ? t('expanded_v') : t('compact')}">
                 <i class="bi bi-layout-text-sidebar-reverse"></i>
             </button>
@@ -2396,17 +2490,24 @@ function buildVerticalGrid() {
         const last   = [...olderDays].reverse().find(e => e.type === 'match');
         const range  = first && last && first !== last ? first.data.date + ' – ' + last.data.date : first ? first.data.date : '';
 
-        // Header-del for load-btn
+        // Header-del for load-btn — eksakt samme bredde som vg-load-wrap nedenfor
+        const LOAD_BTN_W = VG_REST_W; // smal kolonne, samme som hviledager
         if (headerRow) {
             const loadHdr = document.createElement('div');
             loadHdr.className = 'vg-load-header';
             loadHdr.id = 'vg-load-header-btn';
+            loadHdr.style.width    = LOAD_BTN_W + 'px';
+            loadHdr.style.minWidth = LOAD_BTN_W + 'px';
+            loadHdr.style.flexShrink = '0';
             headerRow.appendChild(loadHdr);
         }
 
         // Knapp i innholdsraden
         const loadWrap = document.createElement('div');
         loadWrap.className = 'vg-load-wrap';
+        loadWrap.style.width    = LOAD_BTN_W + 'px';
+        loadWrap.style.minWidth = LOAD_BTN_W + 'px';
+        loadWrap.style.flexShrink = '0';
         const loadBtn = document.createElement('button');
         loadBtn.className = 'vg-load-btn';
         loadBtn.style.height = colH + 'px';
@@ -2415,27 +2516,11 @@ function buildVerticalGrid() {
             '<span class="vg-load-text"> ' + t('load_more') + ' (' + totalM + ') — ' + range + ' </span>' +
             '<i class="bi bi-chevron-up vg-load-arrow"></i>';
         loadBtn.addEventListener('click', () => {
-            loadWrap.classList.add('open');
-            loadBtn.remove();
-            document.getElementById('vg-load-header-btn')?.remove();
+            // Gjenbygg hele rutenettet med alle kamper synlige
+            VG_SHOW_ALL = true;
+            buildVerticalGrid();
         });
         loadWrap.appendChild(loadBtn);
-
-        const loadContent = document.createElement('div');
-        loadContent.className = 'vg-load-content';
-        // loadContent-headere legges i en separat wrapper i headerRow
-        const loadHdrContent = headerRow ? document.createElement('div') : null;
-        if (loadHdrContent) {
-            loadHdrContent.className = 'vg-load-hdr-content';
-            loadHdrContent.style.display = 'none';
-            loadHdrContent.style.flexDirection = 'row';
-        }
-        olderDays.forEach(e => appendCol(e, true, loadContent, loadHdrContent));
-        if (loadHdrContent && headerRow) headerRow.appendChild(loadHdrContent);
-        loadBtn.addEventListener('click', () => {
-            if (loadHdrContent) { loadHdrContent.style.display = 'flex'; }
-        }, { once: true });
-        loadWrap.appendChild(loadContent);
         gridEl.appendChild(loadWrap);
     }
 
@@ -2894,15 +2979,20 @@ function buildGroups() {
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
 function showTab(name, btn) {
-    ['timeline','grid','table','groups','bracket','stats','arenas'].forEach(n => {
+    // 'grid' er ikke lenger en egen fane — omdiriger til timeline i vertikal modus
+    if (name === 'grid') {
+        applyTlMode('vertical');
+        name = 'timeline';
+    }
+    ['timeline','table','groups','bracket','stats','arenas'].forEach(n => {
         const el = document.getElementById('view-'+n);
         if (el) el.classList.toggle('active', n === name);
     });
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     btn.classList.add('active');
     // Oppdater URL-hash ved fanebytte — norsk eller engelsk avhengig av LANG
-    const tabHashNo = { timeline: '#tidslinje', grid: '#rutenett',   table: '#kamper',  groups: '#grupper',  arenas: '#arenaer',  stats: '#statistikk', bracket: '#sluttspill' };
-    const tabHashEn = { timeline: '#timeline',  grid: '#grid',        table: '#table',   groups: '#groups',   arenas: '#venues',   stats: '#stats',      bracket: '#bracket' };
+    const tabHashNo = { timeline: TL_MODE === 'vertical' ? '#rutenett' : '#tidslinje', table: '#kamper',  groups: '#grupper',  arenas: '#arenaer',  stats: '#statistikk', bracket: '#sluttspill' };
+    const tabHashEn = { timeline: TL_MODE === 'vertical' ? '#grid'     : '#timeline',  table: '#table',   groups: '#groups',   arenas: '#venues',   stats: '#stats',      bracket: '#bracket' };
     const tabHash   = LANG === 'no' ? tabHashNo : tabHashEn;
     if (tabHash[name]) history.replaceState(null, '', tabHash[name]);
     // Bygg faner ved første besøk
@@ -2910,7 +3000,8 @@ function showTab(name, btn) {
     if (name === 'arenas'  && !document.getElementById('arenas-built'))  buildArenas();
     if (name === 'map'     && !document.getElementById('map-built'))     buildMap();
     if (name === 'bracket' && !document.getElementById('bracket-built')) buildBracket();
-    if (name === 'grid')   buildVerticalGrid();
+    if (name === 'timeline' && TL_MODE === 'horizontal') { buildTimeline(); renderTlToolbar(); }
+    if (name === 'timeline' && TL_MODE === 'vertical')   buildVerticalGrid();
 }
 
 // ── KO-bracket ────────────────────────────────────────────────────────────────
@@ -4050,13 +4141,15 @@ window.addEventListener('resize', () => {
 window.addEventListener('load', updateHeaderHeight);
 
 buildTimeline();
+// Sett riktig visningsmodus (horisontal/vertikal) fra localStorage
+applyTlMode();
 initTZ();
 initLang();
 // Oppdater tab-etiketter ved oppstart slik at de reflekterer valgt språk
 (function updateTabLabels() {
-    const tabIds   = ['timeline','grid','table','groups','arenas','bracket'];
-    const tabIcons = ['bi-bar-chart-steps','bi-calendar3','bi-list-ul','bi-grid-3x3-gap','bi-geo-alt','bi-diagram-3'];
-    const tabKeys  = ['tab_timeline','tab_grid','tab_table','tab_groups','tab_arenas','tab_bracket'];
+    const tabIds   = ['timeline','table','groups','arenas','bracket'];
+    const tabIcons = ['bi-bar-chart-steps','bi-list-ul','bi-grid-3x3-gap','bi-geo-alt','bi-diagram-3'];
+    const tabKeys  = ['tab_timeline','tab_table','tab_groups','tab_arenas','tab_bracket'];
     tabIds.forEach((id, i) => {
         const btn = document.getElementById('tab-' + id);
         if (btn) btn.innerHTML = `<i class="bi ${tabIcons[i]}"></i> ${t(tabKeys[i])}`;
