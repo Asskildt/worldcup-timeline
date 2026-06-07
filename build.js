@@ -213,11 +213,25 @@ function buildDataJS() {
     });
 
     // ── MATCHES_RAW-array ─────────────────────────────────────────────────────
+    // I testmodus: bygg TV-oppslag fra matches.json slik at TV-data alltid er tilgjengelig
+    const tvLookup = {};
+    if (IS_TEST) {
+        const prodMatches = readJSON('matches.json');
+        prodMatches.matches.forEach(m => {
+            if (m.tv) {
+                const key = `${m.date}|${m.team1}|${m.team2}`;
+                tvLookup[key] = m.tv;
+            }
+        });
+    }
+
     const matchesRaw = matchesData.matches.map(m => {
         const t    = utcToCEST(m.time);
         const type = roundToType(m.round);
         const grp  = roundToGrp(m.round, m.group);
         const v    = venueCode(m.ground);
+        // Slå opp TV i proddata hvis testmodus og feltet mangler
+        const tv = m.tv || (IS_TEST ? tvLookup[`${m.date}|${m.team1}|${m.team2}`] : null);
         return {
             isoDate: m.date,
             round:   m.round,
@@ -232,7 +246,7 @@ function buildDataJS() {
             ...(m.score ? { score: m.score } : {}),
             ...(m.goals1 ? { goals1: m.goals1 } : {}),
             ...(m.goals2 ? { goals2: m.goals2 } : {}),
-            ...(m.tv ? { tv: m.tv } : {}),
+            ...(tv ? { tv } : {}),
         };
     });
 

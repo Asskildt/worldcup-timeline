@@ -5,8 +5,9 @@
 **What is this?** — FIFA World Cup 2026 schedule. A static website showing all 104 matches with Norwegian time (CEST), group standings, and KO bracket. Hosted as a sub-project under `asskildt.eu`.
 
 **Features:**
-- Five views: Timeline (horizontal), Table (list), Groups (standings), KO bracket, Arenas
+- Six views: Timeline (horizontal), Grid (vertical calendar), Table (list), Groups (standings), KO bracket, Arenas
 - Timeline expanded/compact mode
+- Grid compact mode (FIFA codes, narrow columns)
 - Rest-day toggle in table view
 - Live results fetched from openfootball API on page load
 - Click on a match opens a modal with venue info, scorers, extra time, and penalties
@@ -66,6 +67,7 @@ fotball-vm/
 ├── package.json
 ├── .gitignore
 ├── agents.md                   # This file
+├── dev-patterns.md             # Implementation patterns and how-tos
 ├── design.md                   # Design system documentation
 ├── roadmap.md                  # Development roadmap
 └── ideer.md                    # Ideas scratchpad (Norwegian)
@@ -202,11 +204,13 @@ Test fixtures: `matches-test-*.json` mirrors exactly what openfootball will deli
 
 ## Adding new functionality
 
-### New tab
-1. Add `<button class="tab" onclick="showTab('name',this)">Name</button>` in `.tabs`
-2. Add `<div id="view-name" class="tab-panel">` in the HTML
-3. Add `'name'` to the `showTab()` array in `app.js`
-4. Build the content with a `buildName()` function
+See **`dev-patterns.md`** for full step-by-step guides on:
+- Adding a new tab (complete checklist)
+- Filter and highlight system
+- Timezone conversion helpers
+- i18n — adding new strings
+- Adding new flags
+- Adapting for another country / tournament
 
 ### Updating match data
 Edit the `MATCHES_RAW` array in `data.js`. Each object has:
@@ -224,47 +228,3 @@ Edit the `MATCHES_RAW` array in `data.js`. Each object has:
   "t":       21             // Decimal hours CEST (t>=24 = next day)
 }
 ```
-
-## Adapting for another country / tournament
-
-This site is built with a Norwegian focus, but the architecture is generic. Here's what to change to adapt it for another audience:
-
-### Times
-All match times are shown in CEST (UTC+2). To change:
-- `utcToCEST()` in `build.js` — rename and update the UTC offset
-- `fmtT()` in `app.js` — the label "CEST" is hardcoded in the modal
-- `TL_START` / `TL_END` in `app.js` — adjust the timeline window if needed
-- Venue local time offsets in `stadiums.json` (`timezone` field) — already relative to UTC
-
-### TV listings
-TV channel data (`"tv"` field in `matches.json`) is Norwegian (NRK / TV2). Remove or replace with local broadcasters. The `tc-tv-nrk` and `tc-tv-tv2` CSS classes in `style.css` provide the colours — add new classes for other channels.
-
-### Highlighted team
-Norway is hardcoded as the featured team in several places:
-- `FAVORITE_TEAMS` default in `app.js` — `["Norway"]`
-- `buildNorwaySchedule()` — the header strip showing Norway's schedule
-- `getNorwayPotentialMatches()` — bracket path analysis for Norway
-- The "next Norway match" row in the header
-- Norway-specific CSS classes (`tr-norway`, `bracket-match-norway`, `.norway-match` on modal)
-
-To feature a different team: search for `'Norway'` in `app.js` and replace, and update the NFF crest image if desired.
-
-### Language
-The UI supports Norwegian (`no`) and English (`en`) via a built-in i18n system in `app.js`. The language is auto-detected from `navigator.language` on first visit and stored in `localStorage`.
-
-**To add a new language:**
-1. Add a new block to the `i18n` object in `app.js`, copying the `en` block and translating the ~120 strings.
-2. Add the language to the `LANGS` array in `toggleLangMenu()`.
-3. The `t(key)` helper and `toggleLang()` cycle will pick it up automatically.
-
-**Team name translations:**
-Team names are stored in English as keys throughout the codebase (required for matching against openfootball live data). Localised display names are stored as `name_no` in `teams.json` and looked up via the `teamName(name)` helper in `app.js`. To add names for a new language, add a `name_XX` field per team in `teams.json` and update `teamName()` to return it when `LANG === 'XX'`.
-
-**Timezone selector:**
-`TZ_LIST` in `app.js` contains 9 timezones. Each entry has `desc` (Norwegian) and `descEn` (English). Add `descXX` for additional languages and update `toggleTZMenu()` to select the right field.
-
-**Home timezone:**
-The entry with `home: true` in `TZ_LIST` is highlighted with a star. Set this to the timezone that matches your audience. The default is CEST (Norway).
-
-### Tournament structure
-The KO bracket is hardcoded for 48-team FIFA World Cup (R32 → R16 → QF → SF → FIN). For a different format, `buildBracket()` in `app.js` and the bracket num arrays need to be updated to match the new structure.

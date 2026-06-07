@@ -73,6 +73,7 @@ function setTZ(idx) {
     if (btn) btn.textContent = currentTZ().label;
     buildTimeline();
     buildTable();
+    if (document.getElementById('vg')?.dataset.built) buildVerticalGrid();
 }
 
 function toggleTZMenu() {
@@ -235,6 +236,7 @@ const i18n = {
         rest_days:  (n) => `— ${n} dager hvile —`,
         scorers_note: 'Kun kamper med scorer-data',
         tab_timeline:'Tidslinje',
+        tab_grid:   'Rutenett',
         tab_table:  'Tabell',
         tab_groups: 'Grupper',
         tab_arenas: 'Arenaer',
@@ -326,6 +328,7 @@ const i18n = {
         rest_days:  (n) => `— ${n} day${n !== 1 ? 's' : ''} rest —`,
         scorers_note: 'Only matches with scorer data',
         tab_timeline:'Timeline',
+        tab_grid:   'Grid',
         tab_table:  'Table',
         tab_groups: 'Groups',
         tab_arenas: 'Venues',
@@ -457,10 +460,9 @@ function setLang(code) {
     buildNorwaySchedule();
     renderTlToolbar();
     // Update tab labels
-    const tabIds   = ['timeline','table','groups','arenas','bracket'];
-    const tabIcons = ['bi-bar-chart-steps','bi-list-ul','bi-grid-3x3-gap','bi-geo-alt','bi-diagram-3'];
-    const tabKeys  = ['tab_timeline','tab_table','tab_groups','tab_arenas','tab_bracket'];
-    tabIds.forEach((id, i) => {
+    const tabIds   = ['timeline','grid','table','groups','arenas','bracket'];
+    const tabIcons = ['bi-bar-chart-steps','bi-calendar3','bi-list-ul','bi-grid-3x3-gap','bi-geo-alt','bi-diagram-3'];
+    const tabKeys  = ['tab_timeline','tab_grid','tab_table','tab_groups','tab_arenas','tab_bracket'];    tabIds.forEach((id, i) => {
         const tabBtn = document.getElementById('tab-' + id);
         if (tabBtn) tabBtn.innerHTML = `<i class="bi ${tabIcons[i]}"></i> ${t(tabKeys[i])}`;
     });
@@ -470,6 +472,7 @@ function setLang(code) {
     if (document.getElementById('bracket-built')) buildBracket();
     if (document.getElementById('stats-built')?.children.length) buildStats();
     if (document.getElementById('arenas-built')) buildArenas();
+    if (document.getElementById('vg-built')) buildVerticalGrid();
 }
 
 function saveFavorites() {
@@ -580,6 +583,26 @@ function updateNorwayBanner() { updateCountdown(); }
 
 
 // ── Hjelpefunksjoner ──────────────────────────────────────────────────────────
+
+// Buffer etter siste kamp på en dag før dagen regnes som "over".
+// Kamper kan gå til ekstraomganger + straffesparkkonkurranse (~45 min ekstra),
+// og openfootball-datasettet kan ha forsinkede oppdateringer.
+// 3 timer (= MATCH_DUR 2t + 1t buffer) er trygt og konsistent i hele appen.
+const MATCH_END_BUFFER = 3.0; // timer etter kampstart — erstatter MATCH_DUR der vi sjekker "ferdig"
+
+// Er en enkelt kamp ferdig? (tidsbasert, uavhengig av om score finnes)
+function isMatchPast(m) {
+    return Date.now() > cestToDate(m.isoDate, m.t).getTime() + MATCH_END_BUFFER * 3600000;
+}
+
+// Er alle kamper på en gitt dato ferdig?
+function isDayPast(isoDate) {
+    const dayMatches = MATCHES.filter(m => m.isoDate === isoDate);
+    if (!dayMatches.length) return isoDate < new Date().toISOString().slice(0, 10);
+    const lastStart = Math.max(...dayMatches.map(m => cestToDate(m.isoDate, m.t).getTime()));
+    return Date.now() > lastStart + MATCH_END_BUFFER * 3600000;
+}
+
 function tlPct(t) {
     let off = t - TL_START;
     if (off < 0) off += 24;
@@ -764,6 +787,7 @@ async function fetchResults() {
         buildNorwaySchedule();
         updateHeaderHeight();
         NORWAY_POTENTIAL_MATCHES = new Set(getNorwayPotentialMatches().map(m => m.num));
+        if (document.getElementById('vg')?.dataset.built) buildVerticalGrid();
 
     } catch (err) {
         clearTimeout(tid);
@@ -947,13 +971,14 @@ function openModalByHash() {
 
     // Fane-navigasjon — norske og engelske hash-navn
     const tabMap = {
-        '#tidslinje': 'timeline', '#tab-timeline': 'timeline',
-        '#kamper':    'table',    '#tab-table':    'table',
-        '#grupper':   'groups',   '#tab-groups':   'groups',
-        '#arenaer':   'arenas',   '#tab-arenas':   'arenas',
-        '#arena':     'arenas',   // #arena uten kode → åpne arenaer-fanen
-        '#statistikk':'stats',    '#tab-stats':    'stats',
-        '#sluttspill':'bracket',  '#tab-bracket':  'bracket',
+        '#tidslinje': 'timeline', '#tab-timeline': 'timeline', '#timeline': 'timeline',
+        '#rutenett':  'grid',     '#tab-grid':     'grid',     '#grid':     'grid',
+        '#kamper':    'table',    '#tab-table':    'table',    '#table':    'table',
+        '#grupper':   'groups',   '#tab-groups':   'groups',   '#groups':   'groups',
+        '#arenaer':   'arenas',   '#tab-arenas':   'arenas',   '#venues':   'arenas',
+        '#arena':     'arenas',
+        '#statistikk':'stats',    '#tab-stats':    'stats',    '#stats':    'stats',
+        '#sluttspill':'bracket',  '#tab-bracket':  'bracket',  '#bracket':  'bracket',
     };
     if (tabMap[hash]) {
         const tabName = tabMap[hash];
@@ -963,10 +988,11 @@ function openModalByHash() {
             showTab(tabName, btn);
         } else {
             // Skjult fane — aktiver panel direkte uten å sette aktiv tab-knapp
-            ['timeline','table','groups','bracket','stats','arenas'].forEach(n => {
+            ['timeline','grid','table','groups','bracket','stats','arenas'].forEach(n => {
                 const el = document.getElementById('view-'+n);
                 if (el) el.classList.toggle('active', n === tabName);
             });
+            if (tabName === 'grid'  && !document.getElementById('vg')?.dataset.built) buildVerticalGrid();
             if (tabName === 'stats' && !document.getElementById('stats-built')) buildStats();
         }
         return;
@@ -1234,6 +1260,7 @@ function toggleHighlights() {
     buildBracket();
     renderTlToolbar();
     renderBracketToolbar();
+    if (document.getElementById('vg')?.dataset.built) buildVerticalGrid();
 }
 
 function renderTlToolbar() {
@@ -1603,14 +1630,6 @@ function buildTimeline() {
     // Finn siste fortidsdag (forrige kampdag) og skill den ut
     const nowMs = Date.now();
 
-    function isDayPast(isoDate) {
-        const dayMatches = MATCHES.filter(m => m.isoDate === isoDate);
-        if (!dayMatches.length) return isoDate < new Date().toISOString().slice(0,10);
-        const lastStart = Math.max(...dayMatches.map(m => cestToDate(m.isoDate, m.t).getTime()));
-        return nowMs > lastStart + MATCH_DUR * 3600000;
-    }
-
-    // Potensielle kamper for aktivt filter — Map<num, {match, via}>
     const activeBracketPaths = ACTIVE_FILTER?.type === 'team'
         ? getTeamBracketPaths(ACTIVE_FILTER.value)
         : ACTIVE_FILTER?.type === 'group'
@@ -1973,17 +1992,511 @@ function buildTimeline() {
 
 } // end buildTimeline
 
-// ── Tabell ────────────────────────────────────────────────────────────────────
+// ── Vertikalt rutenett (datoer horisontalt, tidspunkter vertikalt) ────────────
+// Arkitektur: absolutt-posisjonering per dag-kolonne, identisk logikk som buildTimeline.
+const VG_ROW_H    = 20;  // px per halvtime-enhet — kompakt
+const VG_COL_W    = 120; // px normal dag-kolonne
+const VG_COL_W_C  = 72;  // px kompakt dag-kolonne
+const VG_REST_W   = 28;  // px smal hviledags-kolonne
+
+let VG_COMPACT = localStorage.getItem('vgCompact') !== 'false'; // default true
+function saveVgCompact() { localStorage.setItem('vgCompact', String(VG_COMPACT)); }
+function toggleVgCompact() { VG_COMPACT = !VG_COMPACT; saveVgCompact(); buildVerticalGrid(); }
+
+function buildVerticalGrid() {
+    const vg = document.getElementById('vg');
+    if (!vg) return;
+    vg.innerHTML = '';
+    vg.dataset.built = '1';
+
+    const nowMs = Date.now();
+
+    // Tidsvindu: identisk med tidslinjen (TL_START–TL_END i CEST)
+    const ticks = [];
+    for (let tt = TL_START; tt < TL_END; tt += TL_STEP) ticks.push(tt);
+    const colH = ticks.length * VG_ROW_H;
+
+    function tToY(cestT) {
+        let off = cestT - TL_START;
+        if (off < 0) off += 24;
+        return Math.max(0, (off / TL_STEP) * VG_ROW_H);
+    }
+
+    // ── Filter-hjelpere ───────────────────────────────────────────────────────
+    function matchesFilter(m) {
+        if (!ACTIVE_FILTER) return true;
+        if (ACTIVE_FILTER.type === 'team')      return m.team1 === ACTIVE_FILTER.value || m.team2 === ACTIVE_FILTER.value;
+        if (ACTIVE_FILTER.type === 'group')     return m.grp === ACTIVE_FILTER.value;
+        if (ACTIVE_FILTER.type === 'favorites') return FAVORITE_TEAMS.some(f => m.team1 === f || m.team2 === f);
+        return true;
+    }
+    function matchesFilterKO(m) {
+        if (!ACTIVE_FILTER) return false;
+        if (matchesFilter(m)) return true;
+        if (ACTIVE_FILTER.type === 'group') {
+            const grpTeams = Object.entries(TEAMS).filter(([, td]) => !td._alias && td.group === ACTIVE_FILTER.value).map(([n]) => n);
+            return grpTeams.some(n => m.team1 === n || m.team2 === n);
+        }
+        return false;
+    }
+
+    const activeBracketPaths = ACTIVE_FILTER?.type === 'team'
+        ? getTeamBracketPaths(ACTIVE_FILTER.value)
+        : ACTIVE_FILTER?.type === 'group'
+        ? (() => {
+            const c = new Map();
+            Object.entries(TEAMS).filter(([, td]) => !td._alias && td.group === ACTIVE_FILTER.value).map(([n]) => n)
+                .forEach(tn => getTeamBracketPaths(tn).forEach((val, num) => {
+                    if (!c.has(num)) c.set(num, val);
+                    else { const ex = c.get(num); if (!ex.via.includes(val.via)) ex.via += ' / ' + val.via; }
+                }));
+            return c;
+        })()
+        : ACTIVE_FILTER?.type === 'favorites'
+        ? (() => {
+            const c = new Map();
+            FAVORITE_TEAMS.forEach(tn => getTeamBracketPaths(tn).forEach((val, num) => {
+                if (!c.has(num)) c.set(num, val);
+                else { const ex = c.get(num); if (!ex.via.includes(val.via)) ex.via += ' / ' + val.via; }
+            }));
+            return c;
+        })()
+        : new Map();
+
+    const activePotentialNums = new Set(
+        [...activeBracketPaths.keys()].filter(n => n != null).filter(n => {
+            const m = MATCHES.find(x => x.num === n);
+            if (!m) return true;
+            if (ACTIVE_FILTER?.type === 'team') return m.team1 !== ACTIVE_FILTER.value && m.team2 !== ACTIVE_FILTER.value;
+            if (ACTIVE_FILTER?.type === 'group') {
+                const g = Object.entries(TEAMS).filter(([, td]) => !td._alias && td.group === ACTIVE_FILTER.value).map(([n]) => n);
+                return !g.some(n2 => m.team1 === n2 || m.team2 === n2);
+            }
+            if (ACTIVE_FILTER?.type === 'favorites') return !FAVORITE_TEAMS.some(n2 => m.team1 === n2 || m.team2 === n2);
+            return true;
+        })
+    );
+
+    // ── Dag-strukturering (identisk med buildTimeline) ────────────────────────
+    const days = groupByDay(MATCHES);
+    const matchDates = new Set(days.map(d => d.isoDate));
+    const firstDate  = new Date(days[0].isoDate + 'T12:00:00');
+    const lastDate   = new Date(days[days.length - 1].isoDate + 'T12:00:00');
+    const allDays = [];
+    const cursor  = new Date(firstDate);
+    while (cursor <= lastDate) {
+        const iso = cursor.toISOString().slice(0, 10);
+        allDays.push(matchDates.has(iso)
+            ? { type: 'match', data: days.find(d => d.isoDate === iso) }
+            : { type: 'rest',  iso });
+        cursor.setDate(cursor.getDate() + 1);
+    }
+
+    function entryIso(e) { return e.type === 'match' ? e.data.isoDate : e.iso; }
+
+    function collapseRestGaps(arr) {
+        const secLabelsKO = { r32: t('sec_r32'), r16: t('sec_r16'), qf: t('sec_qf'), sf: t('sec_sf'), fin: t('sec_fin') };
+        const out = []; let rs = null, re = null, cgt = null;
+        function flush() {
+            if (!rs) return;
+            const s = new Date(rs + 'T12:00:00'), d = new Date(re + 'T12:00:00');
+            out.push({ type: 'rest-gap', iso: rs, days: Math.round((d - s) / 86400000) + 1, sectionType: cgt });
+            rs = null; re = null;
+        }
+        for (const e of arr) {
+            if (e.type === 'rest') {
+                const od = days.find(d => d.isoDate === e.iso), dt = od?.type || null;
+                const isNew = dt && secLabelsKO[dt] && dt !== cgt;
+                if (isNew && rs) { flush(); cgt = dt; } else if (!rs) cgt = dt || cgt;
+                if (!rs) rs = e.iso; re = e.iso;
+            } else { flush(); cgt = null; out.push(e); }
+        }
+        flush(); return out;
+    }
+
+    // ── Filtrer effektive dager ───────────────────────────────────────────────
+    let effectiveDays = allDays;
+    if (ACTIVE_FILTER) {
+        const potNums = activePotentialNums;
+        const fmDates = new Set(days.filter(d => d.matches.some(m => matchesFilterKO(m))).map(d => d.isoDate));
+        const pmDates = new Set(days.filter(d => d.matches.some(m => potNums.has(m.num))).map(d => d.isoDate));
+        const relDates = new Set([...fmDates, ...pmDates]);
+        if (relDates.size === 0) {
+            effectiveDays = allDays;
+        } else {
+            const lastISO = allDays.filter(e => e.type === 'match').pop()?.data.isoDate || [...relDates].sort().pop();
+            effectiveDays = allDays.filter(e => entryIso(e) <= lastISO).map(e => {
+                if (e.type !== 'match') return e;
+                if (fmDates.has(e.data.isoDate) || pmDates.has(e.data.isoDate)) return e;
+                return { type: 'rest', iso: e.data.isoDate };
+            });
+            effectiveDays = collapseRestGaps(effectiveDays);
+        }
+    }
+
+    // ── Past / forrige kampdag / fremtid ──────────────────────────────────────
+    const pastDays    = effectiveDays.filter(e => isDayPast(entryIso(e)));
+    const futureDays  = effectiveDays.filter(e => !isDayPast(entryIso(e)));
+    const lastPastM   = [...pastDays].reverse().find(e => e.type === 'match');
+    const prevISO     = lastPastM?.data?.isoDate;
+
+    let olderDays, prevDayEntries;
+    if (ACTIVE_FILTER) {
+        olderDays = [];
+        prevDayEntries = pastDays;
+    } else {
+        olderDays      = pastDays.filter(e => e.type !== 'rest-gap' && entryIso(e) !== prevISO);
+        prevDayEntries = pastDays.filter(e => e.type === 'rest-gap' || entryIso(e) === prevISO);
+    }
+
+    // ── Verktøylinje ─────────────────────────────────────────────────────────
+    let bar = document.getElementById('vg-toolbar');
+    if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'vg-toolbar';
+        document.getElementById('vg-wrap')?.before(bar);
+    }
+    const groups        = 'ABCDEFGHIJKL'.split('');
+    const teamsArr      = Object.entries(TEAMS).filter(([, td]) => !td._alias && td.group);
+    const favTeamsArr   = teamsArr.filter(([n]) => n !== 'Norway' && FAVORITE_TEAMS.includes(n)).sort((a, b) => a[0].localeCompare(b[0]));
+    const otherTeamsArr = teamsArr.filter(([n]) => n !== 'Norway' && !FAVORITE_TEAMS.includes(n)).sort((a, b) => a[0].localeCompare(b[0]));
+    const activeGrp  = ACTIVE_FILTER?.type === 'group' ? ACTIVE_FILTER.value : null;
+    const activeTeam = ACTIVE_FILTER?.type === 'team'  ? ACTIVE_FILTER.value : null;
+    bar.className = 'tl-toolbar';
+    bar.innerHTML = `
+        <div class="tl-toolbar-left">
+            <div class="tl-filter-wrap">
+                <button class="tl-filter-btn${ACTIVE_FILTER ? ' active' : ''}" onclick="toggleVgFilterMenu()" id="vg-filter-toggle" aria-expanded="false">
+                    <i class="bi bi-funnel"></i>
+                    <span>${ACTIVE_FILTER
+                        ? (ACTIVE_FILTER.type === 'team'
+                            ? `${TEAMS[ACTIVE_FILTER.value]?.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${TEAMS[ACTIVE_FILTER.value].flag_id}"/></svg>` : (TEAMS[ACTIVE_FILTER.value]?.flag || '')} ${ACTIVE_FILTER.value}`
+                            : ACTIVE_FILTER.type === 'favorites'
+                            ? `<i class="bi bi-heart-fill" style="margin-right:.3em"></i>${t('favourites')}`
+                            : `${t('grp_prefix')}${ACTIVE_FILTER.value}`)
+                        : t('filter')}</span>
+                </button>
+                <div class="tl-filter-menu" id="vg-filter-menu" style="display:none">
+                    <div class="tl-filter-section">Grupper</div>
+                    <div class="tl-filter-groups">
+                        ${groups.map(g => `<button class="tl-filter-grp${activeGrp === g ? ' selected' : ''}" onclick="setGroupFilter('${g}');closeVgFilterMenu();buildVerticalGrid()">Gr. ${g}</button>`).join('')}
+                    </div>
+                    <div class="tl-filter-section">Lag</div>
+                    <div class="tl-filter-teams">
+                        <button class="tl-filter-team${activeTeam === 'Norway' ? ' selected' : ''}" onclick="setTeamFilter('Norway');closeVgFilterMenu();buildVerticalGrid()">${TEAMS['Norway']?.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${TEAMS['Norway'].flag_id}"/></svg>` : '🇳🇴'} Norway</button>
+                        ${favTeamsArr.length > 0 ? `
+                        <div class="tl-filter-divider"></div>
+                        ${FAVORITE_TEAMS.filter(n => n !== 'Norway').length > 0 ? `<button class="tl-filter-team tl-filter-favorites${ACTIVE_FILTER?.type === 'favorites' ? ' selected' : ''}" onclick="setFavoritesFilter();closeVgFilterMenu();buildVerticalGrid()"><i class="bi bi-heart-fill"></i> ${t('fav_count', FAVORITE_TEAMS.filter(n => n !== 'Norway').length)}</button>` : ''}
+                        ${favTeamsArr.map(([name, td]) => `<button class="tl-filter-team${activeTeam === name ? ' selected' : ''}" onclick="setTeamFilter('${name}');closeVgFilterMenu();buildVerticalGrid()">${td.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${td.flag_id}"/></svg>` : (td.flag || '')} ${teamName(name)}</button>`).join('')}` : ''}
+                        <div class="tl-filter-divider"></div>
+                        ${otherTeamsArr.map(([name, td]) => `<button class="tl-filter-team${activeTeam === name ? ' selected' : ''}" onclick="setTeamFilter('${name}');closeVgFilterMenu();buildVerticalGrid()">${td.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${td.flag_id}"/></svg>` : (td.flag || '')} ${teamName(name)}</button>`).join('')}
+                    </div>
+                </div>
+            </div>
+            ${ACTIVE_FILTER ? `<button class="tl-filter-clear-btn" onclick="clearFilter();buildVerticalGrid()" aria-label="Fjern filter"><i class="bi bi-x"></i> ${t('reset')}</button>` : ''}
+        </div>
+        <div class="tl-toolbar-right">
+            <button class="tl-highlight-toggle${VG_COMPACT ? ' on' : ''}" onclick="toggleVgCompact()" title="${VG_COMPACT ? t('expanded_v') : t('compact')}">
+                <i class="bi bi-layout-text-sidebar-reverse"></i>
+            </button>
+            <button class="tl-highlight-toggle${HIGHLIGHTS_ON ? ' on' : ''}" onclick="toggleHighlights();buildVerticalGrid()" title="${HIGHLIGHTS_ON ? t('hide_hl') : t('show_hl')}">
+                <i class="bi bi-heart${HIGHLIGHTS_ON ? '-fill' : ''}"></i>
+            </button>
+        </div>
+    `;
+
+    // ── Tids-akse og header — utenfor scroll, synkronisert horisontal scroll ──
+    const VG_HEADER_H = 32; // px — høyde på dato-header-raden
+
+    // Tids-akse (venstre, fast) — kun tidspunkter, ingen spacer
+    const axisBodyWrap = document.getElementById('vg-axis-body-wrap');
+    if (axisBodyWrap) {
+        axisBodyWrap.innerHTML = '';
+        const axis = document.createElement('div');
+        axis.className = 'vg-time-axis';
+        axis.style.height = colH + 'px';
+        ticks.forEach((cestT, i) => {
+            const localT  = toLocalT(cestT);
+            const h       = Math.floor(((localT % 24) + 24) % 24);
+            const isHalf  = (cestT % 1) !== 0;
+            const isMid   = Math.abs(cestT - 24) < 0.01;
+            const timeStr = isHalf ? '' : String(h).padStart(2, '0') + ':00';
+            const tick    = document.createElement('div');
+            tick.className = 'vg-tick' + (isMid ? ' midnight' : isHalf ? ' half' : ' whole');
+            tick.style.top = (i * VG_ROW_H) + 'px';
+            if (timeStr) tick.textContent = timeStr;
+            axis.appendChild(tick);
+        });
+        axisBodyWrap.appendChild(axis);
+    }
+
+    // Hjørne-celle i vg-axis-wrap (TZ-label, over tids-aksen)
+    const axisWrap = document.getElementById('vg-axis-wrap');
+    if (axisWrap) {
+        axisWrap.innerHTML = '';
+        const corner = document.createElement('div');
+        corner.className = 'vg-corner';
+        corner.textContent = currentTZ().label;
+        axisWrap.appendChild(corner);
+    }
+
+    // headerRow: den separate sticky-raden med dato-celler
+    const headerRow = document.getElementById('vg-header-row');
+    if (headerRow) headerRow.innerHTML = '';
+
+    // ── Bygg kolonner ─────────────────────────────────────────────────────────
+
+    function makeDateHeader(entry, isPast) {
+        const cell = document.createElement('div');
+        if (entry.type === 'rest') {
+            cell.className = 'vg-date-cell vg-date-rest';
+            const d = new Date(entry.iso + 'T12:00:00');
+            const day3 = t('days')[d.getDay()].toUpperCase();
+            const dd   = String(d.getDate()).padStart(2, '0');
+            const mm   = String(d.getMonth() + 1).padStart(2, '0');
+            cell.innerHTML =
+                '<strong>' + day3 + '</strong>' +
+                '<span>' + dd + '.' + mm + '</span>';
+            return cell;
+        }
+        if (entry.type === 'rest-gap') {
+            cell.className = 'vg-date-cell vg-date-rest vg-date-gap';
+            cell.innerHTML = '<span class="vg-rest-gap-label">' + entry.days + 'd</span>';
+            return cell;
+        }
+        const day = entry.data, d = new Date(day.isoDate + 'T12:00:00'), mo = t('months');
+        const day3 = t('days')[d.getDay()].toUpperCase();
+        cell.className = 'vg-date-cell' + (isPast ? ' past' : '');
+        cell.innerHTML =
+            '<strong>' + day3 + '</strong>' +
+            '<span>' + d.getDate() + '. ' + mo[d.getMonth()] + '</span>';
+        return cell;
+    }
+
+    function makeDayCol(entry, isPast) {
+        const col = document.createElement('div');
+        if (entry.type === 'rest' || entry.type === 'rest-gap') {
+            col.className = 'vg-day-col vg-day-rest' + (entry.type === 'rest-gap' ? ' vg-day-gap' : '') + (isPast ? ' past' : '');
+            col.style.height = colH + 'px';
+            const line = document.createElement('div'); line.className = 'vg-rest-vline'; col.appendChild(line);
+            return col;
+        }
+        const day = entry.data;
+        col.className = 'vg-day-col' + (isPast ? ' past' : '');
+        col.style.height = colH + 'px';
+        ticks.forEach((cestT, i) => {
+            const isHalf = (cestT % 1) !== 0, isMid = Math.abs(cestT - 24) < 0.01;
+            const line = document.createElement('div');
+            line.className = 'vg-grid-line' + (isMid ? ' midnight' : isHalf ? ' half' : '');
+            line.style.top = (i * VG_ROW_H) + 'px';
+            col.appendChild(line);
+        });
+        day.matches.forEach(m => {
+            const sc = scoreStr(m.score), st = STADIUMS[m.v] || {};
+            const isNorway        = m.team1 === 'Norway' || m.team2 === 'Norway';
+            const potentialNorway = HIGHLIGHTS_ON && !isNorway && NORWAY_POTENTIAL_MATCHES.has(m.num);
+            const isFavMatch      = HIGHLIGHTS_ON && !isNorway && (FAVORITE_TEAMS.includes(m.team1) || FAVORITE_TEAMS.includes(m.team2));
+            const isPotFilt       = ACTIVE_FILTER && activePotentialNums.has(m.num);
+            const isDimmed        = ACTIVE_FILTER && !matchesFilter(m) && !isPotFilt && !matchesFilterKO(m);
+            const mStart          = cestToDate(m.isoDate, m.t).getTime();
+            const isLive          = nowMs >= mStart && nowMs <= mStart + MATCH_DUR * 3600000;
+            const viaLabel        = isPotFilt ? (activeBracketPaths.get(m.num)?.via || '') : '';
+            const showNum         = m.num != null && m.type !== 'g' &&
+                MATCHES.some(x => x.num != null && !x.score?.ft &&
+                    (x.team1 === 'W' + m.num || x.team2 === 'W' + m.num ||
+                     x.team1 === 'L' + m.num || x.team2 === 'L' + m.num));
+
+            const block = document.createElement('div');
+            block.className = ['vg-match', 'c-' + m.grp,
+                sc ? 'has-score' : '',
+                isNorway && HIGHLIGHTS_ON ? 'norway' : '',
+                potentialNorway ? 'norway-potential' : '',
+                isFavMatch      ? 'fav-match'        : '',
+                isDimmed        ? 'dimmed'           : '',
+                isLive          ? 'live'             : '',
+                VG_COMPACT      ? 'compact'          : '',
+            ].filter(Boolean).join(' ');
+            block.style.top    = tToY(m.t) + 'px';
+            block.style.height = ((MATCH_DUR / TL_STEP) * VG_ROW_H - 2) + 'px';
+            block.title = m.flag1 + ' ' + teamName(m.team1) + ' v ' + teamName(m.team2) + ' ' + m.flag2 + ' — ' + fmtT(toLocalT(m.t)) + ' — ' + (st.name || m.ground);
+
+            const fifa1 = TEAMS[m.team1]?.code || m.team1.slice(0, 3).toUpperCase();
+            const fifa2 = TEAMS[m.team2]?.code || m.team2.slice(0, 3).toUpperCase();
+            const name1 = VG_COMPACT ? fifa1 : teamName(m.team1);
+            const name2 = VG_COMPACT ? fifa2 : teamName(m.team2);
+
+            block.innerHTML =
+                '<div class="vg-match-time">' + fmtT(toLocalT(m.t)) + '</div>' +
+                (viaLabel ? '<div class="vg-via">' + viaLabel + '</div>' : '') +
+                (showNum  ? '<div class="vg-match-num">#' + m.num + '</div>' : '') +
+                '<div class="vg-match-teams"><span class="vg-flag">' + m.flag1 + '</span><span class="vg-team1">' + name1 + '</span></div>' +
+                (sc ? '<div class="vg-score">' + sc + '</div>' : '<div class="vg-score-placeholder">v</div>') +
+                '<div class="vg-match-teams"><span class="vg-flag">' + m.flag2 + '</span><span class="vg-team2">' + name2 + '</span></div>' +
+                (VG_COMPACT ? '' : (st.city || m.ground ? '<div class="vg-city">' + (st.city || m.ground) + '</div>' : '')) +
+                (m.tv   ? '<div class="vg-tv tl-tv-' + m.tv.toLowerCase() + '">' + m.tv + '</div>' : '') +
+                (isLive ? '<div class="vg-live-badge">' + t('live') + '</div>' : '');
+            block.addEventListener('click', () => openModal(m));
+            col.appendChild(block);
+        });
+        return col;
+    }
+
+    const secLabelsAll = { g: t('sec_group'), r32: t('sec_r32'), r16: t('sec_r16'), qf: t('sec_qf'), sf: t('sec_sf'), fin: t('sec_fin') };
+    let appendSectionType = null;
+
+    // gridEl: kun kolonne-innhold (uten dato-celler)
+    const gridEl = document.createElement('div');
+    gridEl.className = 'vg-grid';
+
+    function appendCol(entry, isPast, contentContainer, hdrContainer) {
+        const w = (entry.type === 'rest' || entry.type === 'rest-gap')
+            ? VG_REST_W
+            : VG_COMPACT ? VG_COL_W_C : VG_COL_W;
+
+        let isNewSection = false;
+        if (entry.type === 'match') {
+            const dayType = entry.data.type;
+            if (dayType !== appendSectionType) {
+                isNewSection = true;
+                appendSectionType = dayType;
+            }
+        }
+
+        // Header-celle
+        if (hdrContainer) {
+            const hdrCell = makeDateHeader(entry, isPast);
+            hdrCell.style.width    = w + 'px';
+            hdrCell.style.minWidth = w + 'px';
+            hdrCell.style.flexShrink = '0';
+            if (isNewSection) hdrCell.classList.add('vg-section-start');
+            hdrContainer.appendChild(hdrCell);
+        }
+
+        // Kolonne-innhold
+        const col = makeDayCol(entry, isPast);
+        col.style.width    = w + 'px';
+        col.style.minWidth = w + 'px';
+        col.style.flexShrink = '0';
+        if (isNewSection) col.classList.add('vg-section-start');
+
+        if (entry.type === 'match' && appendSectionType && secLabelsAll[appendSectionType]) {
+            const lbl = document.createElement('div');
+            lbl.className = 'vg-section-label';
+            lbl.textContent = secLabelsAll[appendSectionType];
+            col.appendChild(lbl);
+        }
+
+        contentContainer.appendChild(col);
+    }
+
+    // ── "Last inn tidligere"-knapp ────────────────────────────────────────────
+    if (olderDays.length > 0) {
+        const totalM = olderDays.filter(e => e.type === 'match').reduce((s, e) => s + e.data.matches.length, 0);
+        const first  = olderDays.find(e => e.type === 'match');
+        const last   = [...olderDays].reverse().find(e => e.type === 'match');
+        const range  = first && last && first !== last ? first.data.date + ' – ' + last.data.date : first ? first.data.date : '';
+
+        // Header-del for load-btn
+        if (headerRow) {
+            const loadHdr = document.createElement('div');
+            loadHdr.className = 'vg-load-header';
+            loadHdr.id = 'vg-load-header-btn';
+            headerRow.appendChild(loadHdr);
+        }
+
+        // Knapp i innholdsraden
+        const loadWrap = document.createElement('div');
+        loadWrap.className = 'vg-load-wrap';
+        const loadBtn = document.createElement('button');
+        loadBtn.className = 'vg-load-btn';
+        loadBtn.style.height = colH + 'px';
+        loadBtn.innerHTML =
+            '<i class="bi bi-chevron-up vg-load-arrow"></i>' +
+            '<span class="vg-load-text"> ' + t('load_more') + ' (' + totalM + ') — ' + range + ' </span>' +
+            '<i class="bi bi-chevron-up vg-load-arrow"></i>';
+        loadBtn.addEventListener('click', () => {
+            loadWrap.classList.add('open');
+            loadBtn.remove();
+            document.getElementById('vg-load-header-btn')?.remove();
+        });
+        loadWrap.appendChild(loadBtn);
+
+        const loadContent = document.createElement('div');
+        loadContent.className = 'vg-load-content';
+        // loadContent-headere legges i en separat wrapper i headerRow
+        const loadHdrContent = headerRow ? document.createElement('div') : null;
+        if (loadHdrContent) {
+            loadHdrContent.className = 'vg-load-hdr-content';
+            loadHdrContent.style.display = 'none';
+            loadHdrContent.style.flexDirection = 'row';
+        }
+        olderDays.forEach(e => appendCol(e, true, loadContent, loadHdrContent));
+        if (loadHdrContent && headerRow) headerRow.appendChild(loadHdrContent);
+        loadBtn.addEventListener('click', () => {
+            if (loadHdrContent) { loadHdrContent.style.display = 'flex'; }
+        }, { once: true });
+        loadWrap.appendChild(loadContent);
+        gridEl.appendChild(loadWrap);
+    }
+
+    prevDayEntries.forEach(e => appendCol(e, true,  gridEl, headerRow));
+    futureDays.forEach(    e => appendCol(e, false, gridEl, headerRow));
+
+    // ── Synkroniser horisontal scroll mellom header og innhold ────────────────
+    const vgWrap = document.getElementById('vg-wrap');
+    const hdrScrollWrap = document.getElementById('vg-header-scroll-wrap');
+    if (vgWrap && hdrScrollWrap) {
+        if (vgWrap._vgHdrScrollHandler) vgWrap.removeEventListener('scroll', vgWrap._vgHdrScrollHandler);
+        vgWrap._vgHdrScrollHandler = () => { hdrScrollWrap.scrollLeft = vgWrap.scrollLeft; };
+        vgWrap.addEventListener('scroll', vgWrap._vgHdrScrollHandler, { passive: true });
+    }
+
+    // Synkroniser bredden på header-raden med innholdet (som tl-axis-outer)
+    function syncHeaderWidth() {
+        if (!gridEl || !headerRow) return;
+        const w = gridEl.scrollWidth;
+        if (w > 100) {
+            headerRow.style.width    = w + 'px';
+            headerRow.style.minWidth = w + 'px';
+        }
+    }
+    requestAnimationFrame(() => { syncHeaderWidth(); requestAnimationFrame(syncHeaderWidth); });
+    if (window._vgResizeObserver) window._vgResizeObserver.disconnect();
+    window._vgResizeObserver = new ResizeObserver(() => requestAnimationFrame(syncHeaderWidth));
+    if (gridEl) window._vgResizeObserver.observe(gridEl);
+
+    vg.appendChild(gridEl);
+}
+function toggleVgFilterMenu() {
+    const menu = document.getElementById('vg-filter-menu');
+    const btn  = document.getElementById('vg-filter-toggle');
+    if (!menu) return;
+    const isOpen = menu.style.display !== 'none';
+    menu.style.display = isOpen ? 'none' : 'block';
+    btn?.setAttribute('aria-expanded', String(!isOpen));
+    if (!isOpen) {
+        const handler = (e) => {
+            if (!menu.contains(e.target) && e.target !== btn) {
+                menu.style.display = 'none';
+                btn?.setAttribute('aria-expanded', 'false');
+                document.removeEventListener('pointerdown', handler, true);
+            }
+        };
+        setTimeout(() => document.addEventListener('pointerdown', handler, true), 0);
+    }
+}
+
+function closeVgFilterMenu() {
+    const menu = document.getElementById('vg-filter-menu');
+    const btn  = document.getElementById('vg-filter-toggle');
+    if (menu) menu.style.display = 'none';
+    btn?.setAttribute('aria-expanded', 'false');
+}
+
+
 function buildTable() {
     const tbl = document.getElementById('tbl');
     const nowMs = Date.now();
-
-    function isDayPast(isoDate) {
-        const dayMatches = MATCHES.filter(m => m.isoDate === isoDate);
-        if (!dayMatches.length) return isoDate < new Date().toISOString().slice(0,10);
-        const lastStart = Math.max(...dayMatches.map(m => cestToDate(m.isoDate, m.t).getTime()));
-        return nowMs > lastStart + MATCH_DUR * 3600000;
-    }
 
     const secLabels = {
         g: t('sec_group'), r32: t('sec_r32'), r16: t('sec_r16'),
@@ -2381,20 +2894,23 @@ function buildGroups() {
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
 function showTab(name, btn) {
-    ['timeline','table','groups','bracket','stats','arenas'].forEach(n => {
+    ['timeline','grid','table','groups','bracket','stats','arenas'].forEach(n => {
         const el = document.getElementById('view-'+n);
         if (el) el.classList.toggle('active', n === name);
     });
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     btn.classList.add('active');
-    // Oppdater URL-hash ved fanebytte
-    const tabHash = { timeline: '#tidslinje', table: '#kamper', groups: '#grupper', arenas: '#arenaer', stats: '#statistikk', bracket: '#sluttspill' };
+    // Oppdater URL-hash ved fanebytte — norsk eller engelsk avhengig av LANG
+    const tabHashNo = { timeline: '#tidslinje', grid: '#rutenett',   table: '#kamper',  groups: '#grupper',  arenas: '#arenaer',  stats: '#statistikk', bracket: '#sluttspill' };
+    const tabHashEn = { timeline: '#timeline',  grid: '#grid',        table: '#table',   groups: '#groups',   arenas: '#venues',   stats: '#stats',      bracket: '#bracket' };
+    const tabHash   = LANG === 'no' ? tabHashNo : tabHashEn;
     if (tabHash[name]) history.replaceState(null, '', tabHash[name]);
     // Bygg faner ved første besøk
     if (name === 'stats'   && !document.getElementById('stats-built'))   buildStats();
     if (name === 'arenas'  && !document.getElementById('arenas-built'))  buildArenas();
     if (name === 'map'     && !document.getElementById('map-built'))     buildMap();
     if (name === 'bracket' && !document.getElementById('bracket-built')) buildBracket();
+    if (name === 'grid')   buildVerticalGrid();
 }
 
 // ── KO-bracket ────────────────────────────────────────────────────────────────
@@ -3317,7 +3833,7 @@ function buildNorwaySchedule() {
         const opp = m.team1 === 'Norway' ? m.team2 : m.team1;
         const oppFlag = m.team1 === 'Norway' ? m.flag2 : m.flag1;
         const sc = scoreStr(m.score);
-        const isPast = cestToDate(m.isoDate, m.t).getTime() + MATCH_DUR * 3600000 < now;
+        const isPast = isMatchPast(m);
         const isLive = !isPast && cestToDate(m.isoDate, m.t).getTime() <= now;
         const st = STADIUMS[m.v] || {};
         const idx = MATCHES.indexOf(m);
@@ -3520,8 +4036,10 @@ resolveKOTeams(); // Løs W/L-koder basert på eventuelle scores i MATCHES_RAW
 
 // Sett --header-h CSS-variabel slik at tl-axis-wrap sticky top er korrekt
 function updateHeaderHeight() {
-    const h = document.querySelector('.site-header')?.offsetHeight || 0;
+    const h    = document.querySelector('.site-header')?.offsetHeight || 0;
+    const tabs = document.querySelector('.tabs')?.offsetHeight || 0;
     document.documentElement.style.setProperty('--header-h', h + 'px');
+    document.documentElement.style.setProperty('--header-tabs-h', (h + tabs) + 'px');
 }
 updateHeaderHeight();
 window.addEventListener('resize', () => {
@@ -3534,6 +4052,16 @@ window.addEventListener('load', updateHeaderHeight);
 buildTimeline();
 initTZ();
 initLang();
+// Oppdater tab-etiketter ved oppstart slik at de reflekterer valgt språk
+(function updateTabLabels() {
+    const tabIds   = ['timeline','grid','table','groups','arenas','bracket'];
+    const tabIcons = ['bi-bar-chart-steps','bi-calendar3','bi-list-ul','bi-grid-3x3-gap','bi-geo-alt','bi-diagram-3'];
+    const tabKeys  = ['tab_timeline','tab_grid','tab_table','tab_groups','tab_arenas','tab_bracket'];
+    tabIds.forEach((id, i) => {
+        const btn = document.getElementById('tab-' + id);
+        if (btn) btn.innerHTML = `<i class="bi ${tabIcons[i]}"></i> ${t(tabKeys[i])}`;
+    });
+})();
 buildTable();
 buildGroups();
 updateNorwayBanner();

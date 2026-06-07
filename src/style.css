@@ -2182,3 +2182,427 @@ tr.tr-potential td { font-style: italic; }
     fill: none;
     stroke-linecap: round;
 }
+
+
+/* ── Vertikalt rutenett (datoer horisontalt, tidspunkter vertikalt) ─────────── */
+
+/* Sticky header-rad (utenfor scroll) */
+.vg-outer {
+    display: flex;
+    position: sticky;
+    top: var(--header-h, 0px);
+    z-index: 9;
+    border: 2px solid var(--border-mid);
+    border-bottom: none;
+    background: var(--bg-card-hi);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+/* TZ-label hjørne */
+.vg-corner {
+    flex-shrink: 0;
+    width: 44px;
+    border-right: 2px solid var(--border-mid);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-size: .38rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    box-sizing: border-box;
+    height: 32px;
+}
+
+/* Horisontal scroll-wrapper for header-raden */
+.vg-header-scroll-wrap {
+    flex: 1;
+    overflow: hidden;       /* skjult scroll — styres av vg-wrap */
+    scrollbar-width: none;
+}
+.vg-header-scroll-wrap::-webkit-scrollbar { display: none; }
+
+/* Selve header-raden med dato-celler */
+.vg-header-row {
+    display: flex;
+    flex-direction: row;
+    min-width: max-content;
+}
+
+/* Innholdsrad (tids-akse + horisontal scroll) */
+.vg-body-outer {
+    display: flex;
+    border: 2px solid var(--border-mid);
+    border-top: none;
+    background: var(--bg-card);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+/* Tids-akse — fast bredde, siden scroller vertikalt */
+.vg-axis-wrap {
+    flex-shrink: 0;
+    width: 44px;
+    overflow: hidden;
+    border-right: 2px solid var(--border-mid);
+    background: var(--bg-card);
+}
+/* Kurs-aksens body-del (samme bredde, i vg-body-outer) */
+.vg-axis-body-wrap {
+    flex-shrink: 0;
+    width: 44px;
+    overflow: hidden;
+    border-right: 2px solid var(--border-mid);
+    background: var(--bg-card);
+}
+
+/* Horisontal scroll for kolonne-innholdet */
+.vg-wrap {
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Innholdscontainer */
+.vg-inner { min-width: 300px; }
+
+/* Kolonner side om side */
+.vg-grid {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+/* ── "Last inn"-knapp ───────────────────────────────────────────────────────── */
+.vg-load-wrap {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+/* Header-spacer for load-btn — i header-raden */
+.vg-load-header {
+    box-sizing: border-box;
+    height: 32px;
+    border-right: 1px solid var(--border-mid);
+    border-bottom: 2px solid var(--border-mid);
+    background: var(--bg-card-hi);
+    flex-shrink: 0;
+}
+.vg-load-hdr-content { display: none; flex-direction: row; }
+/* Knapp strekker seg ned gjennom hele kolonne-innholdet, rotert vertikalt */
+.vg-load-btn {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    background: none;
+    border: none;
+    border-right: 1px solid var(--border-mid);
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    font-size: .50rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    padding: .6rem .3rem;
+    transition: color .15s, background .15s;
+    width: 100%;
+    white-space: nowrap;
+    text-align: center;   /* sentrerer innholdet langs vertikal akse */
+}
+.vg-load-btn:hover { color: var(--text-sec); background: rgba(0,48,135,.1); }
+/* Piler roteres tilbake 90° slik at de peker langs tekstretningen */
+.vg-load-arrow {
+    display: inline-block;
+    transform: rotate(90deg);
+    font-size: .7rem;
+    line-height: 1;
+}
+.vg-load-text  { white-space: nowrap; }
+.vg-load-range { display: none; }
+.vg-load-content { display: none; flex-direction: row; }
+.vg-load-wrap.open .vg-load-content { display: flex; }
+
+/* ── Kolonne-wrapper ────────────────────────────────────────────────────────── */
+.vg-col-wrap {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+/* ── Dato-header (sticky topp) ──────────────────────────────────────────────── */
+.vg-date-cell {
+    box-sizing: border-box;
+    font-family: 'Space Mono', monospace;
+    font-size: .52rem;
+    color: var(--text-sec);
+    padding: 3px 3px;
+    text-align: center;
+    border-right: 1px solid var(--border);
+    border-bottom: 2px solid var(--border-mid);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    height: 32px;
+    justify-content: center;
+    background: var(--bg-card-hi);
+}
+.vg-date-cell strong { color: var(--text); font-size: .46rem; text-transform: uppercase; letter-spacing: .05em; }
+.vg-date-cell span   { font-size: .52rem; color: var(--text); font-weight: 600; }
+.vg-date-cell.past   { opacity: .5; }
+/* Seksjonsovergang — venstre kant + absolutt-posisjonert label på kolonne-innholdet */
+.vg-section-start .vg-date-cell {
+    border-left: 2px solid var(--sec-text);
+}
+.vg-section-start .vg-day-col {
+    border-left: 2px solid var(--sec-text);
+}
+/* Seksjonsnavn som rotert vertical label øverst i dag-kolonnen */
+.vg-section-label {
+    position: absolute;
+    top: 4px;
+    left: 2px;
+    right: 2px;
+    font-family: 'VT323', monospace;
+    font-size: .65rem;
+    letter-spacing: .1em;
+    color: var(--sec-text);
+    opacity: .7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Hviledags-header — smal, samme border-bottom som kampdag, men dempet */
+.vg-date-rest {
+    opacity: .5;
+    overflow: hidden;
+}
+/* Enkeltdager — litt mindre tekst */
+.vg-date-cell.vg-date-rest strong { font-size: .38rem !important; letter-spacing: .03em; }
+.vg-date-cell.vg-date-rest span   { font-size: .40rem !important; font-weight: 400 !important; color: var(--muted) !important; }
+
+/* Gap-celler (.vg-date-gap) — tydelig tekst, ingen duplikat opacity */
+.vg-date-gap { opacity: 1; }  /* opacity settes av .vg-date-rest over */
+.vg-rest-gap-label {
+    font-size: .48rem !important;
+    font-weight: 700 !important;
+    color: var(--text-sec) !important;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: .04em;
+}
+
+/* Seksjonsnavn — absolutt øverst i dag-kolonnen */
+.vg-section-label {
+    position: absolute;
+    top: 4px;
+    left: 2px;
+    right: 2px;
+    font-family: 'VT323', monospace;
+    font-size: .72rem;
+    letter-spacing: .1em;
+    color: var(--sec-text);
+    opacity: .65;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* ── Dag-kolonne ────────────────────────────────────────────────────────────── */
+.vg-day-col {
+    position: relative;
+    border-right: 1px solid var(--border);
+    flex-shrink: 0;
+}
+.vg-day-col:last-child { border-right: none; }
+.vg-day-col.past { opacity: .6; }
+.vg-day-rest {
+    border-right: 1px solid var(--border-mid);
+    border-left: 1px solid var(--border-mid);
+    background: rgba(255,255,255,.012);
+    opacity: .4;
+}
+.vg-day-rest.past { opacity: .22; }
+.vg-rest-vline { display: none; } /* bakgrunnsfargen er nok */
+
+/* Grid-linjer */
+.vg-grid-line {
+    position: absolute;
+    left: 0; right: 0; height: 0;
+    border-top: 1px solid var(--border);
+    opacity: .4;
+    pointer-events: none;
+}
+.vg-grid-line.midnight { border-top: 2px solid var(--midnight); opacity: .5; }
+.vg-grid-line.half     { opacity: .1; }
+
+/* ── Tids-akse ──────────────────────────────────────────────────────────────── */
+.vg-time-axis { position: relative; width: 44px; }
+.vg-tick {
+    position: absolute;
+    left: 0; right: 0;
+    height: 20px;
+    display: flex;
+    align-items: flex-start;
+    padding: 2px 4px 0 0;
+    justify-content: flex-end;
+    font-family: 'Space Mono', monospace;
+    font-size: .40rem;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    white-space: nowrap;
+}
+.vg-tick.whole    { border-top: 1px solid var(--border-mid); color: var(--text-sec); font-weight: 600; font-size: .42rem; }
+.vg-tick.midnight { border-top: 2px solid var(--midnight); color: var(--midnight); font-weight: 700; }
+.vg-tick.half     { border-top: 1px solid var(--border); opacity: .25; }
+
+/* ── Kamp-blokker ───────────────────────────────────────────────────────────── */
+.vg-match {
+    position: absolute;
+    left: 2px; right: 2px;
+    border-radius: 2px;
+    padding: 2px 4px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    overflow: hidden;
+    transition: filter .12s, transform .1s, box-shadow .1s;
+    z-index: 2;
+    font-size: .65rem;
+}
+.vg-match:hover {
+    filter: brightness(1.35) saturate(1.2);
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 rgba(0,0,0,.6);
+    z-index: 20;
+    overflow: visible;
+}
+.vg-match.past      { opacity: .6; }
+.vg-match.has-score { border-left: 3px solid rgba(255,255,255,.5); }
+[data-theme="light"] .vg-match            { border: 1px solid rgba(0,0,0,.12); }
+[data-theme="light"] .vg-match.has-score  { border-left: 3px solid rgba(0,0,0,.35); }
+.vg-match.norway {
+    outline: 2px solid var(--norway) !important;
+    outline-offset: -1px;
+    box-shadow: 0 0 8px var(--norway-glow);
+    z-index: 5;
+}
+.vg-match.norway:hover { z-index: 25; box-shadow: 3px 3px 0 rgba(0,0,0,.6), 0 0 16px var(--norway-glow); }
+.vg-match.norway-potential { outline: 2px dashed rgba(239,43,45,.5) !important; outline-offset: -1px; }
+.vg-match.fav-match        { outline: 2px solid rgba(255,255,255,.4) !important; outline-offset: -1px; }
+[data-theme="light"] .vg-match.fav-match  { outline: 2px solid rgba(0,0,0,.3) !important; }
+.vg-match.dimmed { opacity: .18; }
+
+.vg-match-time {
+    font-family: 'Space Mono', monospace;
+    font-size: .38rem;
+    opacity: .7;
+    flex-shrink: 0;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+.vg-match-teams {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    overflow: hidden;
+    flex-shrink: 0;
+    line-height: 1.2;
+}
+.vg-flag { font-size: .78rem; flex-shrink: 0; line-height: 1; }
+.vg-team1, .vg-team2 {
+    font-size: .64rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+    line-height: 1.2;
+}
+.vg-score {
+    font-family: 'VT323', monospace;
+    font-size: .9rem;
+    line-height: 1;
+    flex-shrink: 0;
+    color: var(--text);
+}
+.vg-score-placeholder {
+    font-family: 'Space Mono', monospace;
+    font-size: .48rem;
+    opacity: .4;
+    flex-shrink: 0;
+    line-height: 1;
+}
+.vg-city {
+    font-family: 'Space Mono', monospace;
+    font-size: .38rem;
+    opacity: .55;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 0;
+    line-height: 1.2;
+}
+.vg-via {
+    font-family: 'Space Mono', monospace;
+    font-size: .38rem;
+    opacity: .8;
+    border: 1px solid currentColor;
+    padding: 0 2px;
+    border-radius: 1px;
+    align-self: flex-start;
+    flex-shrink: 0;
+    line-height: 1.3;
+}
+.vg-match-num {
+    font-family: 'Space Mono', monospace;
+    font-size: .38rem;
+    color: var(--muted);
+    flex-shrink: 0;
+    line-height: 1.2;
+}
+.vg-tv {
+    font-family: 'Space Mono', monospace;
+    font-size: .40rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    line-height: 1.2;
+}
+.vg-live-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: .38rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--norway);
+    animation: pulse 2s infinite;
+    flex-shrink: 0;
+    line-height: 1.2;
+}
+
+/* Kompakt modus — FIFA-kode, smalere blokker */
+.vg-match.compact .vg-team1,
+.vg-match.compact .vg-team2 {
+    font-family: 'Space Mono', monospace;
+    font-size: .54rem;
+    font-weight: 700;
+    letter-spacing: .03em;
+}
+.vg-match.compact .vg-flag { font-size: .7rem; }
+.vg-match.compact .vg-match-time { font-size: .36rem; }
+.vg-match.compact .vg-score { font-size: .82rem; }
+[data-theme="light"] .vg-axis-wrap { background: var(--bg-card); }
+[data-theme="light"] .vg-date-cell { background: var(--bg-card-hi); }
+
+/* Mobil */
+@media (max-width: 700px) {
+    .vg-team1, .vg-team2 { font-size: .58rem; }
+    .vg-match { padding: 2px 3px; }
+}
+
