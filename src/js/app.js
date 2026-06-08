@@ -285,7 +285,10 @@ const i18n = {
         arena_btn:  'Arena',
         tz_label:   'Tidssone',
         lang_btn:   'EN',
-        fav_count:  (n) => `Favoritter (${n})`,
+        fav_count:      (n) => `Favoritter (${n})`,
+        ko_paths_title: 'Hvem kan komme hit?',
+        ko_winner_of:   'Vinneren av',
+        ko_loser_of:    'Taperen av',
     },
     en: {
         days:       ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
@@ -378,7 +381,10 @@ const i18n = {
         arena_btn:  'Venue',
         tz_label:   'Timezone',
         lang_btn:   'NO',
-        fav_count:  (n) => `Favourites (${n})`,
+        fav_count:      (n) => `Favourites (${n})`,
+        ko_paths_title: 'Who can qualify here?',
+        ko_winner_of:   'Winner of',
+        ko_loser_of:    'Loser of',
     }
 };
 
@@ -873,6 +879,89 @@ async function fetchResults() {
     }
 }
 
+// ── KO-bane-resolver ─────────────────────────────────────────────────────────
+// Gitt en posisjonskode (f.eks. "W89", "1E", "3A/B/C/D/F"), løs den rekursivt
+// til en liste med { code, label } som representerer mulige lag/veier.
+function resolveSlotToTeams(code, depth) {
+    if (depth === undefined) depth = 0;
+    if (depth > 4) return { type: 'leaf', label: code };
+
+    // W<num> — vinneren av kamp num
+    const wMatch = code.match(/^W(\d+)$/);
+    if (wMatch) {
+        const num = parseInt(wMatch[1], 10);
+        const raw = MATCHES_RAW.find(m => m.num === num);
+        if (!raw) return { type: 'leaf', label: code };
+        // Hvis kamp er spilt og vi har et kjent lagnavn — returner direkte
+        const live = MATCHES.find(m => m.num === num);
+        if (live?.score?.ft) {
+            // Resolved: vinneren er et faktisk lag
+            const winnerName = live.score.ft[0] > live.score.ft[1] ? live.team1 :
+                               live.score.ft[1] > live.score.ft[0] ? live.team2 :
+                               live.score.p ? (live.score.p[0] > live.score.p[1] ? live.team1 : live.team2) : null;
+            if (winnerName && !isUnresolvedCode(winnerName))
+                return { type: 'leaf', label: winnerName };
+        }
+        const t1 = resolveSlotToTeams(raw.team1, depth + 1);
+        const t2 = resolveSlotToTeams(raw.team2, depth + 1);
+        return { type: 'match', num, left: t1, right: t2 };
+    }
+
+    // L<num> — taperen av kamp num
+    const lMatch = code.match(/^L(\d+)$/);
+    if (lMatch) {
+        const num = parseInt(lMatch[1], 10);
+        const raw = MATCHES_RAW.find(m => m.num === num);
+        if (!raw) return { type: 'leaf', label: code };
+        const t1 = resolveSlotToTeams(raw.team1, depth + 1);
+        const t2 = resolveSlotToTeams(raw.team2, depth + 1);
+        return { type: 'match', num, loser: true, left: t1, right: t2 };
+    }
+
+    // Gruppeposisjon eller beste-treer — leaf-node
+    return { type: 'leaf', label: code };
+}
+
+// Render et resolve-tre som HTML
+function renderSlotTree(node) {
+    if (!node) return '';
+    if (node.type === 'leaf') {
+        // Vis kjente lagnavn med flagg
+        const td = TEAMS[node.label];
+        if (td) {
+            const flag = td.flag_id
+                ? `<svg class="flag-svg" aria-hidden="true" style="height:.9em;width:1.2em;vertical-align:middle;margin-right:.25em"><use href="#${td.flag_id}"/></svg>`
+                : (td.flag || '');
+            return `<li class="modal-ko-leaf modal-ko-team">${flag}${teamName(node.label)}</li>`;
+        }
+        return `<li class="modal-ko-leaf">${node.label}</li>`;
+    }
+    if (node.type === 'match') {
+        const roundLabel = (() => {
+            const m = MATCHES.find(x => x.num === node.num);
+            if (!m) return `#${node.num}`;
+            const labels = { r32: t('grp_r32'), r16: t('grp_r16'), qf: t('grp_qf'), sf: t('grp_sf') };
+            return labels[m.type] || `#${node.num}`;
+        })();
+        const prefix = node.loser ? t('ko_loser_of') : t('ko_winner_of');
+        const leftHtml  = renderSlotTree(node.left);
+        const rightHtml = renderSlotTree(node.right);
+        return `<li class="modal-ko-group">
+            <span class="modal-ko-group-label">${prefix} ${roundLabel}:</span>
+            <ul class="modal-ko-slot-list modal-ko-slot-sublist">
+                ${leftHtml}
+                ${rightHtml}
+            </ul>
+        </li>`;
+    }
+    return '';
+}
+
+// Sjekk om en kode er et ekte lagnavn (ikke en posisjonskode)
+function isUnresolvedCode(code) {
+    return /^[WL]\d+$/.test(code) || /^\d[A-L]$/.test(code) || /^3[A-L\/]+$/.test(code);
+}
+
 // ── Modal ─────────────────────────────────────────────────────────────────────
 function openModal(m) {
     const sc = m.score;
@@ -972,6 +1061,50 @@ function openModal(m) {
                 <i class="bi bi-share"></i>
             </button>
         </div>
+        ${(() => {
+            if (m.type === 'g') return '';
+            // Bruk MATCHES_RAW for å sjekke opprinnelige koder — resolveKOTeams
+            // kan ha overskrevet team1/team2 i MATCHES med ekte lagnavn
+            const rawM = m.num != null ? MATCHES_RAW.find(r => r.num === m.num) : null;
+            const rawT1 = rawM ? rawM.team1 : m.team1;
+            const rawT2 = rawM ? rawM.team2 : m.team2;
+            const t1unresolved = isUnresolvedCode(rawT1);
+            const t2unresolved = isUnresolvedCode(rawT2);
+            if (!t1unresolved && !t2unresolved) return '';
+
+            function slotHtml(rawCode, resolvedName) {
+                const tree = resolveSlotToTeams(rawCode);
+                const isLoser = /^L\d+$/.test(rawCode);
+                const prefix  = isLoser ? t('ko_loser_of') : t('ko_winner_of');
+                // Hvis allerede løst til kjent lagnavn — vis ikke seksjonen
+                if (tree.type === 'leaf' && !isUnresolvedCode(tree.label)) return '';
+                if (tree.type === 'leaf') {
+                    // Enkel leaf med posisjonskode
+                    return `<div class="modal-ko-slot">
+                        <div class="modal-ko-slot-label">${prefix}</div>
+                        <ul class="modal-ko-slot-list"><li class="modal-ko-leaf">${tree.label}</li></ul>
+                    </div>`;
+                }
+                return `<div class="modal-ko-slot">
+                    <div class="modal-ko-slot-label">${prefix}</div>
+                    <ul class="modal-ko-slot-list">
+                        ${renderSlotTree(tree.left)}
+                        ${renderSlotTree(tree.right)}
+                    </ul>
+                </div>`;
+            }
+
+            const slots = [
+                t1unresolved ? slotHtml(rawT1, m.team1) : '',
+                t2unresolved ? slotHtml(rawT2, m.team2) : '',
+            ].filter(Boolean).join('');
+            if (!slots) return '';
+
+            return `<div class="modal-ko-paths${(t1unresolved && t2unresolved) ? ' modal-ko-paths-two' : ''}">
+                <div class="modal-ko-paths-title">${t('ko_paths_title')}</div>
+                ${slots}
+            </div>`;
+        })()}
     `;
     document.getElementById('modal').style.display = 'flex';
     window._modalMatch = m; // brukes av shareMatch-knappen
@@ -2426,7 +2559,7 @@ function buildVerticalGrid() {
                 '<div class="vg-match-teams"><span class="vg-flag">' + m.flag1 + '</span><span class="vg-team1">' + name1 + '</span></div>' +
                 (sc ? '<div class="vg-score">' + sc + '</div>' : '<div class="vg-score-placeholder">v</div>') +
                 '<div class="vg-match-teams"><span class="vg-flag">' + m.flag2 + '</span><span class="vg-team2">' + name2 + '</span></div>' +
-                (VG_COMPACT ? '' : (st.city || m.ground ? '<div class="vg-city">' + (st.city || m.ground) + '</div>' : '')) +
+                (st.city || m.ground ? '<div class="vg-city">' + (st.city || m.ground) + '</div>' : '') +
                 (m.tv   ? '<div class="vg-tv tl-tv-' + m.tv.toLowerCase() + '">' + m.tv + '</div>' : '') +
                 (isLive ? '<div class="vg-live-badge">' + t('live') + '</div>' : '');
             block.addEventListener('click', () => openModal(m));

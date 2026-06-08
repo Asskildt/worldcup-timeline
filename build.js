@@ -440,16 +440,23 @@ function buildSharePages(matchesRaw, teamsData, stadiumsData) {
     });
     console.log(`  ✓ ${matchesRaw.length} kamp-sider generert`);
 
-    // Generer sitemap.xml — kun hovedsiden (kamp-sider er noindex redirect-sider for embeds)
+    // Generer sitemap.xml
     const today = new Date().toISOString().slice(0, 10);
+    const sitemapBase = IS_TEST ? '' : 'https://fotballvm.asskildt.eu';
     write(path.join(DIST, 'sitemap.xml'),
 `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://fotballvm.asskildt.eu/</loc>
+    <loc>${sitemapBase || 'https://fotballvm.asskildt.eu'}/</loc>
     <lastmod>${today}</lastmod>
     <changefreq>hourly</changefreq>
     <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://fotballvm.asskildt.eu/en/</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.9</priority>
   </url>
 </urlset>
 `);
@@ -484,18 +491,25 @@ function buildHTML(matchesRaw, stadiumsData) {
         return d.toISOString();
     }
 
+    const isEn = LANG_BUILD === 'en';
+    const siteUrl = isEn
+        ? 'https://fotballvm.asskildt.eu/en/'
+        : 'https://fotballvm.asskildt.eu/';
+
     const jsonLd = {
         '@context': 'https://schema.org',
         '@type': 'SportsEvent',
-        'name': 'FIFA VM 2026',
-        'alternateName': 'FIFA World Cup 2026',
-        'description': 'Alle 104 kamper i fotball-VM 2026 på norsk tid (CEST). Tidslinje, kamptabell, gruppestandinger og sluttspill.',
-        'url': 'https://fotballvm.asskildt.eu/',
+        'name': isEn ? 'FIFA World Cup 2026' : 'FIFA VM 2026',
+        'alternateName': isEn ? 'FIFA VM 2026' : 'FIFA World Cup 2026',
+        'description': isEn
+            ? 'All 104 matches of the 2026 FIFA World Cup. Timeline, match list, group standings and knockout bracket. Timezone auto-detected, 9 timezone options.'
+            : 'Alle 104 kamper i fotball-VM 2026. Tidslinje, kamptabell, gruppestandinger og sluttspill. Tidssone tilpasses automatisk.',
+        'url': siteUrl,
         'startDate': matchStartUTC(firstMatch),
         'endDate': matchStartUTC(lastMatch),
         'location': {
             '@type': 'Place',
-            'name': 'USA, Canada og Mexico',
+            'name': isEn ? 'USA, Canada and Mexico' : 'USA, Canada og Mexico',
             'address': { '@type': 'PostalAddress', 'addressCountry': 'US' }
         },
         'sport': 'Football',
@@ -505,9 +519,9 @@ function buildHTML(matchesRaw, stadiumsData) {
             'url': 'https://www.fifa.com'
         },
         'image': 'https://fotballvm.asskildt.eu/og-image.png',
-        'inLanguage': 'nb',
+        'inLanguage': isEn ? 'en' : 'nb',
         'isAccessibleForFree': true,
-        'audience': { '@type': 'Audience', 'audienceType': 'Fotballfans' }
+        'audience': { '@type': 'Audience', 'audienceType': isEn ? 'Football fans' : 'Fotballfans' }
     };
 
     const jsonLdScript = `<script type="application/ld+json">\n    ${JSON.stringify(jsonLd, null, 2).replace(/\n/g, '\n    ')}\n    </script>`;
@@ -589,11 +603,10 @@ function copyStatic() {
         copy(ogImage, path.join(DIST, 'og-image.png'));
     }
 
-    // Generer robots.txt — kamp/-mappen skal ikke indekseres (redirect-sider for embeds)
+    // Generer robots.txt
     write(path.join(DIST, 'robots.txt'),
 `User-agent: *
 Allow: /
-Disallow: /kamp/
 Sitemap: https://fotballvm.asskildt.eu/sitemap.xml
 `);
 
