@@ -1051,10 +1051,10 @@ function openModal(m) {
             <button class="modal-share-btn" onclick="closeModal();openVenueModal('${m.v}')">
                 <i class="bi bi-building"></i> ${t('arena_btn')}
             </button>
-            ${!m.team1.match(/^[WL]\d|^\d/) ? `<button class="modal-share-btn" onclick="closeModal();openTeamModal('${teamName(m.team1)}')">
+            ${!m.team1.match(/^[WL]\d|^\d/) ? `<button class="modal-share-btn" onclick="closeModal();openTeamModal('${m.team1.replace(/'/g, "\\'")}')">
                 ${m.flag1}
             </button>` : ''}
-            ${!m.team2.match(/^[WL]\d|^\d/) ? `<button class="modal-share-btn" onclick="closeModal();openTeamModal('${teamName(m.team2)}')">
+            ${!m.team2.match(/^[WL]\d|^\d/) ? `<button class="modal-share-btn" onclick="closeModal();openTeamModal('${m.team2.replace(/'/g, "\\'")}')">
                 ${m.flag2}
             </button>` : ''}
             <button id="share-btn" class="modal-share-btn" onclick="shareMatch(_modalMatch)">
@@ -1361,11 +1361,11 @@ function openGroupModal(grp) {
 }
 
 // ── Lag-modal ─────────────────────────────────────────────────────────────────
-function openTeamModal(teamName) {
-    const teamData = TEAMS[teamName];
+function openTeamModal(teamKey) {
+    const teamData = TEAMS[teamKey];
     if (!teamData) return;
-    const isFav = FAVORITE_TEAMS.includes(teamName);
-    const teamMatches = MATCHES.filter(m => m.team1 === teamName || m.team2 === teamName);
+    const isFav = FAVORITE_TEAMS.includes(teamKey);
+    const teamMatches = MATCHES.filter(m => m.team1 === teamKey || m.team2 === teamKey);
 
     // Bygg kamp-rader med hviledag-gap mellom kamper
     let matchRows = '';
@@ -1401,24 +1401,24 @@ function openTeamModal(teamName) {
         <div class="team-header">
             <div class="team-flag-lg">${teamData.flag_id ? `<svg class="flag-svg" style="width:2.5rem;height:1.875rem" aria-hidden="true"><use href="#${teamData.flag_id}"/></svg>` : (teamData.flag || '')}</div>
             <div class="team-info">
-                <div class="team-name-lg">${teamName}</div>
+                <div class="team-name-lg">${teamName(teamKey)}</div>
                 <div class="team-meta">${grpLabel}${grpLabel && confLabel ? ' · ' : ''}${confLabel}</div>
             </div>
         </div>
         <div class="venue-matches-title">${t('venue_matches')} (${teamMatches.length})</div>
         <div class="venue-matches">${matchRows}</div>
         <div class="modal-share">
-            <button class="modal-share-btn fav-btn ${isFav ? 'fav-active' : ''}" onclick="toggleFavorite('${teamName}')">
+            <button class="modal-share-btn fav-btn ${isFav ? 'fav-active' : ''}" onclick="toggleFavorite('${teamKey}')">
                 <i class="bi bi-heart${isFav ? '-fill' : ''}"></i> ${isFav ? t('fav_active') : t('add_fav')}
             </button>
-            <button class="modal-share-btn" onclick="setTeamFilter('${teamName}'); showTab('timeline', document.querySelector('.tab')); closeModal();">
+            <button class="modal-share-btn" onclick="setTeamFilter('${teamKey}'); showTab('timeline', document.querySelector('.tab')); closeModal();">
                 <i class="bi bi-funnel"></i> ${t('show_tl')}
             </button>
         </div>
     `;
     document.getElementById('modal').style.display = 'flex';
     document.querySelector('.modal')?.classList.remove('norway-match');
-    if (teamName === 'Norway') {
+    if (teamKey === 'Norway') {
         document.querySelector('.modal')?.classList.add('norway-match');
     }
     document.addEventListener('keydown', onModalKey);
