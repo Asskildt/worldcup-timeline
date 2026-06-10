@@ -2518,7 +2518,21 @@ function buildVerticalGrid() {
             line.style.top = (i * VG_ROW_H) + 'px';
             col.appendChild(line);
         });
-        day.matches.forEach(m => {
+
+        // Beregn antall overlappende kolonner per kamp — identisk logikk som tidslinjen
+        const sorted = [...day.matches].sort((a, b) => a.t - b.t);
+        const colEnds = []; // slutt-tid per sub-kolonne
+        const placed  = sorted.map(m => {
+            let ci = 0;
+            while (colEnds[ci] !== undefined && colEnds[ci] > m.t - 0.05) ci++;
+            colEnds[ci] = m.t + MATCH_DUR;
+            return { m, ci };
+        });
+        const numSubCols = colEnds.length;
+        // Returner numSubCols slik at appendCol kan skalere kolonnebredden
+        col._numSubCols = numSubCols;
+
+        placed.forEach(({ m, ci }) => {
             const sc = scoreStr(m.score), st = STADIUMS[m.v] || {};
             const isNorway        = m.team1 === 'Norway' || m.team2 === 'Norway';
             const potentialNorway = HIGHLIGHTS_ON && !isNorway && NORWAY_POTENTIAL_MATCHES.has(m.num);
@@ -2545,6 +2559,13 @@ function buildVerticalGrid() {
             ].filter(Boolean).join(' ');
             block.style.top    = tToY(m.t) + 'px';
             block.style.height = ((MATCH_DUR / TL_STEP) * VG_ROW_H - 2) + 'px';
+            // Horisontal fordeling ved overlapp
+            if (numSubCols > 1) {
+                const pct = 100 / numSubCols;
+                block.style.left  = (ci * pct) + '%';
+                block.style.width = pct + '%';
+                block.style.right = 'auto';
+            }
             block.title = m.flag1 + ' ' + teamName(m.team1) + ' v ' + teamName(m.team2) + ' ' + m.flag2 + ' — ' + fmtT(toLocalT(m.t)) + ' — ' + (st.name || m.ground);
 
             const fifa1 = TEAMS[m.team1]?.code || m.team1.slice(0, 3).toUpperCase();
@@ -2564,7 +2585,7 @@ function buildVerticalGrid() {
                 (isLive ? '<div class="vg-live-badge">' + t('live') + '</div>' : '');
             block.addEventListener('click', () => openModal(m));
             col.appendChild(block);
-        });
+        }); // end placed.forEach
         return col;
     }
 
@@ -2576,9 +2597,16 @@ function buildVerticalGrid() {
     gridEl.className = 'vg-grid';
 
     function appendCol(entry, isPast, contentContainer, hdrContainer) {
-        const w = (entry.type === 'rest' || entry.type === 'rest-gap')
+        const baseW = (entry.type === 'rest' || entry.type === 'rest-gap')
             ? VG_REST_W
             : VG_COMPACT ? VG_COL_W_C : VG_COL_W;
+
+        // Skaler kolonnebredden med antall overlappende sub-kolonner —
+        // makeDayCol setter col._numSubCols, så vi kaller den én gang tidlig
+        const col = makeDayCol(entry, isPast);
+        const w = (entry.type === 'rest' || entry.type === 'rest-gap')
+            ? baseW
+            : baseW * Math.max(1, col._numSubCols || 1);
 
         let isNewSection = false;
         if (entry.type === 'match') {
@@ -2599,8 +2627,7 @@ function buildVerticalGrid() {
             hdrContainer.appendChild(hdrCell);
         }
 
-        // Kolonne-innhold
-        const col = makeDayCol(entry, isPast);
+        // Kolonne-innhold — allerede laget ovenfor
         col.style.width    = w + 'px';
         col.style.minWidth = w + 'px';
         col.style.flexShrink = '0';
