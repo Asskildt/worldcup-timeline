@@ -4,6 +4,143 @@ Konkrete oppskrifter for å legge til eller endre funksjonalitet. Se `agents.md`
 
 ---
 
+## KO-bracket prediksjon
+
+Funksjonalitet for å vise forutsagte lag i bracket-kortene, timeline, vertikalt rutenett og modal mens gruppespillet pågår. Oppdateres automatisk live via `fetchResults()` — ingen ny deploy nødvendig.
+
+### Funksjoner (`src/js/app.js`)
+
+**`getGroupStandings(grp)`**
+Beregner og returnerer sortert gruppestabell for én gruppe (A–L). Returnerer array av `{ name, pts, gf, ga, played, remaining }`. Den kanoniske standings-funksjonen — `buildGroups()` har sin egen inline-versjon, men `getGroupStandings` er den gjenbrukbare varianten for prediksjonslogikken.
+
+**`predictKOSlot(code, depth?)`**
+Løser én posisjonskode til et prediksjons-objekt, eller `null` hvis ingen prediksjon er mulig. `depth` brukes internt av rekursjonen (ikke sett utenfra).
+
+Returtyper:
+- `null` — ingen prediksjon, vis original kode uendret
+- `{ type: 'certain', name }` — én sikker plassering (gruppe ferdigspilt eller ett lag klinket)
+- `{ type: 'clinched', code, teams: [n1, n2] }` — begge lag matematisk klinket, plass ukjent
+- `{ type: 'candidates', teams: [n, …] }` — 2–4 kjente lag fra W-kode-rekursjon (ingen uløste koder på veien)
+
+Regler per kode-type:
+
+| Kode | Betingelse for prediksjon |
+|------|--------------------------|
+| `1A`–`2L` | Gruppe ferdigspilt → `certain` |
+| `1A`–`2L` | Klinket-betingelse oppfylt → `certain` (ett) eller `clinched` (begge) |
+| `3A/B/…` | Aldri — treere avgjøres av FIFA-kombinasjonstabellen (for komplekst) |
+| `W<num>` (kamp spilt) | `certain` — faktisk vinner |
+| `W<num>` (kamp ikke spilt) | `candidates` — rekursivt løst via `_collectCandidates`, kun hvis ≤4 kjente lag og ingen uløste koder |
+| `L<num>` | Kun `certain` når kampen er spilt (3.-plassmatch) |
+
+**Klinket-betingelse** (to nivåer):
+1. `pts > thirdMaxPts` — ingen kan innhente poengmessig uansett. Da er laget garantert topp-2.
+2. Fallback: `pts > fourthMaxPts` **og** GD-forspranget til 3. plass er ≥ 5. Brukes f.eks. for USA (6p, +5 GD) der 3. plass kan nå 6p men ikke ta igjen GD-bufferet.
+
+Begge betingelsene sjekkes per lag (ikke bare som par). `bothClinched` bruker samme logikk for begge lag i topp-2.
+
+**`_collectCandidates(code, depth)`** *(intern)*
+Rekursiv hjelpefunksjon kalt av `predictKOSlot` for W-koder. Returnerer `{ teams, hasUnresolved }`. `hasUnresolved: true` → `predictKOSlot` returnerer `null` (ufullstendig bilde). Deler depth-counter med `predictKOSlot`; begge stopper ved `depth > 6`.
+
+**`resolveSlotDisplay(rawCode)`**
+Felles omformer for bracket, timeline og vertikalt rutenett. Kaller `predictKOSlot` og returnerer `{ flag, name, predicted, clinched, candidates, teams }` med ferdig flagg-HTML. Brukes ikke i modal — der kaller `slotHtml` `predictKOSlot` direkte for individuelle `<li>`-rader (se kommentar i koden).
+
+**`thirdPlaceCandidates(code)`**
+For `3X/Y/Z`-koder i modal: viser treeren fra hver nevnte gruppe med flagg, poeng og GD. Vises kun i R32-sloten (dybde 0 i `renderLeafWithPred`).
+
+### Visning
+
+| View | Certain | Clinched | Candidates | Null |
+|------|---------|----------|------------|------|
+| Bracket | Flagg + FIFA-kode | **Kode** (full opacity) + flagg (dempet) | 2–4 flagg (dempet) | Original kode |
+| Timeline | Flagg + navn | Flagg (dempet) | Flagg (dempet) | Original kode |
+| Vertikalt rutenett | Flagg + navn | Flagg (dempet) | Flagg (dempet) | Original kode |
+| Modal header | Flagg + navn | Original kode (W97 etc.) | Original kode | Original kode |
+| Modal "Hvem kan komme?" | Flagg + navn + `(1E)` | Flagg-par + kode | Trestruktur med flagg | Trestruktur |
+
+**Merk om modal "Hvem kan komme?":** bruker `renderLeafWithPred(label, depth)` og `renderTreeWithPred(node, depth)` — original trestruktur bevart, krydret med prediksjons-flagg. Treere-kandidater (`thirdPlaceCandidates`) vises kun på dybde 0 (R32 direkte), dypere er de bare tekst.
+
+### CSS-klasser
+
+| Klasse | Bruk |
+|--------|------|
+| `.bracket-clinched-code` | Clinched-rad i bracket — kode full opacity, flagg dempet (plass ukjent) |
+| `.bracket-clinched` | Candidates-rad i bracket — skjuler navn/kode helt, bare flagg |
+| `.bracket-flag-double` | Flagg-wrapper for 2–4 flagg side om side |
+| `.tl-pred-clinched` | Timeline/VG — demper flagg og navn for clinched/candidates |
+| `.mko-paths` / `.mko-slot` / `.mko-match` | Modal "Hvem kan komme?"-seksjon (nytt layout) |
+| `.mko-label` / `.mko-code` | Label og kode-badge i modal-seksjonen |
+| `.mko-teams` / `.mko-team` / `.mko-leaf-team` | Lag-rader i modal-seksjonen |
+| `.mko-teams-certain` / `.mko-teams-candidates` | Variant-stiler for certain/candidates |
+| `.modal-third-candidate` | Rad med treer-kandidat (flagg + navn + stats) |
+| `.modal-third-header` | Header-etikett (`3C/D/F/G/H`) over kandidatradene |
+| `.modal-third-meta` | Gruppe + poeng + GD for treere |
+| `.modal-third-pending` | `…`-markering for treere som ikke er ferdigspilt |
+| `.modal-ko-pred-name` | Predikert lagnavn i trestrukturen |
+| `.modal-ko-pred-code` | Posisjonskode-badge ved siden av predikert navn |
+
+### Oppdatere lokale resultater
+
+`matches.json` har scores bakt inn slik at `dist/` fungerer via `file://` uten lokal server. Oppdater når nye resultater foreligger:
+
+```bash
+curl -s "https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json" -o /tmp/wc2026.json
+node /tmp/update-fixture.mjs
+node /tmp/patch-matches.mjs
+node build.js --test && node build.js
+```
+
+**`update-fixture.mjs`** — patcher scores fra API inn i `matches-test-group.json`:
+```js
+import { readFileSync, writeFileSync } from 'fs';
+const api     = JSON.parse(readFileSync('/tmp/wc2026.json', 'utf8'));
+const fixture = JSON.parse(readFileSync('src/data/matches-test-group.json', 'utf8'));
+const lookup  = {};
+for (const m of api.matches) lookup[`${m.date}|${m.team1}|${m.team2}`] = m;
+let updated = 0;
+for (const m of fixture.matches) {
+  if (m.num) continue;
+  const a = lookup[`${m.date}|${m.team1}|${m.team2}`];
+  if (a?.score) {
+    m.score = a.score;
+    if (a.goals1?.length) m.goals1 = a.goals1; else delete m.goals1;
+    if (a.goals2?.length) m.goals2 = a.goals2; else delete m.goals2;
+    updated++;
+  }
+}
+writeFileSync('src/data/matches-test-group.json', JSON.stringify(fixture, null, 1));
+console.log(`Oppdaterte ${updated} kamper.`);
+```
+
+**`patch-matches.mjs`** — kopierer scores fra fixture inn i `matches.json`:
+```js
+import { readFileSync, writeFileSync } from 'fs';
+const fixture = JSON.parse(readFileSync('src/data/matches-test-group.json', 'utf8'));
+const matches = JSON.parse(readFileSync('src/data/matches.json', 'utf8'));
+const lookup  = {};
+for (const m of fixture.matches) if (m.score) lookup[`${m.date}|${m.team1}|${m.team2}`] = m;
+let updated = 0;
+for (const m of matches.matches) {
+  const src = lookup[`${m.date}|${m.team1}|${m.team2}`];
+  if (src) {
+    m.score = src.score;
+    if (src.goals1?.length) m.goals1 = src.goals1; else delete m.goals1;
+    if (src.goals2?.length) m.goals2 = src.goals2; else delete m.goals2;
+    updated++;
+  }
+}
+writeFileSync('src/data/matches.json', JSON.stringify(matches, null, 1));
+console.log(`Patcha ${updated} kamper inn i matches.json.`);
+```
+
+Begge scripts kjøres fra prosjektroten (`fotball-vm/`). Lagres gjerne som filer under `scripts/` om de brukes hyppig.
+
+### Teste prediksjonen
+
+Test-builden (`node build.js --test`) bruker `matches-test-group.json` med ekte resultater (oppdatert fra openfootball API). Gruppe I viser `clinched`-nivå for `1I` og `2I` når Norge og Frankrike begge har klinket. Kamp #77 i sluttspillmodalen viser treere-kandidater for gruppe C, D, F, G, H.
+
+---
+
 ## Legge til en ny fane
 
 Fullstendig sjekkliste basert på "Rutenett"-fanen (juni 2026):

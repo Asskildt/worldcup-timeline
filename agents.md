@@ -193,6 +193,19 @@ Test fixtures: `matches-test-*.json` mirrors exactly what openfootball will deli
 - To test a specific scenario: `node build.js --test=r32` (see table above)
 - **Switch test scenario**: `node build.js --test=r32` → `node build.js --test=sf` etc. — always to `dist-test/`
 
+### Updating local results data
+
+`matches.json` contains match scores baked in so `dist/` works via `file://` without a server. Update when new results arrive:
+
+```bash
+curl -s "https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json" -o /tmp/wc2026.json
+node /tmp/update-fixture.mjs   # patches scores into matches-test-group.json
+node /tmp/patch-matches.mjs    # copies scores from fixture into matches.json
+node build.js --test && node build.js
+```
+
+The two helper scripts live in `/tmp/` — recreate them from `dev-patterns.md` (KO-bracket prediksjon section) if lost.
+
 ## Future improvements
 
 ### High priority

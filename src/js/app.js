@@ -934,6 +934,20 @@ function renderSlotTree(node) {
                 : (td.flag || '');
             return `<li class="modal-ko-leaf modal-ko-team">${flag}${teamName(node.label)}</li>`;
         }
+        // Posisjonskode — sjekk om det er en treere-kode med kandidater
+        const candidates = thirdPlaceCandidates(node.label);
+        if (candidates.length > 0) {
+            const rows = candidates.map(c => {
+                const gd = (c.gf - c.ga > 0 ? '+' : '') + (c.gf - c.ga);
+                const doneMarker = c.done ? '' : ' <span class="modal-third-pending">…</span>';
+                return `<li class="modal-ko-leaf modal-third-candidate">
+                    <span class="modal-third-flag">${c.flag}</span>
+                    <span class="modal-third-name">${teamName(c.name)}</span>
+                    <span class="modal-third-meta">Gr.${c.group} · ${c.pts}p · ${gd}${doneMarker}</span>
+                </li>`;
+            }).join('');
+            return `<li class="modal-ko-leaf modal-third-header">${node.label}</li>${rows}`;
+        }
         return `<li class="modal-ko-leaf">${node.label}</li>`;
     }
     if (node.type === 'match') {
@@ -960,6 +974,27 @@ function renderSlotTree(node) {
 // Sjekk om en kode er et ekte lagnavn (ikke en posisjonskode)
 function isUnresolvedCode(code) {
     return /^[WL]\d+$/.test(code) || /^\d[A-L]$/.test(code) || /^3[A-L\/]+$/.test(code);
+}
+
+// thirdPlaceCandidates(code) → array av { name, flag, pts, gf, ga, group, done }
+// For en "3X/Y/Z"-kode: returner gjeldende treer fra hver nevnte gruppe som har
+// spilt minst én kamp. 'done' = gruppen er ferdigspilt (treeren er endelig).
+function thirdPlaceCandidates(code) {
+    const tm = code.match(/^3([A-L\/]+)$/);
+    if (!tm) return [];
+    const groups = tm[1].split('/').filter(Boolean);
+    return groups.map(grp => {
+        const standings = getGroupStandings(grp);
+        if (standings.length < 3) return null;
+        const third = standings[2];
+        if (!third || third.played === 0) return null;
+        const td = TEAMS[third.name] || {};
+        const flag = td.flag_id
+            ? `<svg class="flag-svg" aria-hidden="true"><use href="#${td.flag_id}"/></svg>`
+            : (td.flag || '');
+        const done = standings.every(s => s.remaining === 0);
+        return { name: third.name, flag, pts: third.pts, gf: third.gf, ga: third.ga, group: grp, done };
+    }).filter(Boolean);
 }
 
 // ── Modal ─────────────────────────────────────────────────────────────────────
@@ -1019,6 +1054,10 @@ function openModal(m) {
     }
     const localT = localTime(m.t, st.tz);
 
+    // Prediksjon for uløste KO-koder i modal
+    // Brukes kun i "Hvem kan komme?"-seksjonen — headeren bruker alltid m.flag1/m.flag2
+    const rawMmodal = m.num != null ? MATCHES_RAW.find(r => r.num === m.num) : null;
+
     document.getElementById('modal-content').innerHTML = `
         <div class="modal-grp">${grpLabel}${numRef ? `<span class="modal-match-num"> · ${t('match_num')}${numRef}</span>` : ''}</div>
         <div class="modal-teams">
@@ -1063,40 +1102,119 @@ function openModal(m) {
         </div>
         ${(() => {
             if (m.type === 'g') return '';
-            // Bruk MATCHES_RAW for å sjekke opprinnelige koder — resolveKOTeams
-            // kan ha overskrevet team1/team2 i MATCHES med ekte lagnavn
-            const rawM = m.num != null ? MATCHES_RAW.find(r => r.num === m.num) : null;
+            const rawM = rawMmodal;
             const rawT1 = rawM ? rawM.team1 : m.team1;
             const rawT2 = rawM ? rawM.team2 : m.team2;
             const t1unresolved = isUnresolvedCode(rawT1);
             const t2unresolved = isUnresolvedCode(rawT2);
             if (!t1unresolved && !t2unresolved) return '';
 
-            function slotHtml(rawCode, resolvedName) {
+            // Kaller predictKOSlot direkte (ikke resolveSlotDisplay) — se kommentar
+            // om type-kontrakten der. slotHtml bruker original trestruktur og
+            // krydrer leaf-noder med flagg fra prediksjonen der det er mulig.
+            function slotHtml(rawCode) {
                 const tree = resolveSlotToTeams(rawCode);
                 const isLoser = /^L\d+$/.test(rawCode);
                 const prefix  = isLoser ? t('ko_loser_of') : t('ko_winner_of');
-                // Hvis allerede løst til kjent lagnavn — vis ikke seksjonen
+
+                // Kode er allerede løst til kjent lagnavn — vis ikke seksjonen
                 if (tree.type === 'leaf' && !isUnresolvedCode(tree.label)) return '';
+
+                // Bygg trestruktur — renderSlotTree håndterer treere og kjente lag.
+                // For koder (1A, 2I etc.) legger vi til prediksjons-flagg ved siden av.
+                // leafDepth: 0 = direkte R32-slot, 1+ = dypere (treere vises kun som tekst)
+                function renderLeafWithPred(label, leafDepth) {
+                    const td = TEAMS[label];
+                    if (td) {
+                        // Kjent lagnavn — flagg + navn (som i renderSlotTree)
+                        const flag = td.flag_id
+                            ? `<svg class="flag-svg" aria-hidden="true" style="height:.9em;width:1.2em;vertical-align:middle;margin-right:.25em"><use href="#${td.flag_id}"/></svg>`
+                            : (td.flag || '');
+                        return `<li class="modal-ko-leaf modal-ko-team">${flag}${teamName(label)}</li>`;
+                    }
+                    // Treere-kode — kandidater kun på dybde 0, ellers bare kode
+                    if (/^3[A-L\/]+$/.test(label)) {
+                        if (leafDepth === 0) {
+                            const candidates = thirdPlaceCandidates(label);
+                            if (candidates.length > 0) {
+                                const rows = candidates.map(c => {
+                                    const gd = (c.gf - c.ga > 0 ? '+' : '') + (c.gf - c.ga);
+                                    const doneMarker = c.done ? '' : ' <span class="modal-third-pending">…</span>';
+                                    return `<li class="modal-ko-leaf modal-third-candidate">
+                                        <span class="modal-third-flag">${c.flag}</span>
+                                        <span class="modal-third-name">${teamName(c.name)}</span>
+                                        <span class="modal-third-meta">Gr.${c.group} · ${c.pts}p · ${gd}${doneMarker}</span>
+                                    </li>`;
+                                }).join('');
+                                return `<li class="modal-ko-leaf modal-third-header">${label}</li>${rows}`;
+                            }
+                        }
+                        // Dypere ledd eller ingen kandidater — bare koden
+                        return `<li class="modal-ko-leaf">${label}</li>`;
+                    }
+                    // Gruppeposisjonskode (1A, 2I etc.) — vis kode med prediksjons-flagg
+                    const pred = predictKOSlot(label);
+                    if (pred?.type === 'certain') {
+                        const ptd = TEAMS[pred.name] || {};
+                        const pflag = ptd.flag_id
+                            ? `<svg class="flag-svg" aria-hidden="true" style="height:.8em;width:1.07em;vertical-align:middle;margin-right:.2em"><use href="#${ptd.flag_id}"/></svg>`
+                            : (ptd.flag || '');
+                        return `<li class="modal-ko-leaf modal-ko-team">${pflag}<span class="modal-ko-pred-name">${teamName(pred.name)}</span> <span class="modal-ko-pred-code">(${label})</span></li>`;
+                    }
+                    if (pred?.type === 'clinched') {
+                        const flags = pred.teams.map(n => {
+                            const ntd = TEAMS[n] || {};
+                            return ntd.flag_id
+                                ? `<svg class="flag-svg" aria-hidden="true" style="height:.8em;width:1.07em;vertical-align:middle;margin-right:.15em"><use href="#${ntd.flag_id}"/></svg>`
+                                : (ntd.flag || '');
+                        }).join('');
+                        return `<li class="modal-ko-leaf">${flags}<span class="modal-ko-pred-code">${label}</span></li>`;
+                    }
+                    // Ingen prediksjon — bare koden
+                    return `<li class="modal-ko-leaf">${label}</li>`;
+                }
+
+                // Rekursiv renderer. nodeDepth 0 = direkte barn av slotHtml (R32-nivå).
+                function renderTreeWithPred(node, nodeDepth) {
+                    if (!node) return '';
+                    if (node.type === 'leaf') return renderLeafWithPred(node.label, nodeDepth);
+                    if (node.type === 'match') {
+                        const roundLabel = (() => {
+                            const lm = MATCHES.find(x => x.num === node.num);
+                            if (!lm) return `#${node.num}`;
+                            const labels = { r32: t('grp_r32'), r16: t('grp_r16'), qf: t('grp_qf'), sf: t('grp_sf') };
+                            return labels[lm.type] || `#${node.num}`;
+                        })();
+                        const p = node.loser ? t('ko_loser_of') : t('ko_winner_of');
+                        return `<li class="modal-ko-group">
+                            <span class="modal-ko-group-label">${p} ${roundLabel}:</span>
+                            <ul class="modal-ko-slot-list modal-ko-slot-sublist">
+                                ${renderTreeWithPred(node.left,  nodeDepth + 1)}
+                                ${renderTreeWithPred(node.right, nodeDepth + 1)}
+                            </ul>
+                        </li>`;
+                    }
+                    return '';
+                }
+
                 if (tree.type === 'leaf') {
-                    // Enkel leaf med posisjonskode
                     return `<div class="modal-ko-slot">
                         <div class="modal-ko-slot-label">${prefix}</div>
-                        <ul class="modal-ko-slot-list"><li class="modal-ko-leaf">${tree.label}</li></ul>
+                        <ul class="modal-ko-slot-list">${renderLeafWithPred(tree.label, 0)}</ul>
                     </div>`;
                 }
                 return `<div class="modal-ko-slot">
                     <div class="modal-ko-slot-label">${prefix}</div>
                     <ul class="modal-ko-slot-list">
-                        ${renderSlotTree(tree.left)}
-                        ${renderSlotTree(tree.right)}
+                        ${renderTreeWithPred(tree.left,  0)}
+                        ${renderTreeWithPred(tree.right, 0)}
                     </ul>
                 </div>`;
             }
 
             const slots = [
-                t1unresolved ? slotHtml(rawT1, m.team1) : '',
-                t2unresolved ? slotHtml(rawT2, m.team2) : '',
+                t1unresolved ? slotHtml(rawT1) : '',
+                t2unresolved ? slotHtml(rawT2) : '',
             ].filter(Boolean).join('');
             if (!slots) return '';
 
@@ -2183,13 +2301,30 @@ function buildTimeline() {
             const footerHtml = !TL_COMPACT
                 ? `<div class="tl-match-footer">${city ? `<span class="tl-match-city">${city}</span>` : ''}${m.tv ? `<span class="tl-match-tv tl-tv-${m.tv.toLowerCase()}">${m.tv}</span>` : ''}</div>`
                 : '';
+
+            // Prediksjon for uløste KO-koder
+            const rawM = m.num != null ? MATCHES_RAW.find(r => r.num === m.num) : null;
+            const disp1 = m.type !== 'g' && !sc ? resolveSlotDisplay(rawM?.team1 ?? m.team1) : null;
+            const disp2 = m.type !== 'g' && !sc ? resolveSlotDisplay(rawM?.team2 ?? m.team2) : null;
+            const flag1 = disp1 ? disp1.flag : m.flag1;
+            const flag2 = disp2 ? disp2.flag : m.flag2;
+            // candidates og clinched: bare flagg, ingen navn
+            const name1 = disp1
+                ? (disp1.candidates || disp1.clinched ? disp1.name : teamName(disp1.name))
+                : teamName(m.team1);
+            const name2 = disp2
+                ? (disp2.candidates || disp2.clinched ? disp2.name : teamName(disp2.name))
+                : teamName(m.team2);
+            const predCls1 = disp1 ? (disp1.candidates || disp1.clinched ? ' tl-pred-clinched' : '') : '';
+            const predCls2 = disp2 ? (disp2.candidates || disp2.clinched ? ' tl-pred-clinched' : '') : '';
+
             block.innerHTML =
                 `<div class="tl-match-main">` +
                 `<span class="tl-match-time">${fmtT(toLocalT(m.t))}</span>` +
                 (viaLabel ? `<span class="tl-match-via">${viaLabel}</span>` : '') +
-                `<span class="tl-flag">${m.flag1}</span>` +
-                `<span class="tl-match-name">${teamName(m.team1)} v ${teamName(m.team2)}</span>` +
-                `<span class="tl-flag" style="margin-left:2px">${m.flag2}</span>` +
+                `<span class="tl-flag${predCls1}">${flag1}</span>` +
+                `<span class="tl-match-name">${name1} v ${name2}</span>` +
+                `<span class="tl-flag${predCls2}" style="margin-left:2px">${flag2}</span>` +
                 (sc ? `<span class="tl-match-score">${sc}</span>` : '') +
                 `</div>` +
                 footerHtml;
@@ -2568,18 +2703,33 @@ function buildVerticalGrid() {
             }
             block.title = m.flag1 + ' ' + teamName(m.team1) + ' v ' + teamName(m.team2) + ' ' + m.flag2 + ' — ' + fmtT(toLocalT(m.t)) + ' — ' + (st.name || m.ground);
 
-            const fifa1 = TEAMS[m.team1]?.code || m.team1.slice(0, 3).toUpperCase();
-            const fifa2 = TEAMS[m.team2]?.code || m.team2.slice(0, 3).toUpperCase();
-            const name1 = VG_COMPACT ? fifa1 : teamName(m.team1);
-            const name2 = VG_COMPACT ? fifa2 : teamName(m.team2);
+            // Prediksjon for uløste KO-koder
+            const rawMvg = m.num != null ? MATCHES_RAW.find(r => r.num === m.num) : null;
+            const vgDisp1 = m.type !== 'g' && !sc ? resolveSlotDisplay(rawMvg?.team1 ?? m.team1) : null;
+            const vgDisp2 = m.type !== 'g' && !sc ? resolveSlotDisplay(rawMvg?.team2 ?? m.team2) : null;
+            const vgFlag1 = vgDisp1 ? vgDisp1.flag : m.flag1;
+            const vgFlag2 = vgDisp2 ? vgDisp2.flag : m.flag2;
+            // candidates og clinched: bare flagg, ingen navn
+            const vgPredCls1 = vgDisp1 ? (vgDisp1.candidates || vgDisp1.clinched ? ' tl-pred-clinched' : '') : '';
+            const vgPredCls2 = vgDisp2 ? (vgDisp2.candidates || vgDisp2.clinched ? ' tl-pred-clinched' : '') : '';
+            const fifa1 = vgDisp1?.certain ? (TEAMS[vgDisp1.name]?.code || vgDisp1.name.slice(0,3).toUpperCase())
+                        : (TEAMS[m.team1]?.code || m.team1.slice(0, 3).toUpperCase());
+            const fifa2 = vgDisp2?.certain ? (TEAMS[vgDisp2.name]?.code || vgDisp2.name.slice(0,3).toUpperCase())
+                        : (TEAMS[m.team2]?.code || m.team2.slice(0, 3).toUpperCase());
+            const name1 = VG_COMPACT
+                ? (vgDisp1 ? (vgDisp1.candidates || vgDisp1.clinched ? vgDisp1.name.slice(0,3).toUpperCase() : (TEAMS[vgDisp1.name]?.code || vgDisp1.name.slice(0,3).toUpperCase())) : fifa1)
+                : (vgDisp1 ? (vgDisp1.candidates || vgDisp1.clinched ? vgDisp1.name : teamName(vgDisp1.name)) : teamName(m.team1));
+            const name2 = VG_COMPACT
+                ? (vgDisp2 ? (vgDisp2.candidates || vgDisp2.clinched ? vgDisp2.name.slice(0,3).toUpperCase() : (TEAMS[vgDisp2.name]?.code || vgDisp2.name.slice(0,3).toUpperCase())) : fifa2)
+                : (vgDisp2 ? (vgDisp2.candidates || vgDisp2.clinched ? vgDisp2.name : teamName(vgDisp2.name)) : teamName(m.team2));
 
             block.innerHTML =
                 '<div class="vg-match-time">' + fmtT(toLocalT(m.t)) + '</div>' +
                 (viaLabel ? '<div class="vg-via">' + viaLabel + '</div>' : '') +
                 (showNum  ? '<div class="vg-match-num">#' + m.num + '</div>' : '') +
-                '<div class="vg-match-teams"><span class="vg-flag">' + m.flag1 + '</span><span class="vg-team1">' + name1 + '</span></div>' +
+                '<div class="vg-match-teams"><span class="vg-flag' + vgPredCls1 + '">' + vgFlag1 + '</span><span class="vg-team1' + vgPredCls1 + '">' + name1 + '</span></div>' +
                 (sc ? '<div class="vg-score">' + sc + '</div>' : '<div class="vg-score-placeholder">v</div>') +
-                '<div class="vg-match-teams"><span class="vg-flag">' + m.flag2 + '</span><span class="vg-team2">' + name2 + '</span></div>' +
+                '<div class="vg-match-teams"><span class="vg-flag' + vgPredCls2 + '">' + vgFlag2 + '</span><span class="vg-team2' + vgPredCls2 + '">' + name2 + '</span></div>' +
                 (st.city || m.ground ? '<div class="vg-city">' + (st.city || m.ground) + '</div>' : '') +
                 (m.tv   ? '<div class="vg-tv tl-tv-' + m.tv.toLowerCase() + '">' + m.tv + '</div>' : '') +
                 (isLive ? '<div class="vg-live-badge">' + t('live') + '</div>' : '');
@@ -2838,9 +2988,10 @@ function buildTable() {
     const pastDates   = allDates.filter(d => isDayPast(d));
     const futureDates = allDates.filter(d => !isDayPast(d));
 
-    // Finn forrige kampdag (siste fortidsdag med faktiske kamper)
+    // Finn forrige kampdag (siste fortidsdag med faktiske kamper) — vises alltid
     const prevDate = [...pastDates].reverse().find(d => byDate[d]?.length > 0) || null;
-    const olderDates = ACTIVE_FILTER ? [] : pastDates.filter(d => d !== prevDate);
+    // Alt eldre enn forrige kampdag går bak "Last inn"-knappen
+    const olderDates = ACTIVE_FILTER ? [] : pastDates.filter(d => d !== prevDate && byDate[d]?.length > 0);
 
     function buildRows(dates, isPast, startFrom) {
         let html = '';
@@ -2973,7 +3124,7 @@ function buildTable() {
     if (ACTIVE_FILTER) {
         fullHtml += buildRows(pastDates, true, tournamentFirstDate);
     } else if (prevDate) {
-        fullHtml += buildRows([prevDate], true, tournamentFirstDate);
+        fullHtml += buildRows([prevDate], true);
     }
 
     // Fremtidige kamper — starter fra turneringens første dag når filter er på
@@ -3015,6 +3166,36 @@ function buildGroups() {
     MATCHES.filter(m => m.type === 'g').forEach(m => {
         if (!grpRegion[m.grp] && STADIUMS[m.v]?.region) grpRegion[m.grp] = STADIUMS[m.v].region;
     });
+
+    // Pre-beregn hvilke lag som er 100 % sikre ute
+    // 4.-plass i ferdigspilte grupper, og treere som ikke kom blant beste 8
+    // når alle grupper er ferdige.
+    const perGrpStandings = {};
+    Object.keys(grpMap).forEach(g => { perGrpStandings[g] = getGroupStandings(g); });
+
+    const eliminatedTeams = new Set();
+    Object.keys(grpMap).forEach(g => {
+        const gs = perGrpStandings[g];
+        // Lag er definitivt ute kun når alle 4 lag har spilt alle 3 gruppekampene sine
+        if (gs.length === 4 && gs.every(s => s.played >= 3))
+            eliminatedTeams.add(gs[3].name);
+    });
+    const allGroupsDone = Object.keys(grpMap).every(g => {
+        const gs = perGrpStandings[g];
+        return gs.length === 4 && gs.every(s => s.played >= 3);
+    });
+    if (allGroupsDone) {
+        Object.keys(grpMap)
+            .map(g => perGrpStandings[g][2])
+            .filter(Boolean)
+            .sort((a, b) => {
+                if (b.pts !== a.pts) return b.pts - a.pts;
+                if ((b.gf - b.ga) !== (a.gf - a.ga)) return (b.gf - b.ga) - (a.gf - a.ga);
+                return b.gf - a.gf;
+            })
+            .slice(8)
+            .forEach(t => eliminatedTeams.add(t.name));
+    }
 
     // Samle alle treere for å finne beste 4
     const allThirds = [];
@@ -3066,13 +3247,14 @@ function buildGroups() {
             const showFavHeart = HIGHLIGHTS_ON && isFav;
             const favHeart = showFavHeart ? '<i class="bi bi-heart-fill group-fav-heart"></i>' : '';
 
-            // Plasserings-farge: 1+2 = grønn, 3 = gul, 4 = rød
+            // Plasserings-farge: eliminert = grå, 1+2 = grønn, 3 = gul, 4 = rød (ikke avgjort)
             let posClass = '';
             let posIcon = '';
             if (hasResults) {
-                if (idx === 0 || idx === 1) { posClass = ' pos-advance'; posIcon = ''; }
-                else if (idx === 2)          { posClass = ' pos-third';   posIcon = ''; }
-                else                         { posClass = ' pos-out';     posIcon = ''; }
+                if (eliminatedTeams.has(team.name)) { posClass = ' pos-eliminated'; posIcon = ''; }
+                else if (idx === 0 || idx === 1)    { posClass = ' pos-advance';    posIcon = ''; }
+                else if (idx === 2)                 { posClass = ' pos-third';      posIcon = ''; }
+                else                                { posClass = ' pos-out';        posIcon = ''; }
             }
 
             html += `<div class="group-team${isNor}${posClass}" onclick="openTeamModal('${team.name}')">
@@ -3396,32 +3578,57 @@ function buildBracket() {
         const isCode1 = rawT1.match(/^[WL]\d+$/) || rawT1.match(/^[123][A-L]/) || rawT1.match(/^3[A-L\/]+$/);
         const isCode2 = rawT2.match(/^[WL]\d+$/) || rawT2.match(/^[123][A-L]/) || rawT2.match(/^3[A-L\/]+$/);
 
-        // Vis FIFA-kode (3 bokstavar) eller kortform av posisjonskoden
-        const label1 = isCode1 ? rawT1 : (TEAMS[rawT1]?.fifa_code || rawT1.slice(0, 3).toUpperCase());
-        const label2 = isCode2 ? rawT2 : (TEAMS[rawT2]?.fifa_code || rawT2.slice(0, 3).toUpperCase());
-        const flag1  = isCode1 ? '' : m.flag1;
-        const flag2  = isCode2 ? '' : m.flag2;
+        // Prediksjon via resolveSlotDisplay — håndterer certain/clinched/candidates/null
+        const disp1 = isCode1 && !sc?.ft ? resolveSlotDisplay(rawT1) : null;
+        const disp2 = isCode2 && !sc?.ft ? resolveSlotDisplay(rawT2) : null;
 
-        const isNorway    = rawT1 === 'Norway' || rawT2 === 'Norway';
-        const isFavMatch  = HIGHLIGHTS_ON && !isNorway &&
-            (FAVORITE_TEAMS.includes(rawT1) || FAVORITE_TEAMS.includes(rawT2));
-        const isNorwayHl  = HIGHLIGHTS_ON && isNorway;
+        // Effektive lag for filter/highlight/Norway-sjekk
+        const dispTeams1 = disp1?.teams ?? (isCode1 ? [] : [rawT1]);
+        const dispTeams2 = disp2?.teams ?? (isCode2 ? [] : [rawT2]);
+        const allDispNames = [...dispTeams1, ...dispTeams2];
 
-        // Filter-dimming: dempe kort som ikke er relevante for aktivt filter
+        const isPred1     = !!disp1;
+        const isPred2     = !!disp2;
+        const isClinched1 = disp1?.clinched   || false;
+        const isClinched2 = disp2?.clinched   || false;
+        const isCandidates1 = disp1?.candidates || false;
+        const isCandidates2 = disp2?.candidates || false;
+
+        // ── Label ─────────────────────────────────────────────────────────────
+        // certain    → FIFA-kode
+        // clinched   → posisjonskode ("1I")
+        // candidates → tomt (bare flagg)
+        // ingen      → original kode
+        const label1 = isCode1
+            ? (disp1?.candidates ? '' : disp1 ? (TEAMS[disp1.name]?.fifa_code || disp1.name.slice(0,3).toUpperCase() || '') : rawT1)
+            : (TEAMS[rawT1]?.fifa_code || rawT1.slice(0,3).toUpperCase());
+        const label2 = isCode2
+            ? (disp2?.candidates ? '' : disp2 ? (TEAMS[disp2.name]?.fifa_code || disp2.name.slice(0,3).toUpperCase() || '') : rawT2)
+            : (TEAMS[rawT2]?.fifa_code || rawT2.slice(0,3).toUpperCase());
+
+        // ── Flagg ─────────────────────────────────────────────────────────────
+        const flag1 = disp1 ? disp1.flag : (isCode1 ? '' : m.flag1);
+        const flag2 = disp2 ? disp2.flag : (isCode2 ? '' : m.flag2);
+
+        const isNorway   = allDispNames.includes('Norway');
+        const isFavMatch = HIGHLIGHTS_ON && !isNorway && allDispNames.some(n => FAVORITE_TEAMS.includes(n));
+        const isNorwayHl = HIGHLIGHTS_ON && isNorway;
+
+        // Filter-dimming
         const isFilterActive = !!ACTIVE_FILTER;
         let isDimmed = false;
         if (isFilterActive) {
             if (ACTIVE_FILTER.type === 'team') {
-                isDimmed = rawT1 !== ACTIVE_FILTER.value && rawT2 !== ACTIVE_FILTER.value
+                isDimmed = !allDispNames.includes(ACTIVE_FILTER.value)
                     && !activePotentialNums.has(m.num);
             } else if (ACTIVE_FILTER.type === 'group') {
                 const grpTeams = Object.entries(TEAMS)
                     .filter(([, td]) => !td._alias && td.group === ACTIVE_FILTER.value)
                     .map(([n]) => n);
-                isDimmed = !grpTeams.some(n => rawT1 === n || rawT2 === n)
+                isDimmed = !grpTeams.some(n => allDispNames.includes(n))
                     && !activePotentialNums.has(m.num);
             } else if (ACTIVE_FILTER.type === 'favorites') {
-                isDimmed = !FAVORITE_TEAMS.some(n => rawT1 === n || rawT2 === n)
+                isDimmed = !FAVORITE_TEAMS.some(n => allDispNames.includes(n))
                     && !activePotentialNums.has(m.num);
             }
         }
@@ -3436,14 +3643,18 @@ function buildBracket() {
         ].filter(Boolean).join(' ');
 
         const t1Cls = ['bracket-team team1',
-            winner === 'team1' ? 'bracket-winner' : '',
-            loser  === 'team1' ? 'bracket-loser'  : '',
-            rawT1 === 'Norway' ? 'bracket-norway'  : '',
+            winner === 'team1'                  ? 'bracket-winner'       : '',
+            loser  === 'team1'                  ? 'bracket-loser'        : '',
+            dispTeams1.includes('Norway')        ? 'bracket-norway'      : '',
+            isClinched1                          ? 'bracket-clinched-code': '',
+            isCandidates1                        ? 'bracket-clinched'     : '',
         ].filter(Boolean).join(' ');
         const t2Cls = ['bracket-team team2',
-            winner === 'team2' ? 'bracket-winner' : '',
-            loser  === 'team2' ? 'bracket-loser'  : '',
-            rawT2 === 'Norway' ? 'bracket-norway'  : '',
+            winner === 'team2'                  ? 'bracket-winner'       : '',
+            loser  === 'team2'                  ? 'bracket-loser'        : '',
+            dispTeams2.includes('Norway')        ? 'bracket-norway'      : '',
+            isClinched2                          ? 'bracket-clinched-code': '',
+            isCandidates2                        ? 'bracket-clinched'     : '',
         ].filter(Boolean).join(' ');
 
         let typeBadge = '';
@@ -3451,8 +3662,15 @@ function buildBracket() {
         if (m.num === 104) typeBadge = '<span class="bracket-type-badge badge-fin">FIN</span>';
 
         const timeStr = m.t != null ? fmtT(m.t) : '';
-        const fullName1 = isCode1 ? rawT1 : rawT1;
-        const fullName2 = isCode2 ? rawT2 : rawT2;
+        // Tooltip
+        const fullName1 = disp1?.candidates ? disp1.teams.join(' / ')
+                        : disp1?.clinched   ? disp1.teams.join(' / ') + ` (${disp1.name})`
+                        : disp1             ? disp1.name
+                        : rawT1;
+        const fullName2 = disp2?.candidates ? disp2.teams.join(' / ')
+                        : disp2?.clinched   ? disp2.teams.join(' / ') + ` (${disp2.name})`
+                        : disp2             ? disp2.name
+                        : rawT2;
 
         const numStr  = m.num != null ? `#${m.num}` : '';
         const dateStr = m.day && m.date ? `${m.day} ${m.date}` : '';
@@ -3483,15 +3701,25 @@ function buildBracket() {
             ${typeBadge}
             ${matchHeader}
             <div class="${t1Cls}">
-                ${flag1 ? `<span class="bracket-flag">${flag1}</span>` : ''}
-                <span class="bracket-name">${label1}</span>
-                <span class="bracket-flag-code">${label1}</span>
+                ${(isClinched1 || isCandidates1)
+                    ? `<span class="bracket-name">${label1}</span>` +
+                      `<span class="bracket-flag-code">${label1}</span>` +
+                      (flag1 ? `<span class="bracket-flag bracket-flag-double">${flag1}</span>` : '')
+                    : (flag1 ? `<span class="bracket-flag">${flag1}</span>` : '') +
+                      `<span class="bracket-name">${label1}</span>` +
+                      `<span class="bracket-flag-code">${label1}</span>`
+                }
                 <span class="bracket-score">${s1}</span>
             </div>
             <div class="${t2Cls}">
-                ${flag2 ? `<span class="bracket-flag">${flag2}</span>` : ''}
-                <span class="bracket-name">${label2}</span>
-                <span class="bracket-flag-code">${label2}</span>
+                ${(isClinched2 || isCandidates2)
+                    ? `<span class="bracket-name">${label2}</span>` +
+                      `<span class="bracket-flag-code">${label2}</span>` +
+                      (flag2 ? `<span class="bracket-flag bracket-flag-double">${flag2}</span>` : '')
+                    : (flag2 ? `<span class="bracket-flag">${flag2}</span>` : '') +
+                      `<span class="bracket-name">${label2}</span>` +
+                      `<span class="bracket-flag-code">${label2}</span>`
+                }
                 <span class="bracket-score">${s2}</span>
             </div>
             ${footerFull}${footerTiny}
@@ -4101,6 +4329,252 @@ function buildNorwaySchedule() {
 // Bracket-logikk: 1I → R32 #77, 2I → R32 #78
 function getNorwayPotentialMatches() {
     return getNorwayPotentialMatchesForTeam('Norway');
+}
+
+// ── Bracket-prediksjon ────────────────────────────────────────────────────────
+// getGroupStandings(grp) → [{ name, pts, gf, ga, played, remaining }, ...]
+// Returnerer sortert gruppestabell (poeng → målforskjell → mål scoret).
+// Lag uten noen kamper spilt får alle felter som 0.
+function getGroupStandings(grp) {
+    const st = {};
+    // Initialiser alle lag i gruppen
+    Object.entries(TEAMS).forEach(([name, td]) => {
+        if (!td._alias && td.group === grp) {
+            st[name] = { name, pts: 0, gf: 0, ga: 0, played: 0, remaining: 0 };
+        }
+    });
+    MATCHES.filter(m => m.type === 'g' && m.grp === grp).forEach(m => {
+        if (!st[m.team1]) st[m.team1] = { name: m.team1, pts: 0, gf: 0, ga: 0, played: 0, remaining: 0 };
+        if (!st[m.team2]) st[m.team2] = { name: m.team2, pts: 0, gf: 0, ga: 0, played: 0, remaining: 0 };
+        if (m.score?.ft) {
+            const [s1, s2] = m.score.ft;
+            st[m.team1].gf += s1; st[m.team1].ga += s2; st[m.team1].played++;
+            st[m.team2].gf += s2; st[m.team2].ga += s1; st[m.team2].played++;
+            if (s1 > s2)      st[m.team1].pts += 3;
+            else if (s1 < s2) st[m.team2].pts += 3;
+            else              { st[m.team1].pts++; st[m.team2].pts++; }
+        } else {
+            st[m.team1].remaining++;
+            st[m.team2].remaining++;
+        }
+    });
+    return Object.values(st).sort((a, b) => {
+        if (b.pts !== a.pts)                       return b.pts - a.pts;
+        if ((b.gf - b.ga) !== (a.gf - a.ga))      return (b.gf - b.ga) - (a.gf - a.ga);
+        return b.gf - a.gf;
+    });
+}
+
+// predictKOSlot(code) → prediksjons-objekt eller null
+//
+// Returnerer ett av fire typer:
+//   null
+//   { type: 'certain',    name }
+//   { type: 'clinched',   code, teams: [n1, n2] }
+//   { type: 'candidates', teams: [n, ...] }        // 2–4 kjente lag fra W-kode-rekursjon
+//
+// Regler:
+//   W<num> (kamp ikke spilt) → løses rekursivt via _collectCandidates.
+//     Returnerer candidates kun hvis alle kandidater er kjente (ingen uløste koder)
+//     og antall er 2–4. Ellers null.
+//   W<num> (kamp spilt)  → certain/null
+//   L<num>               → certain/null (kun 3.-plassmatch)
+//   "1A"–"2L" (ferdig)   → certain
+//   "1A"–"2L" (pågår)    → certain (én klinket) eller clinched (begge klinket, plass ukjent)
+//   "3A/B/…"             → alltid null (treere, for komplekst å spå)
+//
+// depth sendes gjennom _collectCandidates og begrenses til 6 totalt.
+function predictKOSlot(code, depth) {
+    if (!code || (depth || 0) > 6) return null;
+
+    // ── W<num> — vinneren av en KO-kamp ──────────────────────────────────────
+    const wm = code.match(/^W(\d+)$/);
+    if (wm) {
+        const num  = parseInt(wm[1], 10);
+        const live = MATCHES.find(m => m.num === num);
+        if (!live) return null;
+
+        // Kamp spilt — returner faktisk vinner (certain)
+        if (live.score?.ft) {
+            const [g1, g2] = live.score.ft;
+            if (g1 > g2) return { type: 'certain', name: live.team1 };
+            if (g2 > g1) return { type: 'certain', name: live.team2 };
+            if (live.score.p) return {
+                type: 'certain',
+                name: live.score.p[0] > live.score.p[1] ? live.team1 : live.team2
+            };
+            return null;
+        }
+
+        // Kamp ikke spilt — samle kandidater fra begge sider rekursivt
+        const rawM = MATCHES_RAW.find(m => m.num === num);
+        if (!rawM) return null;
+
+        const left  = _collectCandidates(rawM.team1, (depth || 0) + 1);
+        const right = _collectCandidates(rawM.team2, (depth || 0) + 1);
+
+        const teams = [...new Set([...left.teams, ...right.teams])];
+        const hasUnresolved = left.hasUnresolved || right.hasUnresolved;
+        const unresolvedCode = left.unresolvedCode || right.unresolvedCode || null;
+
+        if (teams.length === 0) return null;
+        if (teams.length > 4)   return null; // for mange — vis ingenting
+        if (hasUnresolved)      return null; // ukjente kandidater — bildet er ufullstendig
+
+        // 1 lag uten uløste → certain, 2–4 lag → candidates
+        if (teams.length === 1) return { type: 'certain', name: teams[0] };
+        return { type: 'candidates', teams };
+    }
+
+    // ── L<num> — taperen av en KO-kamp (3.-plassmatch) ───────────────────────
+    const lm = code.match(/^L(\d+)$/);
+    if (lm) {
+        const num  = parseInt(lm[1], 10);
+        const live = MATCHES.find(m => m.num === num);
+        if (!live?.score?.ft) return null;
+        const [g1, g2] = live.score.ft;
+        if (g1 > g2) return { type: 'certain', name: live.team2 };
+        if (g2 > g1) return { type: 'certain', name: live.team1 };
+        if (live.score.p) return {
+            type: 'certain',
+            name: live.score.p[0] > live.score.p[1] ? live.team2 : live.team1
+        };
+        return null;
+    }
+
+    // ── Gruppeposisjon: "1A"–"2L" ─────────────────────────────────────────────
+    const gm = code.match(/^([12])([A-L])$/);
+    if (gm) {
+        const pos = parseInt(gm[1], 10) - 1;
+        const grp = gm[2];
+        const standings = getGroupStandings(grp);
+        if (!standings.length) return null;
+
+        const allDone = standings.every(s => s.remaining === 0);
+        if (allDone) {
+            return standings[pos]?.name ? { type: 'certain', name: standings[pos].name } : null;
+        }
+
+        const fourth = standings[3];
+        if (!fourth) return null;
+        // Klinket-betingelse: laget er garantert topp-2 hvis:
+        //   1. det har strikt mer poeng enn 4. plass kan nå maks, ELLER
+        //   2. det har strikt mer poeng enn 3. plass kan nå maks
+        //      (tryggere terskel — 3. plass er den reelle konkurrenten om en topp-2-plass)
+        // I tillegg: hvis 3. plass kan matche poengmessig, krever vi at laget
+        // har et GD-forsprang på minst 5 mål til nærmeste utfordrer som poengmessig
+        // kan true (konservativ sikkerhetsmargin for tiebreaker-risiko).
+        const thirdEntry  = standings[2];
+        const thirdMaxPts = thirdEntry.pts + thirdEntry.remaining * 3;
+        const fourthMaxPts = fourth.pts + fourth.remaining * 3;
+        const top2 = standings.slice(0, 2);
+        const myPts  = top2[pos]?.pts;
+        const myGD   = (top2[pos]?.gf || 0) - (top2[pos]?.ga || 0);
+
+        // Sjekk: kan noen under topp-2 innhente på poeng?
+        const ptsAbsolute = myPts > thirdMaxPts;  // ingen kan nå opp på poeng
+        // Fallback: ok på poeng mot 4. plass men ikke 3. — krev GD-buffer
+        const ptsAgainst4 = myPts > fourthMaxPts;
+        const gdBuffer    = myGD - ((thirdEntry.gf || 0) - (thirdEntry.ga || 0)) >= 5;
+
+        const thisClinched = ptsAbsolute || (ptsAgainst4 && gdBuffer);
+        if (!thisClinched) return null;
+
+        const bothClinched = top2.every(s => {
+            const sGD  = (s.gf || 0) - (s.ga || 0);
+            const sAbs = s.pts > thirdMaxPts;
+            const sGDB = s.pts > fourthMaxPts && (sGD - ((thirdEntry.gf || 0) - (thirdEntry.ga || 0)) >= 5);
+            return sAbs || sGDB;
+        });
+        if (bothClinched) {
+            return { type: 'clinched', code, teams: [top2[0].name, top2[1].name] };
+        } else {
+            return { type: 'certain', name: top2[pos].name };
+        }
+    }
+
+    // ── Beste treer: aldri spådd ───────────────────────────────────────────────
+    if (code.match(/^3[A-L\/]+$/)) return null;
+
+    return null;
+}
+
+// _collectCandidates(code, depth) → { teams: string[], hasUnresolved: bool }
+// Intern hjelpefunksjon — samler alle kjente lag som kan fylle en gitt slot.
+// hasUnresolved = true betyr at det finnes ukjente kandidater (treere, uavklarte grupper).
+// Brukes rekursivt av predictKOSlot for W-koder.
+// depth deles med predictKOSlot — begge stopper ved > 6.
+function _collectCandidates(code, depth) {
+    if (!code || depth > 6) return { teams: [], hasUnresolved: false };
+
+    const pred = predictKOSlot(code, depth);
+
+    if (!pred) {
+        // Uløst kode — treere, uavklarte gruppeposisjoner eller W/L-koder uten nok data
+        const hasUnresolved = /^3[A-L\/]+$/.test(code) || /^[12][A-L]$/.test(code) || /^[WL]\d+$/.test(code);
+        return { teams: [], hasUnresolved };
+    }
+
+    if (pred.type === 'certain')    return { teams: [pred.name],  hasUnresolved: false };
+    if (pred.type === 'clinched')   return { teams: pred.teams,   hasUnresolved: false };
+    if (pred.type === 'candidates') return { teams: pred.teams,   hasUnresolved: false };
+
+    return { teams: [], hasUnresolved: false };
+}
+
+// resolveSlotDisplay(rawCode) → visningsdata for bracket/timeline/VG/modal
+// Returnerer null dersom ingen prediksjon er mulig.
+// Returnert objekt:
+//   { flag, name, predicted, clinched, candidates }
+//   flag:       HTML-streng med ett eller flere flagg-SVGer
+//   name:       visningsnavn (lagnavn, posisjonskode, eller tomt for candidates)
+//   predicted:  true for certain/clinched/candidates
+//   clinched:   true for clinched (plass ukjent mellom to lag)
+//   candidates: true for candidates-type (1–4 flagg, ingen lagnavn)
+//   teams:      array med lagnavn (for certain/clinched/candidates)
+function resolveSlotDisplay(rawCode) {
+    if (!isUnresolvedCode(rawCode)) return null;
+    const pred = predictKOSlot(rawCode);
+    if (!pred) return null;
+
+    function teamFlag(name) {
+        const td = TEAMS[name];
+        return td?.flag_id
+            ? `<svg class="flag-svg" aria-hidden="true"><use href="#${td.flag_id}"/></svg>`
+            : (td?.flag || '');
+    }
+
+    if (pred.type === 'certain') {
+        return {
+            flag:       teamFlag(pred.name),
+            name:       pred.name,
+            predicted:  true,
+            clinched:   false,
+            candidates: false,
+            teams:      [pred.name],
+        };
+    }
+    if (pred.type === 'clinched') {
+        return {
+            flag:       pred.teams.map(teamFlag).join(''),
+            name:       pred.code,
+            predicted:  true,
+            clinched:   true,
+            candidates: false,
+            teams:      pred.teams,
+        };
+    }
+    if (pred.type === 'candidates') {
+        return {
+            flag:           pred.teams.map(teamFlag).join(''),
+            name:           '',
+            predicted:      true,
+            clinched:       false,
+            candidates:     true,
+            teams:          pred.teams,
+        };
+    }
+    return null;
 }
 
 // ── Bracket-analyse ───────────────────────────────────────────────────────────

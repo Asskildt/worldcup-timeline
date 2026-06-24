@@ -859,9 +859,10 @@ tr.tr-rest-day td { border-bottom: 1px solid var(--border); padding: 0 0.5rem !i
 .tc-rest-day-line::after { content: ''; display: block; border-top: 1px dashed var(--border); margin: 0 8px; }
 
 /* ── Grupper — plasserings-farger ──────────────────────────────────────────── */
-.group-team.pos-advance { border-left-color: #22c55e; }
-.group-team.pos-third   { border-left-color: #eab308; }
-.group-team.pos-out     { border-left-color: #ef4444; opacity: .75; }
+.group-team.pos-advance  { border-left-color: #22c55e; }
+.group-team.pos-third    { border-left-color: #eab308; }
+.group-team.pos-out      { border-left-color: #ef4444; }
+.group-team.pos-eliminated { border-left-color: #ef4444; opacity: .4; }
 .group-team.norway-team { background: var(--norway-dim); }
 
 /* ── Beste treere — accordion ──────────────────────────────────────────────── */
@@ -2012,6 +2013,47 @@ tr.tr-potential td { font-style: italic; }
 }
 .bracket-norway .bracket-name { color: var(--norway-hi); }
 
+/* Spådd lag — certain: klinket og plass kjent, vis normalt */
+/* Clinched (plass ukjent): kode synlig med full opacity, flagg dempet og etter koden */
+.bracket-clinched-code .bracket-name {
+    opacity: 1;
+    color: var(--text);
+}
+.bracket-clinched-code .bracket-flag-code {
+    opacity: 1;
+    color: var(--text);
+}
+.bracket-clinched-code .bracket-flag {
+    opacity: .55;
+}
+
+/* Candidates (2–4 flagg fra W-rekursjon, ingen label): skjul tekst, dempe flagg */
+.bracket-clinched .bracket-name,
+.bracket-clinched .bracket-flag-code {
+    display: none;
+}
+.bracket-clinched .bracket-flag {
+    opacity: .6;
+}
+
+/* Timeline og vertikalt rutenett — predicted-stiler */
+.tl-pred-clinched {
+    opacity: .6;
+}
+
+/* Flagg-wrapper for 2–4 flagg side om side (clinched + candidates) */
+.bracket-flag-double {
+    width: auto;
+    gap: .08rem;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+.bracket-flag-double .flag-svg {
+    width: .85em;
+    height: .64em;
+}
+
 .bracket-meta {
     font-family: 'Space Mono', monospace;
     font-size: .42rem;
@@ -2619,6 +2661,7 @@ tr.tr-potential td { font-style: italic; }
 
 
 /* ── KO-baner: "Hvem kan komme hit?" ─────────────────────────────────────── */
+/* Gammel .modal-ko-paths-seksjonen beholdes for kompatibilitet med renderSlotTree-fallback */
 .modal-ko-paths {
     margin-top: .75rem;
     padding: .55rem .65rem;
@@ -2652,6 +2695,151 @@ tr.tr-potential td { font-style: italic; }
     flex-direction: column;
     gap: .2rem;
 }
+
+/* ── Ny mko-* layout for "Hvem kan komme hit?" ───────────────────────────── */
+.mko-paths {
+    margin-top: .75rem;
+    padding: .5rem .6rem;
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--border-mid);
+    border-radius: 2px;
+}
+[data-theme="light"] .mko-paths {
+    background: rgba(0,0,0,.03);
+}
+.mko-title {
+    font-family: 'Space Mono', monospace;
+    font-size: .56rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    margin-bottom: .4rem;
+}
+.mko-paths-two {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .4rem 1rem;
+    align-items: start;
+}
+.mko-paths-two .mko-title {
+    grid-column: 1 / -1;
+    margin-bottom: .1rem;
+}
+.mko-slot {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+}
+.mko-label {
+    font-family: 'Space Mono', monospace;
+    font-size: .54rem;
+    font-weight: 700;
+    color: var(--text-sec);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+.mko-code {
+    opacity: .65;
+    font-weight: 400;
+}
+/* Lag-container: horisontal rad med flagg + navn */
+.mko-teams {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .3rem .5rem;
+}
+.mko-team {
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+}
+/* certain: ett lag, litt mer prominent */
+.mko-teams-certain .mko-name {
+    font-size: .78rem;
+    color: var(--text);
+}
+.mko-teams-certain .mko-flag {
+    height: .95em;
+    width: 1.27em;
+}
+/* clinched: to lag side om side */
+.mko-name {
+    font-size: .72rem;
+    color: var(--text-sec);
+}
+.mko-flag {
+    height: .85em;
+    width: 1.13em;
+    display: inline-block;
+    vertical-align: middle;
+}
+/* candidates: bare flagg, ingen navn — kompakt rad */
+.mko-teams-candidates {
+    gap: .2rem;
+}
+.mko-teams-candidates .mko-flag {
+    height: 1em;
+    width: 1.35em;
+}
+
+/* Hierarki-treet for W-koder — rekursivt, med flagg og "vs" */
+.mko-match {
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+    margin-top: .1rem;
+}
+.mko-match-indent {
+    padding-left: .6rem;
+    border-left: 1px solid var(--border-mid);
+    margin-top: .2rem;
+}
+.mko-match-label {
+    font-family: 'Space Mono', monospace;
+    font-size: .52rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+.mko-match-sides {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .2rem .4rem;
+}
+.mko-match-side {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .15rem;
+}
+.mko-leaf-team {
+    display: inline-flex;
+    align-items: center;
+    gap: .2rem;
+    white-space: nowrap;
+}
+.mko-vs {
+    font-family: 'VT323', monospace;
+    font-size: 1rem;
+    color: var(--muted);
+    opacity: .5;
+    flex-shrink: 0;
+}
+.mko-third-code {
+    font-family: 'Space Mono', monospace;
+    font-size: .52rem;
+    color: var(--muted);
+    letter-spacing: .02em;
+    opacity: .7;
+}
+.mko-third-expanded {
+    margin-top: .1rem;
+}
+
+
 .modal-ko-slot-label {
     font-family: 'Space Mono', monospace;
     font-size: .56rem;
@@ -2710,3 +2898,61 @@ tr.tr-potential td { font-style: italic; }
 }
 /* Kjente lagnavn i listen — litt lysere */
 .modal-ko-leaf.modal-ko-team { color: var(--text-sec) !important; }
+/* Klinket men plass ukjent — litt dempet */
+.modal-ko-leaf.modal-ko-team-clinched { color: var(--text-sec) !important; opacity: .7; }
+/* Klinket i modal-teams-header (to lagnavn) */
+.modal-name-clinched { opacity: .8; font-size: .85em; }
+
+/* Prediksjons-lagnavn og kode-badge ved siden av hverandre i trestrukturen */
+.modal-ko-pred-name { color: var(--text-sec); }
+.modal-ko-pred-code {
+    font-family: 'Space Mono', monospace;
+    font-size: .55em;
+    color: var(--muted);
+    opacity: .7;
+    margin-left: .3em;
+}
+
+/* Treere-kandidater i modal — flagg + navn + meta kompakt */
+.modal-third-header {
+    color: var(--muted) !important;
+    font-family: 'Space Mono', monospace;
+    font-size: .6rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    padding-top: .3rem;
+    opacity: .7;
+}
+.modal-third-header::before { display: none !important; }
+.modal-third-candidate {
+    display: flex !important;
+    align-items: center;
+    gap: .35rem;
+    padding: .15rem 0;
+    color: var(--text-sec) !important;
+}
+.modal-third-candidate::before { display: none !important; }
+.modal-third-flag {
+    flex-shrink: 0;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+}
+.modal-third-flag .flag-svg {
+    width: 1.15em;
+    height: .86em;
+}
+.modal-third-name {
+    flex: 1;
+    font-size: .75rem;
+}
+.modal-third-meta {
+    font-family: 'Space Mono', monospace;
+    font-size: .58rem;
+    color: var(--muted);
+    white-space: nowrap;
+}
+.modal-third-pending {
+    color: var(--muted);
+    opacity: .6;
+}

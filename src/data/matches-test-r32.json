@@ -1,826 +1,2377 @@
-{"name": "World Cup 2026",
- "matches": 
-  [{"round": "Matchday 1",
-    "date": "2026-06-11",
-    "time": "13:00 UTC-6",
-    "team1": "Mexico",
-    "team2": "South Africa",
-    "group": "Group A",
-    "ground": "Mexico City",
-    "score": {"ft": [2, 1]}},
-   {"round": "Matchday 1",
-    "date": "2026-06-11",
-    "time": "20:00 UTC-6",
-    "team1": "South Korea",
-    "team2": "Czech Republic",
-    "group": "Group A",
-    "ground": "Guadalajara (Zapopan)",
-    "score": {"ft": [0, 1]}},
-   {"round": "Matchday 8",
-    "date": "2026-06-18",
-    "time": "12:00 UTC-4",
-    "team1": "Czech Republic",
-    "team2": "South Africa",
-    "group": "Group A",
-    "ground": "Atlanta",
-    "score": {"ft": [1, 0]}},
-   {"round": "Matchday 8",
-    "date": "2026-06-18",
-    "time": "19:00 UTC-6",
-    "team1": "Mexico",
-    "team2": "South Korea",
-    "group": "Group A",
-    "ground": "Guadalajara (Zapopan)",
-    "score": {"ft": [1, 1]}},
-   {"round": "Matchday 14",
-    "date": "2026-06-24",
-    "time": "19:00 UTC-6",
-    "team1": "Czech Republic",
-    "team2": "Mexico",
-    "group": "Group A",
-    "ground": "Mexico City",
-    "score": {"ft": [0, 1]}},
-   {"round": "Matchday 14",
-    "date": "2026-06-24",
-    "time": "19:00 UTC-6",
-    "team1": "South Africa",
-    "team2": "South Korea",
-    "group": "Group A",
-    "ground": "Monterrey (Guadalupe)",
-    "score": {"ft": [1, 2]}},
-   {"round": "Matchday 2",
-    "date": "2026-06-12",
-    "time": "15:00 UTC-4",
-    "team1": "Canada",
-    "team2": "Bosnia & Herzegovina",
-    "group": "Group B",
-    "ground": "Toronto",
-    "score": {"ft": [3, 0]}},
-   {"round": "Matchday 3",
-    "date": "2026-06-13",
-    "time": "12:00 UTC-7",
-    "team1": "Qatar",
-    "team2": "Switzerland",
-    "group": "Group B",
-    "ground": "San Francisco Bay Area (Santa Clara)",
-    "score": {"ft": [0, 2]}},
-   {"round": "Matchday 8",
-    "date": "2026-06-18",
-    "time": "12:00 UTC-7",
-    "team1": "Switzerland",
-    "team2": "Bosnia & Herzegovina",
-    "group": "Group B",
-    "ground": "Los Angeles (Inglewood)",
-    "score": {"ft": [2, 0]}},
-   {"round": "Matchday 8",
-    "date": "2026-06-18",
-    "time": "15:00 UTC-7",
-    "team1": "Canada",
-    "team2": "Qatar",
-    "group": "Group B",
-    "ground": "Vancouver",
-    "score": {"ft": [2, 0]}},
-   {"round": "Matchday 14",
-    "date": "2026-06-24",
-    "time": "12:00 UTC-7",
-    "team1": "Switzerland",
-    "team2": "Canada",
-    "group": "Group B",
-    "ground": "Vancouver",
-    "score": {"ft": [1, 2]}},
-   {"round": "Matchday 14",
-    "date": "2026-06-24",
-    "time": "12:00 UTC-7",
-    "team1": "Bosnia & Herzegovina",
-    "team2": "Qatar",
-    "group": "Group B",
-    "ground": "Seattle",
-    "score": {"ft": [2, 0]}},
-   {"round": "Matchday 3",
-    "date": "2026-06-13",
-    "time": "18:00 UTC-4",
-    "team1": "Brazil",
-    "team2": "Morocco",
-    "group": "Group C",
-    "ground": "New York/New Jersey (East Rutherford)",
-    "score": {"ft": [1, 1]}},
-   {"round": "Matchday 3",
-    "date": "2026-06-13",
-    "time": "21:00 UTC-4",
-    "team1": "Haiti",
-    "team2": "Scotland",
-    "group": "Group C",
-    "ground": "Boston (Foxborough)",
-    "score": {"ft": [0, 3]}},
-   {"round": "Matchday 9",
-    "date": "2026-06-19",
-    "time": "18:00 UTC-4",
-    "team1": "Scotland",
-    "team2": "Morocco",
-    "group": "Group C",
-    "ground": "Boston (Foxborough)",
-    "score": {"ft": [0, 1]}},
-   {"round": "Matchday 9",
-    "date": "2026-06-19",
-    "time": "20:30 UTC-4",
-    "team1": "Brazil",
-    "team2": "Haiti",
-    "group": "Group C",
-    "ground": "Philadelphia",
-    "score": {"ft": [4, 0]}},
-   {"round": "Matchday 14",
-    "date": "2026-06-24",
-    "time": "18:00 UTC-4",
-    "team1": "Scotland",
-    "team2": "Brazil",
-    "group": "Group C",
-    "ground": "Miami (Miami Gardens)",
-    "score": {"ft": [0, 3]}},
-   {"round": "Matchday 14",
-    "date": "2026-06-24",
-    "time": "18:00 UTC-4",
-    "team1": "Morocco",
-    "team2": "Haiti",
-    "group": "Group C",
-    "ground": "Atlanta",
-    "score": {"ft": [3, 0]}},
-   {"round": "Matchday 2",
-    "date": "2026-06-12",
-    "time": "18:00 UTC-7",
-    "team1": "USA",
-    "team2": "Paraguay",
-    "group": "Group D",
-    "ground": "Los Angeles (Inglewood)",
-    "score": {"ft": [2, 0]}},
-   {"round": "Matchday 3",
-    "date": "2026-06-13",
-    "time": "21:00 UTC-7",
-    "team1": "Australia",
-    "team2": "Turkey",
-    "group": "Group D",
-    "ground": "Vancouver",
-    "score": {"ft": [1, 2]}},
-   {"round": "Matchday 9",
-    "date": "2026-06-19",
-    "time": "12:00 UTC-7",
-    "team1": "USA",
-    "team2": "Australia",
-    "group": "Group D",
-    "ground": "Seattle",
-    "score": {"ft": [1, 0]}},
-   {"round": "Matchday 9",
-    "date": "2026-06-19",
-    "time": "20:00 UTC-7",
-    "team1": "Turkey",
-    "team2": "Paraguay",
-    "group": "Group D",
-    "ground": "San Francisco Bay Area (Santa Clara)",
-    "score": {"ft": [2, 1]}},
-   {"round": "Matchday 15",
-    "date": "2026-06-25",
-    "time": "19:00 UTC-7",
-    "team1": "Turkey",
-    "team2": "USA",
-    "group": "Group D",
-    "ground": "Los Angeles (Inglewood)",
-    "score": {"ft": [1, 2]}},
-   {"round": "Matchday 15",
-    "date": "2026-06-25",
-    "time": "19:00 UTC-7",
-    "team1": "Paraguay",
-    "team2": "Australia",
-    "group": "Group D",
-    "ground": "San Francisco Bay Area (Santa Clara)",
-    "score": {"ft": [0, 1]}},
-   {"round": "Matchday 4",
-    "date": "2026-06-14",
-    "time": "12:00 UTC-5",
-    "team1": "Germany",
-    "team2": "Curaçao",
-    "group": "Group E",
-    "ground": "Houston",
-    "score": {"ft": [4, 0]}},
-   {"round": "Matchday 4",
-    "date": "2026-06-14",
-    "time": "19:00 UTC-4",
-    "team1": "Ivory Coast",
-    "team2": "Ecuador",
-    "group": "Group E",
-    "ground": "Philadelphia",
-    "score": {"ft": [1, 2]}},
-   {"round": "Matchday 10",
-    "date": "2026-06-20",
-    "time": "16:00 UTC-4",
-    "team1": "Germany",
-    "team2": "Ivory Coast",
-    "group": "Group E",
-    "ground": "Toronto",
-    "score": {"ft": [2, 1]}},
-   {"round": "Matchday 10",
-    "date": "2026-06-20",
-    "time": "19:00 UTC-5",
-    "team1": "Ecuador",
-    "team2": "Curaçao",
-    "group": "Group E",
-    "ground": "Kansas City",
-    "score": {"ft": [3, 0]}},
-   {"round": "Matchday 15",
-    "date": "2026-06-25",
-    "time": "16:00 UTC-4",
-    "team1": "Curaçao",
-    "team2": "Ivory Coast",
-    "group": "Group E",
-    "ground": "Philadelphia",
-    "score": {"ft": [0, 2]}},
-   {"round": "Matchday 15",
-    "date": "2026-06-25",
-    "time": "16:00 UTC-4",
-    "team1": "Ecuador",
-    "team2": "Germany",
-    "group": "Group E",
-    "ground": "New York/New Jersey (East Rutherford)",
-    "score": {"ft": [0, 3]}},
-   {"round": "Matchday 4",
-    "date": "2026-06-14",
-    "time": "15:00 UTC-5",
-    "team1": "Netherlands",
-    "team2": "Japan",
-    "group": "Group F",
-    "ground": "Dallas (Arlington)",
-    "score": {"ft": [2, 1]}},
-   {"round": "Matchday 4",
-    "date": "2026-06-14",
-    "time": "20:00 UTC-6",
-    "team1": "Sweden",
-    "team2": "Tunisia",
-    "group": "Group F",
-    "ground": "Monterrey (Guadalupe)",
-    "score": {"ft": [1, 0]}},
-   {"round": "Matchday 10",
-    "date": "2026-06-20",
-    "time": "12:00 UTC-5",
-    "team1": "Netherlands",
-    "team2": "Sweden",
-    "group": "Group F",
-    "ground": "Houston",
-    "score": {"ft": [1, 0]}},
-   {"round": "Matchday 10",
-    "date": "2026-06-20",
-    "time": "22:00 UTC-6",
-    "team1": "Tunisia",
-    "team2": "Japan",
-    "group": "Group F",
-    "ground": "Monterrey (Guadalupe)",
-    "score": {"ft": [0, 2]}},
-   {"round": "Matchday 15",
-    "date": "2026-06-25",
-    "time": "18:00 UTC-5",
-    "team1": "Japan",
-    "team2": "Sweden",
-    "group": "Group F",
-    "ground": "Dallas (Arlington)",
-    "score": {"ft": [2, 1]}},
-   {"round": "Matchday 15",
-    "date": "2026-06-25",
-    "time": "18:00 UTC-5",
-    "team1": "Tunisia",
-    "team2": "Netherlands",
-    "group": "Group F",
-    "ground": "Kansas City",
-    "score": {"ft": [0, 2]}},
-   {"round": "Matchday 5",
-    "date": "2026-06-15",
-    "time": "12:00 UTC-7",
-    "team1": "Belgium",
-    "team2": "Egypt",
-    "group": "Group G",
-    "ground": "Seattle",
-    "score": {"ft": [2, 0]}},
-   {"round": "Matchday 5",
-    "date": "2026-06-15",
-    "time": "18:00 UTC-7",
-    "team1": "Iran",
-    "team2": "New Zealand",
-    "group": "Group G",
-    "ground": "Los Angeles (Inglewood)",
-    "score": {"ft": [1, 0]}},
-   {"round": "Matchday 11",
-    "date": "2026-06-21",
-    "time": "12:00 UTC-7",
-    "team1": "Belgium",
-    "team2": "Iran",
-    "group": "Group G",
-    "ground": "Los Angeles (Inglewood)",
-    "score": {"ft": [3, 1]}},
-   {"round": "Matchday 11",
-    "date": "2026-06-21",
-    "time": "18:00 UTC-7",
-    "team1": "New Zealand",
-    "team2": "Egypt",
-    "group": "Group G",
-    "ground": "Vancouver",
-    "score": {"ft": [1, 1]}},
-   {"round": "Matchday 16",
-    "date": "2026-06-26",
-    "time": "20:00 UTC-7",
-    "team1": "Egypt",
-    "team2": "Iran",
-    "group": "Group G",
-    "ground": "Seattle",
-    "score": {"ft": [1, 2]}},
-   {"round": "Matchday 16",
-    "date": "2026-06-26",
-    "time": "20:00 UTC-7",
-    "team1": "New Zealand",
-    "team2": "Belgium",
-    "group": "Group G",
-    "ground": "Vancouver",
-    "score": {"ft": [0, 2]}},
-   {"round": "Matchday 5",
-    "date": "2026-06-15",
-    "time": "12:00 UTC-4",
-    "team1": "Spain",
-    "team2": "Cape Verde",
-    "group": "Group H",
-    "ground": "Atlanta",
-    "score": {"ft": [3, 0]}},
-   {"round": "Matchday 5",
-    "date": "2026-06-15",
-    "time": "18:00 UTC-4",
-    "team1": "Saudi Arabia",
-    "team2": "Uruguay",
-    "group": "Group H",
-    "ground": "Miami (Miami Gardens)",
-    "score": {"ft": [0, 2]}},
-   {"round": "Matchday 11",
-    "date": "2026-06-21",
-    "time": "12:00 UTC-4",
-    "team1": "Spain",
-    "team2": "Saudi Arabia",
-    "group": "Group H",
-    "ground": "Atlanta",
-    "score": {"ft": [2, 0]}},
-   {"round": "Matchday 11",
-    "date": "2026-06-21",
-    "time": "18:00 UTC-4",
-    "team1": "Uruguay",
-    "team2": "Cape Verde",
-    "group": "Group H",
-    "ground": "Miami (Miami Gardens)",
-    "score": {"ft": [3, 0]}},
-   {"round": "Matchday 16",
-    "date": "2026-06-26",
-    "time": "19:00 UTC-5",
-    "team1": "Cape Verde",
-    "team2": "Saudi Arabia",
-    "group": "Group H",
-    "ground": "Houston",
-    "score": {"ft": [1, 0]}},
-   {"round": "Matchday 16",
-    "date": "2026-06-26",
-    "time": "18:00 UTC-6",
-    "team1": "Uruguay",
-    "team2": "Spain",
-    "group": "Group H",
-    "ground": "Guadalajara (Zapopan)",
-    "score": {"ft": [1, 2]}},
-   {"round": "Matchday 6",
-    "date": "2026-06-16",
-    "time": "15:00 UTC-4",
-    "team1": "France",
-    "team2": "Senegal",
-    "group": "Group I",
-    "ground": "New York/New Jersey (East Rutherford)",
-    "score": {"ft": [2, 1]}},
-   {"round": "Matchday 6",
-    "date": "2026-06-16",
-    "time": "18:00 UTC-4",
-    "team1": "Iraq",
-    "team2": "Norway",
-    "group": "Group I",
-    "ground": "Boston (Foxborough)",
-    "score": {"ft": [0, 2]},
-    "goals1": [],
-    "goals2": [{"name": "Haaland", "minute": 23}, {"name": "Ødegaard", "minute": 67}]},
-   {"round": "Matchday 12",
-    "date": "2026-06-22",
-    "time": "17:00 UTC-4",
-    "team1": "France",
-    "team2": "Iraq",
-    "group": "Group I",
-    "ground": "Philadelphia",
-    "score": {"ft": [2, 0]}},
-   {"round": "Matchday 12",
-    "date": "2026-06-22",
-    "time": "20:00 UTC-4",
-    "team1": "Norway",
-    "team2": "Senegal",
-    "group": "Group I",
-    "ground": "New York/New Jersey (East Rutherford)",
-    "score": {"ft": [1, 0]},
-    "goals1": [{"name": "Haaland", "minute": 55, "penalty": true}],
-    "goals2": []},
-   {"round": "Matchday 16",
-    "date": "2026-06-26",
-    "time": "15:00 UTC-4",
-    "team1": "Norway",
-    "team2": "France",
-    "group": "Group I",
-    "ground": "Boston (Foxborough)",
-    "score": {"ft": [1, 2]},
-    "goals1": [{"name": "Haaland", "minute": 72}],
-    "goals2": [{"name": "Mbappé", "minute": 34}, {"name": "Griezmann", "minute": 88}]},
-   {"round": "Matchday 16",
-    "date": "2026-06-26",
-    "time": "15:00 UTC-4",
-    "team1": "Senegal",
-    "team2": "Iraq",
-    "group": "Group I",
-    "ground": "Toronto",
-    "score": {"ft": [1, 0]}},
-   {"round": "Matchday 6",
-    "date": "2026-06-16",
-    "time": "20:00 UTC-5",
-    "team1": "Argentina",
-    "team2": "Algeria",
-    "group": "Group J",
-    "ground": "Kansas City",
-    "score": {"ft": [3, 0]}},
-   {"round": "Matchday 6",
-    "date": "2026-06-16",
-    "time": "21:00 UTC-7",
-    "team1": "Austria",
-    "team2": "Jordan",
-    "group": "Group J",
-    "ground": "San Francisco Bay Area (Santa Clara)",
-    "score": {"ft": [2, 1]}},
-   {"round": "Matchday 12",
-    "date": "2026-06-22",
-    "time": "12:00 UTC-5",
-    "team1": "Argentina",
-    "team2": "Austria",
-    "group": "Group J",
-    "ground": "Dallas (Arlington)",
-    "score": {"ft": [2, 1]}},
-   {"round": "Matchday 12",
-    "date": "2026-06-22",
-    "time": "20:00 UTC-7",
-    "team1": "Jordan",
-    "team2": "Algeria",
-    "group": "Group J",
-    "ground": "San Francisco Bay Area (Santa Clara)",
-    "score": {"ft": [0, 1]}},
-   {"round": "Matchday 17",
-    "date": "2026-06-27",
-    "time": "21:00 UTC-5",
-    "team1": "Algeria",
-    "team2": "Austria",
-    "group": "Group J",
-    "ground": "Kansas City",
-    "score": {"ft": [1, 2]}},
-   {"round": "Matchday 17",
-    "date": "2026-06-27",
-    "time": "21:00 UTC-5",
-    "team1": "Jordan",
-    "team2": "Argentina",
-    "group": "Group J",
-    "ground": "Dallas (Arlington)",
-    "score": {"ft": [0, 2]}},
-   {"round": "Matchday 7",
-    "date": "2026-06-17",
-    "time": "12:00 UTC-5",
-    "team1": "Portugal",
-    "team2": "DR Congo",
-    "group": "Group K",
-    "ground": "Houston",
-    "score": {"ft": [2, 0]}},
-   {"round": "Matchday 7",
-    "date": "2026-06-17",
-    "time": "20:00 UTC-6",
-    "team1": "Uzbekistan",
-    "team2": "Colombia",
-    "group": "Group K",
-    "ground": "Mexico City",
-    "score": {"ft": [0, 1]}},
-   {"round": "Matchday 13",
-    "date": "2026-06-23",
-    "time": "12:00 UTC-5",
-    "team1": "Portugal",
-    "team2": "Uzbekistan",
-    "group": "Group K",
-    "ground": "Houston",
-    "score": {"ft": [3, 0]}},
-   {"round": "Matchday 13",
-    "date": "2026-06-23",
-    "time": "20:00 UTC-6",
-    "team1": "Colombia",
-    "team2": "DR Congo",
-    "group": "Group K",
-    "ground": "Guadalajara (Zapopan)",
-    "score": {"ft": [2, 1]}},
-   {"round": "Matchday 17",
-    "date": "2026-06-27",
-    "time": "19:30 UTC-4",
-    "team1": "Colombia",
-    "team2": "Portugal",
-    "group": "Group K",
-    "ground": "Miami (Miami Gardens)",
-    "score": {"ft": [1, 2]}},
-   {"round": "Matchday 17",
-    "date": "2026-06-27",
-    "time": "19:30 UTC-4",
-    "team1": "DR Congo",
-    "team2": "Uzbekistan",
-    "group": "Group K",
-    "ground": "Atlanta",
-    "score": {"ft": [2, 0]}},
-   {"round": "Matchday 7",
-    "date": "2026-06-17",
-    "time": "15:00 UTC-5",
-    "team1": "England",
-    "team2": "Croatia",
-    "group": "Group L",
-    "ground": "Dallas (Arlington)",
-    "score": {"ft": [1, 0]}},
-   {"round": "Matchday 7",
-    "date": "2026-06-17",
-    "time": "19:00 UTC-4",
-    "team1": "Ghana",
-    "team2": "Panama",
-    "group": "Group L",
-    "ground": "Toronto",
-    "score": {"ft": [2, 2]}},
-   {"round": "Matchday 13",
-    "date": "2026-06-23",
-    "time": "16:00 UTC-4",
-    "team1": "England",
-    "team2": "Ghana",
-    "group": "Group L",
-    "ground": "Boston (Foxborough)",
-    "score": {"ft": [2, 0]}},
-   {"round": "Matchday 13",
-    "date": "2026-06-23",
-    "time": "19:00 UTC-4",
-    "team1": "Panama",
-    "team2": "Croatia",
-    "group": "Group L",
-    "ground": "Toronto",
-    "score": {"ft": [0, 2]}},
-   {"round": "Matchday 17",
-    "date": "2026-06-27",
-    "time": "17:00 UTC-4",
-    "team1": "Panama",
-    "team2": "England",
-    "group": "Group L",
-    "ground": "New York/New Jersey (East Rutherford)",
-    "score": {"ft": [0, 2]}},
-   {"round": "Matchday 17",
-    "date": "2026-06-27",
-    "time": "17:00 UTC-4",
-    "team1": "Croatia",
-    "team2": "Ghana",
-    "group": "Group L",
-    "ground": "Philadelphia",
-    "score": {"ft": [2, 1]}},
-   {"round": "Round of 32",
-    "num": 73,
-    "date": "2026-06-28",
-    "time": "12:00 UTC-7",
-    "team1": "Czech Republic",
-    "team2": "Switzerland",
-    "ground": "Los Angeles (Inglewood)",
-    "score": {"ft": [2, 1]}},
-   {"round": "Round of 32",
-    "num": 74,
-    "date": "2026-06-29",
-    "time": "16:30 UTC-4",
-    "team1": "Germany",
-    "team2": "South Korea",
-    "ground": "Boston (Foxborough)",
-    "score": {"ft": [1, 0]}},
-   {"round": "Round of 32",
-    "num": 75,
-    "date": "2026-06-29",
-    "time": "19:00 UTC-6",
-    "team1": "Netherlands",
-    "team2": "Morocco",
-    "ground": "Monterrey (Guadalupe)",
-    "score": {"ft": [2, 0]}},
-   {"round": "Round of 32",
-    "num": 76,
-    "date": "2026-06-29",
-    "time": "12:00 UTC-5",
-    "team1": "Brazil",
-    "team2": "Japan",
-    "ground": "Houston",
-    "score": {"ft": [1, 0]}},
-   {"round": "Round of 32",
-    "num": 77,
-    "date": "2026-06-30",
-    "time": "17:00 UTC-4",
-    "team1": "France",
-    "team2": "Iran",
-    "ground": "New York/New Jersey (East Rutherford)",
-    "score": {"ft": [2, 1]}},
-   {"round": "Round of 32",
-    "num": 78,
-    "date": "2026-06-30",
-    "time": "12:00 UTC-5",
-    "team1": "Ecuador",
-    "team2": "Norway",
-    "ground": "Dallas (Arlington)",
-    "score": {"ft": [0, 1]},
-    "goals1": [],
-    "goals2": [{"name": "Haaland", "minute": 89}]},
-   {"round": "Round of 32",
-    "num": 79,
-    "date": "2026-06-30",
-    "time": "19:00 UTC-6",
-    "team1": "Mexico",
-    "team2": "Ivory Coast",
-    "ground": "Mexico City",
-    "score": {"ft": [1, 0]}},
-   {"round": "Round of 32",
-    "num": 80,
-    "date": "2026-07-01",
-    "time": "12:00 UTC-4",
-    "team1": "England",
-    "team2": "Algeria",
-    "ground": "Atlanta",
-    "score": {"ft": [2, 1]}},
-   {"round": "Round of 32",
-    "num": 81,
-    "date": "2026-07-01",
-    "time": "17:00 UTC-7",
-    "team1": "USA",
-    "team2": "Bosnia & Herzegovina",
-    "ground": "San Francisco Bay Area (Santa Clara)",
-    "score": {"ft": [2, 0]}},
-   {"round": "Round of 32",
-    "num": 82,
-    "date": "2026-07-01",
-    "time": "13:00 UTC-7",
-    "team1": "Belgium",
-    "team2": "Cape Verde",
-    "ground": "Seattle",
-    "score": {"ft": [3, 1]}},
-   {"round": "Round of 32",
-    "num": 83,
-    "date": "2026-07-02",
-    "time": "19:00 UTC-4",
-    "team1": "Colombia",
-    "team2": "Croatia",
-    "ground": "Toronto",
-    "score": {"ft": [2, 1]}},
-   {"round": "Round of 32",
-    "num": 84,
-    "date": "2026-07-02",
-    "time": "12:00 UTC-7",
-    "team1": "Spain",
-    "team2": "Austria",
-    "ground": "Los Angeles (Inglewood)",
-    "score": {"ft": [2, 0]}},
-   {"round": "Round of 32",
-    "num": 85,
-    "date": "2026-07-02",
-    "time": "20:00 UTC-7",
-    "team1": "Canada",
-    "team2": "Sweden",
-    "ground": "Vancouver",
-    "score": {"ft": [1, 0]}},
-   {"round": "Round of 32",
-    "num": 86,
-    "date": "2026-07-03",
-    "time": "18:00 UTC-4",
-    "team1": "Argentina",
-    "team2": "Uruguay",
-    "ground": "Miami (Miami Gardens)",
-    "score": {"ft": [2, 0]}},
-   {"round": "Round of 32",
-    "num": 87,
-    "date": "2026-07-03",
-    "time": "20:30 UTC-5",
-    "team1": "Portugal",
-    "team2": "Australia",
-    "ground": "Kansas City",
-    "score": {"ft": [2, 0]}},
-   {"round": "Round of 32",
-    "num": 88,
-    "date": "2026-07-03",
-    "time": "13:00 UTC-5",
-    "team1": "Turkey",
-    "team2": "Iran",
-    "ground": "Dallas (Arlington)",
-    "score": {"ft": [1, 0]}},
-   {"round": "Round of 16",
-    "num": 89,
-    "date": "2026-07-04",
-    "time": "17:00 UTC-4",
-    "team1": "W74",
-    "team2": "W77",
-    "ground": "Philadelphia"},
-   {"round": "Round of 16",
-    "num": 90,
-    "date": "2026-07-04",
-    "time": "12:00 UTC-5",
-    "team1": "W73",
-    "team2": "W75",
-    "ground": "Houston"},
-   {"round": "Round of 16",
-    "num": 91,
-    "date": "2026-07-05",
-    "time": "16:00 UTC-4",
-    "team1": "W76",
-    "team2": "W78",
-    "ground": "New York/New Jersey (East Rutherford)"},
-   {"round": "Round of 16",
-    "num": 92,
-    "date": "2026-07-05",
-    "time": "18:00 UTC-6",
-    "team1": "W79",
-    "team2": "W80",
-    "ground": "Mexico City"},
-   {"round": "Round of 16",
-    "num": 93,
-    "date": "2026-07-06",
-    "time": "14:00 UTC-5",
-    "team1": "W83",
-    "team2": "W84",
-    "ground": "Dallas (Arlington)"},
-   {"round": "Round of 16",
-    "num": 94,
-    "date": "2026-07-06",
-    "time": "17:00 UTC-7",
-    "team1": "W81",
-    "team2": "W82",
-    "ground": "Seattle"},
-   {"round": "Round of 16",
-    "num": 95,
-    "date": "2026-07-07",
-    "time": "12:00 UTC-4",
-    "team1": "W86",
-    "team2": "W88",
-    "ground": "Atlanta"},
-   {"round": "Round of 16",
-    "num": 96,
-    "date": "2026-07-07",
-    "time": "13:00 UTC-7",
-    "team1": "W85",
-    "team2": "W87",
-    "ground": "Vancouver"},
-   {"round": "Quarter-final",
-    "num": 97,
-    "date": "2026-07-09",
-    "time": "16:00 UTC-4",
-    "team1": "W89",
-    "team2": "W90",
-    "ground": "Boston (Foxborough)"},
-   {"round": "Quarter-final",
-    "num": 98,
-    "date": "2026-07-10",
-    "time": "12:00 UTC-7",
-    "team1": "W93",
-    "team2": "W94",
-    "ground": "Los Angeles (Inglewood)"},
-   {"round": "Quarter-final",
-    "num": 99,
-    "date": "2026-07-11",
-    "time": "17:00 UTC-4",
-    "team1": "W91",
-    "team2": "W92",
-    "ground": "Miami (Miami Gardens)"},
-   {"round": "Quarter-final",
-    "num": 100,
-    "date": "2026-07-11",
-    "time": "20:00 UTC-5",
-    "team1": "W95",
-    "team2": "W96",
-    "ground": "Kansas City"},
-   {"round": "Semi-final",
-    "num": 101,
-    "date": "2026-07-14",
-    "time": "14:00 UTC-5",
-    "team1": "W97",
-    "team2": "W98",
-    "ground": "Dallas (Arlington)"},
-   {"round": "Semi-final",
-    "num": 102,
-    "date": "2026-07-15",
-    "time": "15:00 UTC-4",
-    "team1": "W99",
-    "team2": "W100",
-    "ground": "Atlanta"},
-   {"round": "Match for third place",
-    "num": 103,
-    "date": "2026-07-18",
-    "time": "17:00 UTC-4",
-    "team1": "L101",
-    "team2": "L102",
-    "ground": "Miami (Miami Gardens)"},
-   {"round": "Final",
-    "num": 104,
-    "date": "2026-07-19",
-    "time": "15:00 UTC-4",
-    "team1": "W101",
-    "team2": "W102",
-    "ground": "New York/New Jersey (East Rutherford)"}]}
+{
+ "name": "World Cup 2026",
+ "matches": [
+  {
+   "round": "Matchday 1",
+   "date": "2026-06-11",
+   "time": "13:00 UTC-6",
+   "team1": "Mexico",
+   "team2": "South Africa",
+   "group": "Group A",
+   "ground": "Mexico City",
+   "score": {
+    "ft": [
+     2,
+     0
+    ],
+    "ht": [
+     1,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Julián Quiñones",
+     "minute": "9"
+    },
+    {
+     "name": "Raúl Jiménez",
+     "minute": "67"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 1",
+   "date": "2026-06-11",
+   "time": "20:00 UTC-6",
+   "team1": "South Korea",
+   "team2": "Czech Republic",
+   "group": "Group A",
+   "ground": "Guadalajara (Zapopan)",
+   "score": {
+    "ft": [
+     2,
+     1
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Hwang In-Beom",
+     "minute": "67"
+    },
+    {
+     "name": "Oh Hyeon-Gyu",
+     "minute": "80"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Ladislav Krejcí",
+     "minute": "59"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 8",
+   "date": "2026-06-18",
+   "time": "12:00 UTC-4",
+   "team1": "Czech Republic",
+   "team2": "South Africa",
+   "group": "Group A",
+   "ground": "Atlanta",
+   "score": {
+    "ft": [
+     1,
+     1
+    ],
+    "ht": [
+     1,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Michal Sadílek",
+     "minute": "6"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Teboho Mokoena",
+     "minute": "83",
+     "penalty": true
+    }
+   ]
+  },
+  {
+   "round": "Matchday 8",
+   "date": "2026-06-18",
+   "time": "19:00 UTC-6",
+   "team1": "Mexico",
+   "team2": "South Korea",
+   "group": "Group A",
+   "ground": "Guadalajara (Zapopan)",
+   "score": {
+    "ft": [
+     1,
+     0
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Luis Romo",
+     "minute": "50"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 14",
+   "date": "2026-06-24",
+   "time": "19:00 UTC-6",
+   "team1": "Czech Republic",
+   "team2": "Mexico",
+   "group": "Group A",
+   "ground": "Mexico City",
+   "score": {
+    "ft": [
+     0,
+     1
+    ]
+   }
+  },
+  {
+   "round": "Matchday 14",
+   "date": "2026-06-24",
+   "time": "19:00 UTC-6",
+   "team1": "South Africa",
+   "team2": "South Korea",
+   "group": "Group A",
+   "ground": "Monterrey (Guadalupe)",
+   "score": {
+    "ft": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "round": "Matchday 2",
+   "date": "2026-06-12",
+   "time": "15:00 UTC-4",
+   "team1": "Canada",
+   "team2": "Bosnia & Herzegovina",
+   "group": "Group B",
+   "ground": "Toronto",
+   "score": {
+    "ft": [
+     1,
+     1
+    ],
+    "ht": [
+     0,
+     1
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Cyle Larin",
+     "minute": "78"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Jovo Lukić",
+     "minute": "21"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 3",
+   "date": "2026-06-13",
+   "time": "12:00 UTC-7",
+   "team1": "Qatar",
+   "team2": "Switzerland",
+   "group": "Group B",
+   "ground": "San Francisco Bay Area (Santa Clara)",
+   "score": {
+    "ft": [
+     1,
+     1
+    ],
+    "ht": [
+     0,
+     1
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Miro Muheim",
+     "minute": "90+4",
+     "owngoal": true
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Breel Embolo",
+     "minute": "17",
+     "penalty": true
+    }
+   ]
+  },
+  {
+   "round": "Matchday 8",
+   "date": "2026-06-18",
+   "time": "12:00 UTC-7",
+   "team1": "Switzerland",
+   "team2": "Bosnia & Herzegovina",
+   "group": "Group B",
+   "ground": "Los Angeles (Inglewood)",
+   "score": {
+    "ft": [
+     4,
+     1
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Johan Manzambi",
+     "minute": "74"
+    },
+    {
+     "name": "Rubén Vargas",
+     "minute": "84"
+    },
+    {
+     "name": "Johan Manzambi",
+     "minute": "90"
+    },
+    {
+     "name": "Granit Xhaka",
+     "minute": "90+7",
+     "penalty": true
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Ermin Mahmic",
+     "minute": "90+3"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 8",
+   "date": "2026-06-18",
+   "time": "15:00 UTC-7",
+   "team1": "Canada",
+   "team2": "Qatar",
+   "group": "Group B",
+   "ground": "Vancouver",
+   "score": {
+    "ft": [
+     6,
+     0
+    ],
+    "ht": [
+     3,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Cyle Larin",
+     "minute": "16"
+    },
+    {
+     "name": "Jonathan David",
+     "minute": "29"
+    },
+    {
+     "name": "Jonathan David",
+     "minute": "45+3"
+    },
+    {
+     "name": "Nathan Saliba",
+     "minute": "64"
+    },
+    {
+     "name": "Mohamed Manai",
+     "minute": "75",
+     "owngoal": true
+    },
+    {
+     "name": "Jonathan David",
+     "minute": "90+2"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 14",
+   "date": "2026-06-24",
+   "time": "12:00 UTC-7",
+   "team1": "Switzerland",
+   "team2": "Canada",
+   "group": "Group B",
+   "ground": "Vancouver",
+   "score": {
+    "ft": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "round": "Matchday 14",
+   "date": "2026-06-24",
+   "time": "12:00 UTC-7",
+   "team1": "Bosnia & Herzegovina",
+   "team2": "Qatar",
+   "group": "Group B",
+   "ground": "Seattle",
+   "score": {
+    "ft": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "round": "Matchday 3",
+   "date": "2026-06-13",
+   "time": "18:00 UTC-4",
+   "team1": "Brazil",
+   "team2": "Morocco",
+   "group": "Group C",
+   "ground": "New York/New Jersey (East Rutherford)",
+   "score": {
+    "ft": [
+     1,
+     1
+    ],
+    "ht": [
+     1,
+     1
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Vinícius Júnior",
+     "minute": "32"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Ismael Saibari",
+     "minute": "21"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 3",
+   "date": "2026-06-13",
+   "time": "21:00 UTC-4",
+   "team1": "Haiti",
+   "team2": "Scotland",
+   "group": "Group C",
+   "ground": "Boston (Foxborough)",
+   "score": {
+    "ft": [
+     0,
+     1
+    ],
+    "ht": [
+     0,
+     1
+    ]
+   },
+   "goals2": [
+    {
+     "name": "John McGinn",
+     "minute": "28"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 9",
+   "date": "2026-06-19",
+   "time": "18:00 UTC-4",
+   "team1": "Scotland",
+   "team2": "Morocco",
+   "group": "Group C",
+   "ground": "Boston (Foxborough)",
+   "score": {
+    "ft": [
+     0,
+     1
+    ],
+    "ht": [
+     0,
+     1
+    ]
+   },
+   "goals2": [
+    {
+     "name": "Ismael Saibari",
+     "minute": "2"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 9",
+   "date": "2026-06-19",
+   "time": "20:30 UTC-4",
+   "team1": "Brazil",
+   "team2": "Haiti",
+   "group": "Group C",
+   "ground": "Philadelphia",
+   "score": {
+    "ft": [
+     3,
+     0
+    ],
+    "ht": [
+     3,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Matheus Cunha",
+     "minute": "23"
+    },
+    {
+     "name": "Matheus Cunha",
+     "minute": "36"
+    },
+    {
+     "name": "Vinícius Júnior",
+     "minute": "45+3"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 14",
+   "date": "2026-06-24",
+   "time": "18:00 UTC-4",
+   "team1": "Scotland",
+   "team2": "Brazil",
+   "group": "Group C",
+   "ground": "Miami (Miami Gardens)",
+   "score": {
+    "ft": [
+     0,
+     3
+    ]
+   }
+  },
+  {
+   "round": "Matchday 14",
+   "date": "2026-06-24",
+   "time": "18:00 UTC-4",
+   "team1": "Morocco",
+   "team2": "Haiti",
+   "group": "Group C",
+   "ground": "Atlanta",
+   "score": {
+    "ft": [
+     3,
+     0
+    ]
+   }
+  },
+  {
+   "round": "Matchday 2",
+   "date": "2026-06-12",
+   "time": "18:00 UTC-7",
+   "team1": "USA",
+   "team2": "Paraguay",
+   "group": "Group D",
+   "ground": "Los Angeles (Inglewood)",
+   "score": {
+    "ft": [
+     4,
+     1
+    ],
+    "ht": [
+     3,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Damian Bobadilla",
+     "minute": "7",
+     "owngoal": true
+    },
+    {
+     "name": "Folarin Balogun",
+     "minute": "31"
+    },
+    {
+     "name": "Folarin Balogun",
+     "minute": "45+5"
+    },
+    {
+     "name": "Giovanni Reyna",
+     "minute": "90+8"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Mauricio",
+     "minute": "73"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 3",
+   "date": "2026-06-13",
+   "time": "21:00 UTC-7",
+   "team1": "Australia",
+   "team2": "Turkey",
+   "group": "Group D",
+   "ground": "Vancouver",
+   "score": {
+    "ft": [
+     2,
+     0
+    ],
+    "ht": [
+     1,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Nestory Irankunda",
+     "minute": "27"
+    },
+    {
+     "name": "Connor Metcalfe",
+     "minute": "75"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 9",
+   "date": "2026-06-19",
+   "time": "12:00 UTC-7",
+   "team1": "USA",
+   "team2": "Australia",
+   "group": "Group D",
+   "ground": "Seattle",
+   "score": {
+    "ft": [
+     2,
+     0
+    ],
+    "ht": [
+     2,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Cameron Burgess",
+     "minute": "11",
+     "owngoal": true
+    },
+    {
+     "name": "Alex Freeman",
+     "minute": "43"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 9",
+   "date": "2026-06-19",
+   "time": "20:00 UTC-7",
+   "team1": "Turkey",
+   "team2": "Paraguay",
+   "group": "Group D",
+   "ground": "San Francisco Bay Area (Santa Clara)",
+   "score": {
+    "ft": [
+     0,
+     1
+    ],
+    "ht": [
+     0,
+     1
+    ]
+   },
+   "goals2": [
+    {
+     "name": "Matías Galarza",
+     "minute": "2"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 15",
+   "date": "2026-06-25",
+   "time": "19:00 UTC-7",
+   "team1": "Turkey",
+   "team2": "USA",
+   "group": "Group D",
+   "ground": "Los Angeles (Inglewood)",
+   "score": {
+    "ft": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "round": "Matchday 15",
+   "date": "2026-06-25",
+   "time": "19:00 UTC-7",
+   "team1": "Paraguay",
+   "team2": "Australia",
+   "group": "Group D",
+   "ground": "San Francisco Bay Area (Santa Clara)",
+   "score": {
+    "ft": [
+     0,
+     1
+    ]
+   }
+  },
+  {
+   "round": "Matchday 4",
+   "date": "2026-06-14",
+   "time": "12:00 UTC-5",
+   "team1": "Germany",
+   "team2": "Curaçao",
+   "group": "Group E",
+   "ground": "Houston",
+   "score": {
+    "ft": [
+     7,
+     1
+    ],
+    "ht": [
+     3,
+     1
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Felix Nmecha",
+     "minute": "6"
+    },
+    {
+     "name": "Nico Schlotterbeck",
+     "minute": "38"
+    },
+    {
+     "name": "Kai Havertz",
+     "minute": "45+5",
+     "penalty": true
+    },
+    {
+     "name": "Kai Havertz",
+     "minute": "88"
+    },
+    {
+     "name": "Jamal Musiala",
+     "minute": "47"
+    },
+    {
+     "name": "Nathaniel Brown",
+     "minute": "68"
+    },
+    {
+     "name": "Deniz Undav",
+     "minute": "78"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Livano Comenencia",
+     "minute": "21"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 4",
+   "date": "2026-06-14",
+   "time": "19:00 UTC-4",
+   "team1": "Ivory Coast",
+   "team2": "Ecuador",
+   "group": "Group E",
+   "ground": "Philadelphia",
+   "score": {
+    "ft": [
+     1,
+     0
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Amad Diallo",
+     "minute": "90"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 10",
+   "date": "2026-06-20",
+   "time": "16:00 UTC-4",
+   "team1": "Germany",
+   "team2": "Ivory Coast",
+   "group": "Group E",
+   "ground": "Toronto",
+   "score": {
+    "ft": [
+     2,
+     1
+    ],
+    "ht": [
+     0,
+     1
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Deniz Undav",
+     "minute": "68"
+    },
+    {
+     "name": "Deniz Undav",
+     "minute": "90+4"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Franck Kessié",
+     "minute": "30"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 10",
+   "date": "2026-06-20",
+   "time": "19:00 UTC-5",
+   "team1": "Ecuador",
+   "team2": "Curaçao",
+   "group": "Group E",
+   "ground": "Kansas City",
+   "score": {
+    "ft": [
+     0,
+     0
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "round": "Matchday 15",
+   "date": "2026-06-25",
+   "time": "16:00 UTC-4",
+   "team1": "Curaçao",
+   "team2": "Ivory Coast",
+   "group": "Group E",
+   "ground": "Philadelphia",
+   "score": {
+    "ft": [
+     0,
+     2
+    ]
+   }
+  },
+  {
+   "round": "Matchday 15",
+   "date": "2026-06-25",
+   "time": "16:00 UTC-4",
+   "team1": "Ecuador",
+   "team2": "Germany",
+   "group": "Group E",
+   "ground": "New York/New Jersey (East Rutherford)",
+   "score": {
+    "ft": [
+     0,
+     3
+    ]
+   }
+  },
+  {
+   "round": "Matchday 4",
+   "date": "2026-06-14",
+   "time": "15:00 UTC-5",
+   "team1": "Netherlands",
+   "team2": "Japan",
+   "group": "Group F",
+   "ground": "Dallas (Arlington)",
+   "score": {
+    "ft": [
+     2,
+     2
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Virgil van Dijk",
+     "minute": "51"
+    },
+    {
+     "name": "Crysencio Summerville",
+     "minute": "64"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Keito Nakamura",
+     "minute": "57"
+    },
+    {
+     "name": "Daichi Kamada",
+     "minute": "88"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 4",
+   "date": "2026-06-14",
+   "time": "20:00 UTC-6",
+   "team1": "Sweden",
+   "team2": "Tunisia",
+   "group": "Group F",
+   "ground": "Monterrey (Guadalupe)",
+   "score": {
+    "ft": [
+     5,
+     1
+    ],
+    "ht": [
+     2,
+     1
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Yasin Ayari",
+     "minute": "7"
+    },
+    {
+     "name": "Alexander Isak",
+     "minute": "30"
+    },
+    {
+     "name": "Viktor Gyökeres",
+     "minute": "59"
+    },
+    {
+     "name": "Mattias Svanberg",
+     "minute": "84"
+    },
+    {
+     "name": "Yasin Ayari",
+     "minute": "90+6"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Omar Rekik",
+     "minute": "43"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 10",
+   "date": "2026-06-20",
+   "time": "12:00 UTC-5",
+   "team1": "Netherlands",
+   "team2": "Sweden",
+   "group": "Group F",
+   "ground": "Houston",
+   "score": {
+    "ft": [
+     5,
+     1
+    ],
+    "ht": [
+     2,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Brian Brobbey",
+     "minute": "5"
+    },
+    {
+     "name": "Brian Brobbey",
+     "minute": "17"
+    },
+    {
+     "name": "Cody Gakpo",
+     "minute": "47"
+    },
+    {
+     "name": "Cody Gakpo",
+     "minute": "54"
+    },
+    {
+     "name": "Crysencio Summerville",
+     "minute": "89"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Anthony Elanga",
+     "minute": "59"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 10",
+   "date": "2026-06-20",
+   "time": "22:00 UTC-6",
+   "team1": "Tunisia",
+   "team2": "Japan",
+   "group": "Group F",
+   "ground": "Monterrey (Guadalupe)",
+   "score": {
+    "ft": [
+     0,
+     4
+    ],
+    "ht": [
+     0,
+     2
+    ]
+   },
+   "goals2": [
+    {
+     "name": "Daichi Kamada",
+     "minute": "4"
+    },
+    {
+     "name": "Ayase Ueda",
+     "minute": "31"
+    },
+    {
+     "name": "Junya Ito",
+     "minute": "69"
+    },
+    {
+     "name": "Ayase Ueda",
+     "minute": "83"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 15",
+   "date": "2026-06-25",
+   "time": "18:00 UTC-5",
+   "team1": "Japan",
+   "team2": "Sweden",
+   "group": "Group F",
+   "ground": "Dallas (Arlington)",
+   "score": {
+    "ft": [
+     2,
+     1
+    ]
+   }
+  },
+  {
+   "round": "Matchday 15",
+   "date": "2026-06-25",
+   "time": "18:00 UTC-5",
+   "team1": "Tunisia",
+   "team2": "Netherlands",
+   "group": "Group F",
+   "ground": "Kansas City",
+   "score": {
+    "ft": [
+     0,
+     2
+    ]
+   }
+  },
+  {
+   "round": "Matchday 5",
+   "date": "2026-06-15",
+   "time": "12:00 UTC-7",
+   "team1": "Belgium",
+   "team2": "Egypt",
+   "group": "Group G",
+   "ground": "Seattle",
+   "score": {
+    "ft": [
+     1,
+     1
+    ],
+    "ht": [
+     0,
+     1
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Mohamed Hany",
+     "minute": "66",
+     "owngoal": true
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Emam Ashour",
+     "minute": "19"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 5",
+   "date": "2026-06-15",
+   "time": "18:00 UTC-7",
+   "team1": "Iran",
+   "team2": "New Zealand",
+   "group": "Group G",
+   "ground": "Los Angeles (Inglewood)",
+   "score": {
+    "ft": [
+     2,
+     2
+    ],
+    "ht": [
+     1,
+     1
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Ramin Rezaeian",
+     "minute": "32"
+    },
+    {
+     "name": "Mohammad Mohebbi",
+     "minute": "64"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Elijah Just",
+     "minute": "7"
+    },
+    {
+     "name": "Elijah Just",
+     "minute": "54"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 11",
+   "date": "2026-06-21",
+   "time": "12:00 UTC-7",
+   "team1": "Belgium",
+   "team2": "Iran",
+   "group": "Group G",
+   "ground": "Los Angeles (Inglewood)",
+   "score": {
+    "ft": [
+     0,
+     0
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "round": "Matchday 11",
+   "date": "2026-06-21",
+   "time": "18:00 UTC-7",
+   "team1": "New Zealand",
+   "team2": "Egypt",
+   "group": "Group G",
+   "ground": "Vancouver",
+   "score": {
+    "ft": [
+     1,
+     3
+    ],
+    "ht": [
+     1,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Finn Surman",
+     "minute": "15"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Mostafa Zico",
+     "minute": "58"
+    },
+    {
+     "name": "Mohamed Salah",
+     "minute": "67"
+    },
+    {
+     "name": "Trézéguet",
+     "minute": "82"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 16",
+   "date": "2026-06-26",
+   "time": "20:00 UTC-7",
+   "team1": "Egypt",
+   "team2": "Iran",
+   "group": "Group G",
+   "ground": "Seattle",
+   "score": {
+    "ft": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "round": "Matchday 16",
+   "date": "2026-06-26",
+   "time": "20:00 UTC-7",
+   "team1": "New Zealand",
+   "team2": "Belgium",
+   "group": "Group G",
+   "ground": "Vancouver",
+   "score": {
+    "ft": [
+     0,
+     2
+    ]
+   }
+  },
+  {
+   "round": "Matchday 5",
+   "date": "2026-06-15",
+   "time": "12:00 UTC-4",
+   "team1": "Spain",
+   "team2": "Cape Verde",
+   "group": "Group H",
+   "ground": "Atlanta",
+   "score": {
+    "ft": [
+     0,
+     0
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "round": "Matchday 5",
+   "date": "2026-06-15",
+   "time": "18:00 UTC-4",
+   "team1": "Saudi Arabia",
+   "team2": "Uruguay",
+   "group": "Group H",
+   "ground": "Miami (Miami Gardens)",
+   "score": {
+    "ft": [
+     1,
+     1
+    ],
+    "ht": [
+     1,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Abdulelah Al-Amri",
+     "minute": "41"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Maxi Araújo",
+     "minute": "80"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 11",
+   "date": "2026-06-21",
+   "time": "12:00 UTC-4",
+   "team1": "Spain",
+   "team2": "Saudi Arabia",
+   "group": "Group H",
+   "ground": "Atlanta",
+   "score": {
+    "ft": [
+     4,
+     0
+    ],
+    "ht": [
+     3,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Lamine Yamal",
+     "minute": "10"
+    },
+    {
+     "name": "Mikel Oyarzabal",
+     "minute": "21"
+    },
+    {
+     "name": "Mikel Oyarzabal",
+     "minute": "24"
+    },
+    {
+     "name": "Hassan Al-Tambakti",
+     "minute": "49",
+     "owngoal": true
+    }
+   ]
+  },
+  {
+   "round": "Matchday 11",
+   "date": "2026-06-21",
+   "time": "18:00 UTC-4",
+   "team1": "Uruguay",
+   "team2": "Cape Verde",
+   "group": "Group H",
+   "ground": "Miami (Miami Gardens)",
+   "score": {
+    "ft": [
+     2,
+     2
+    ],
+    "ht": [
+     2,
+     1
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Maxi Araújo",
+     "minute": "44"
+    },
+    {
+     "name": "Agustín Cano",
+     "minute": "45+6"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Kevin Pina",
+     "minute": "21"
+    },
+    {
+     "name": "Hélio Varela",
+     "minute": "61"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 16",
+   "date": "2026-06-26",
+   "time": "19:00 UTC-5",
+   "team1": "Cape Verde",
+   "team2": "Saudi Arabia",
+   "group": "Group H",
+   "ground": "Houston",
+   "score": {
+    "ft": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "round": "Matchday 16",
+   "date": "2026-06-26",
+   "time": "18:00 UTC-6",
+   "team1": "Uruguay",
+   "team2": "Spain",
+   "group": "Group H",
+   "ground": "Guadalajara (Zapopan)",
+   "score": {
+    "ft": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "round": "Matchday 6",
+   "date": "2026-06-16",
+   "time": "15:00 UTC-4",
+   "team1": "France",
+   "team2": "Senegal",
+   "group": "Group I",
+   "ground": "New York/New Jersey (East Rutherford)",
+   "score": {
+    "ft": [
+     3,
+     1
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Kylian Mbappé",
+     "minute": "66"
+    },
+    {
+     "name": "Bradley Barcola",
+     "minute": "82"
+    },
+    {
+     "name": "Kylian Mbappé",
+     "minute": "90+6"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Ibrahim Mbaye",
+     "minute": "90+5"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 6",
+   "date": "2026-06-16",
+   "time": "18:00 UTC-4",
+   "team1": "Iraq",
+   "team2": "Norway",
+   "group": "Group I",
+   "ground": "Boston (Foxborough)",
+   "score": {
+    "ft": [
+     1,
+     4
+    ],
+    "ht": [
+     1,
+     2
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Aymen Hussein",
+     "minute": "39"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Erling Haaland",
+     "minute": "29"
+    },
+    {
+     "name": "Erling Haaland",
+     "minute": "43"
+    },
+    {
+     "name": "Leo Østigard",
+     "minute": "76"
+    },
+    {
+     "name": "Aymen Hussein",
+     "minute": "90+6",
+     "owngoal": true
+    }
+   ]
+  },
+  {
+   "round": "Matchday 12",
+   "date": "2026-06-22",
+   "time": "17:00 UTC-4",
+   "team1": "France",
+   "team2": "Iraq",
+   "group": "Group I",
+   "ground": "Philadelphia",
+   "score": {
+    "ft": [
+     3,
+     0
+    ],
+    "ht": [
+     1,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Kylian Mbappé",
+     "minute": "14"
+    },
+    {
+     "name": "Kylian Mbappé",
+     "minute": "54"
+    },
+    {
+     "name": "Ousmane Dembélé",
+     "minute": "66"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 12",
+   "date": "2026-06-22",
+   "time": "20:00 UTC-4",
+   "team1": "Norway",
+   "team2": "Senegal",
+   "group": "Group I",
+   "ground": "New York/New Jersey (East Rutherford)",
+   "score": {
+    "ft": [
+     3,
+     2
+    ],
+    "ht": [
+     1,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Marcus Holmgren Pedersen",
+     "minute": "43"
+    },
+    {
+     "name": "Erling Haaland",
+     "minute": "48"
+    },
+    {
+     "name": "Erling Haaland",
+     "minute": "58"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Ismaïla Sarr",
+     "minute": "53"
+    },
+    {
+     "name": "Ismaïla Sarr",
+     "minute": "90+3"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 16",
+   "date": "2026-06-26",
+   "time": "15:00 UTC-4",
+   "team1": "Norway",
+   "team2": "France",
+   "group": "Group I",
+   "ground": "Boston (Foxborough)",
+   "score": {
+    "ft": [
+     1,
+     2
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Haaland",
+     "minute": 72
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Mbappé",
+     "minute": 34
+    },
+    {
+     "name": "Griezmann",
+     "minute": 88
+    }
+   ]
+  },
+  {
+   "round": "Matchday 16",
+   "date": "2026-06-26",
+   "time": "15:00 UTC-4",
+   "team1": "Senegal",
+   "team2": "Iraq",
+   "group": "Group I",
+   "ground": "Toronto",
+   "score": {
+    "ft": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "round": "Matchday 6",
+   "date": "2026-06-16",
+   "time": "20:00 UTC-5",
+   "team1": "Argentina",
+   "team2": "Algeria",
+   "group": "Group J",
+   "ground": "Kansas City",
+   "score": {
+    "ft": [
+     3,
+     0
+    ],
+    "ht": [
+     1,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Lionel Messi",
+     "minute": "17"
+    },
+    {
+     "name": "Lionel Messi",
+     "minute": "60"
+    },
+    {
+     "name": "Lionel Messi",
+     "minute": "76"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 6",
+   "date": "2026-06-16",
+   "time": "21:00 UTC-7",
+   "team1": "Austria",
+   "team2": "Jordan",
+   "group": "Group J",
+   "ground": "San Francisco Bay Area (Santa Clara)",
+   "score": {
+    "ft": [
+     3,
+     1
+    ],
+    "ht": [
+     1,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Romano Schmid",
+     "minute": "21"
+    },
+    {
+     "name": "Yazan Al-Arab",
+     "minute": "76",
+     "owngoal": true
+    },
+    {
+     "name": "Marko Arnautovic",
+     "minute": "90+12",
+     "penalty": true
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Ali Olwan",
+     "minute": "50"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 12",
+   "date": "2026-06-22",
+   "time": "12:00 UTC-5",
+   "team1": "Argentina",
+   "team2": "Austria",
+   "group": "Group J",
+   "ground": "Dallas (Arlington)",
+   "score": {
+    "ft": [
+     2,
+     0
+    ],
+    "ht": [
+     1,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Lionel Messi",
+     "minute": "38"
+    },
+    {
+     "name": "Lionel Messi",
+     "minute": "90+5"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 12",
+   "date": "2026-06-22",
+   "time": "20:00 UTC-7",
+   "team1": "Jordan",
+   "team2": "Algeria",
+   "group": "Group J",
+   "ground": "San Francisco Bay Area (Santa Clara)",
+   "score": {
+    "ft": [
+     1,
+     2
+    ],
+    "ht": [
+     1,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Nizar Al-Rashdan",
+     "minute": "36"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Nadhir Benbouali",
+     "minute": "69"
+    },
+    {
+     "name": "Amine Gouiri",
+     "minute": "82"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 17",
+   "date": "2026-06-27",
+   "time": "21:00 UTC-5",
+   "team1": "Algeria",
+   "team2": "Austria",
+   "group": "Group J",
+   "ground": "Kansas City",
+   "score": {
+    "ft": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "round": "Matchday 17",
+   "date": "2026-06-27",
+   "time": "21:00 UTC-5",
+   "team1": "Jordan",
+   "team2": "Argentina",
+   "group": "Group J",
+   "ground": "Dallas (Arlington)",
+   "score": {
+    "ft": [
+     0,
+     2
+    ]
+   }
+  },
+  {
+   "round": "Matchday 7",
+   "date": "2026-06-17",
+   "time": "12:00 UTC-5",
+   "team1": "Portugal",
+   "team2": "DR Congo",
+   "group": "Group K",
+   "ground": "Houston",
+   "score": {
+    "ft": [
+     1,
+     1
+    ],
+    "ht": [
+     1,
+     1
+    ]
+   },
+   "goals1": [
+    {
+     "name": "João Neves",
+     "minute": "6"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Yoane Wissa",
+     "minute": "45+5"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 7",
+   "date": "2026-06-17",
+   "time": "20:00 UTC-6",
+   "team1": "Uzbekistan",
+   "team2": "Colombia",
+   "group": "Group K",
+   "ground": "Mexico City",
+   "score": {
+    "ft": [
+     1,
+     3
+    ],
+    "ht": [
+     0,
+     1
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Abbosbek Fayzullaev",
+     "minute": "60"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Daniel Muñoz",
+     "minute": "40"
+    },
+    {
+     "name": "Luis Díaz",
+     "minute": "65"
+    },
+    {
+     "name": "Jáminton Campaz",
+     "minute": "90+9"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 13",
+   "date": "2026-06-23",
+   "time": "12:00 UTC-5",
+   "team1": "Portugal",
+   "team2": "Uzbekistan",
+   "group": "Group K",
+   "ground": "Houston",
+   "score": {
+    "ft": [
+     5,
+     0
+    ],
+    "ht": [
+     3,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Cristiano Ronaldo",
+     "minute": "6"
+    },
+    {
+     "name": "Nuno Mendes",
+     "minute": "17"
+    },
+    {
+     "name": "Cristiano Ronaldo",
+     "minute": "39"
+    },
+    {
+     "name": "Abduvohid Nematov",
+     "minute": "60",
+     "owngoal": true
+    },
+    {
+     "name": "Rafael Leão",
+     "minute": "87"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 13",
+   "date": "2026-06-23",
+   "time": "20:00 UTC-6",
+   "team1": "Colombia",
+   "team2": "DR Congo",
+   "group": "Group K",
+   "ground": "Guadalajara (Zapopan)",
+   "score": {
+    "ft": [
+     2,
+     1
+    ]
+   }
+  },
+  {
+   "round": "Matchday 17",
+   "date": "2026-06-27",
+   "time": "19:30 UTC-4",
+   "team1": "Colombia",
+   "team2": "Portugal",
+   "group": "Group K",
+   "ground": "Miami (Miami Gardens)",
+   "score": {
+    "ft": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "round": "Matchday 17",
+   "date": "2026-06-27",
+   "time": "19:30 UTC-4",
+   "team1": "DR Congo",
+   "team2": "Uzbekistan",
+   "group": "Group K",
+   "ground": "Atlanta",
+   "score": {
+    "ft": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "round": "Matchday 7",
+   "date": "2026-06-17",
+   "time": "15:00 UTC-5",
+   "team1": "England",
+   "team2": "Croatia",
+   "group": "Group L",
+   "ground": "Dallas (Arlington)",
+   "score": {
+    "ft": [
+     4,
+     2
+    ],
+    "ht": [
+     2,
+     2
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Harry Kane",
+     "minute": "12",
+     "penalty": true
+    },
+    {
+     "name": "Harry Kane",
+     "minute": "42"
+    },
+    {
+     "name": "Jude Bellingham",
+     "minute": "47"
+    },
+    {
+     "name": "Marcus Rashford",
+     "minute": "85"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Martin Baturina",
+     "minute": "36"
+    },
+    {
+     "name": "Petar Musa",
+     "minute": "45+5"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 7",
+   "date": "2026-06-17",
+   "time": "19:00 UTC-4",
+   "team1": "Ghana",
+   "team2": "Panama",
+   "group": "Group L",
+   "ground": "Toronto",
+   "score": {
+    "ft": [
+     1,
+     0
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Caleb Yirenkyi",
+     "minute": "90+5"
+    }
+   ]
+  },
+  {
+   "round": "Matchday 13",
+   "date": "2026-06-23",
+   "time": "16:00 UTC-4",
+   "team1": "England",
+   "team2": "Ghana",
+   "group": "Group L",
+   "ground": "Boston (Foxborough)",
+   "score": {
+    "ft": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "round": "Matchday 13",
+   "date": "2026-06-23",
+   "time": "19:00 UTC-4",
+   "team1": "Panama",
+   "team2": "Croatia",
+   "group": "Group L",
+   "ground": "Toronto",
+   "score": {
+    "ft": [
+     0,
+     2
+    ]
+   }
+  },
+  {
+   "round": "Matchday 17",
+   "date": "2026-06-27",
+   "time": "17:00 UTC-4",
+   "team1": "Panama",
+   "team2": "England",
+   "group": "Group L",
+   "ground": "New York/New Jersey (East Rutherford)",
+   "score": {
+    "ft": [
+     0,
+     2
+    ]
+   }
+  },
+  {
+   "round": "Matchday 17",
+   "date": "2026-06-27",
+   "time": "17:00 UTC-4",
+   "team1": "Croatia",
+   "team2": "Ghana",
+   "group": "Group L",
+   "ground": "Philadelphia",
+   "score": {
+    "ft": [
+     2,
+     1
+    ]
+   }
+  },
+  {
+   "round": "Round of 32",
+   "num": 73,
+   "date": "2026-06-28",
+   "time": "12:00 UTC-7",
+   "team1": "Czech Republic",
+   "team2": "Switzerland",
+   "ground": "Los Angeles (Inglewood)",
+   "score": {
+    "ft": [
+     2,
+     1
+    ]
+   }
+  },
+  {
+   "round": "Round of 32",
+   "num": 74,
+   "date": "2026-06-29",
+   "time": "16:30 UTC-4",
+   "team1": "Germany",
+   "team2": "South Korea",
+   "ground": "Boston (Foxborough)",
+   "score": {
+    "ft": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "round": "Round of 32",
+   "num": 75,
+   "date": "2026-06-29",
+   "time": "19:00 UTC-6",
+   "team1": "Netherlands",
+   "team2": "Morocco",
+   "ground": "Monterrey (Guadalupe)",
+   "score": {
+    "ft": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "round": "Round of 32",
+   "num": 76,
+   "date": "2026-06-29",
+   "time": "12:00 UTC-5",
+   "team1": "Brazil",
+   "team2": "Japan",
+   "ground": "Houston",
+   "score": {
+    "ft": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "round": "Round of 32",
+   "num": 77,
+   "date": "2026-06-30",
+   "time": "17:00 UTC-4",
+   "team1": "France",
+   "team2": "Iran",
+   "ground": "New York/New Jersey (East Rutherford)",
+   "score": {
+    "ft": [
+     2,
+     1
+    ]
+   }
+  },
+  {
+   "round": "Round of 32",
+   "num": 78,
+   "date": "2026-06-30",
+   "time": "12:00 UTC-5",
+   "team1": "Ecuador",
+   "team2": "Norway",
+   "ground": "Dallas (Arlington)",
+   "score": {
+    "ft": [
+     0,
+     1
+    ]
+   },
+   "goals1": [],
+   "goals2": [
+    {
+     "name": "Haaland",
+     "minute": 89
+    }
+   ]
+  },
+  {
+   "round": "Round of 32",
+   "num": 79,
+   "date": "2026-06-30",
+   "time": "19:00 UTC-6",
+   "team1": "Mexico",
+   "team2": "Ivory Coast",
+   "ground": "Mexico City",
+   "score": {
+    "ft": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "round": "Round of 32",
+   "num": 80,
+   "date": "2026-07-01",
+   "time": "12:00 UTC-4",
+   "team1": "England",
+   "team2": "Algeria",
+   "ground": "Atlanta",
+   "score": {
+    "ft": [
+     2,
+     1
+    ]
+   }
+  },
+  {
+   "round": "Round of 32",
+   "num": 81,
+   "date": "2026-07-01",
+   "time": "17:00 UTC-7",
+   "team1": "USA",
+   "team2": "Bosnia & Herzegovina",
+   "ground": "San Francisco Bay Area (Santa Clara)",
+   "score": {
+    "ft": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "round": "Round of 32",
+   "num": 82,
+   "date": "2026-07-01",
+   "time": "13:00 UTC-7",
+   "team1": "Belgium",
+   "team2": "Cape Verde",
+   "ground": "Seattle",
+   "score": {
+    "ft": [
+     3,
+     1
+    ]
+   }
+  },
+  {
+   "round": "Round of 32",
+   "num": 83,
+   "date": "2026-07-02",
+   "time": "19:00 UTC-4",
+   "team1": "Colombia",
+   "team2": "Croatia",
+   "ground": "Toronto",
+   "score": {
+    "ft": [
+     2,
+     1
+    ]
+   }
+  },
+  {
+   "round": "Round of 32",
+   "num": 84,
+   "date": "2026-07-02",
+   "time": "12:00 UTC-7",
+   "team1": "Spain",
+   "team2": "Austria",
+   "ground": "Los Angeles (Inglewood)",
+   "score": {
+    "ft": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "round": "Round of 32",
+   "num": 85,
+   "date": "2026-07-02",
+   "time": "20:00 UTC-7",
+   "team1": "Canada",
+   "team2": "Sweden",
+   "ground": "Vancouver",
+   "score": {
+    "ft": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "round": "Round of 32",
+   "num": 86,
+   "date": "2026-07-03",
+   "time": "18:00 UTC-4",
+   "team1": "Argentina",
+   "team2": "Uruguay",
+   "ground": "Miami (Miami Gardens)",
+   "score": {
+    "ft": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "round": "Round of 32",
+   "num": 87,
+   "date": "2026-07-03",
+   "time": "20:30 UTC-5",
+   "team1": "Portugal",
+   "team2": "Australia",
+   "ground": "Kansas City",
+   "score": {
+    "ft": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "round": "Round of 32",
+   "num": 88,
+   "date": "2026-07-03",
+   "time": "13:00 UTC-5",
+   "team1": "Turkey",
+   "team2": "Iran",
+   "ground": "Dallas (Arlington)",
+   "score": {
+    "ft": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "round": "Round of 16",
+   "num": 89,
+   "date": "2026-07-04",
+   "time": "17:00 UTC-4",
+   "team1": "W74",
+   "team2": "W77",
+   "ground": "Philadelphia"
+  },
+  {
+   "round": "Round of 16",
+   "num": 90,
+   "date": "2026-07-04",
+   "time": "12:00 UTC-5",
+   "team1": "W73",
+   "team2": "W75",
+   "ground": "Houston"
+  },
+  {
+   "round": "Round of 16",
+   "num": 91,
+   "date": "2026-07-05",
+   "time": "16:00 UTC-4",
+   "team1": "W76",
+   "team2": "W78",
+   "ground": "New York/New Jersey (East Rutherford)"
+  },
+  {
+   "round": "Round of 16",
+   "num": 92,
+   "date": "2026-07-05",
+   "time": "18:00 UTC-6",
+   "team1": "W79",
+   "team2": "W80",
+   "ground": "Mexico City"
+  },
+  {
+   "round": "Round of 16",
+   "num": 93,
+   "date": "2026-07-06",
+   "time": "14:00 UTC-5",
+   "team1": "W83",
+   "team2": "W84",
+   "ground": "Dallas (Arlington)"
+  },
+  {
+   "round": "Round of 16",
+   "num": 94,
+   "date": "2026-07-06",
+   "time": "17:00 UTC-7",
+   "team1": "W81",
+   "team2": "W82",
+   "ground": "Seattle"
+  },
+  {
+   "round": "Round of 16",
+   "num": 95,
+   "date": "2026-07-07",
+   "time": "12:00 UTC-4",
+   "team1": "W86",
+   "team2": "W88",
+   "ground": "Atlanta"
+  },
+  {
+   "round": "Round of 16",
+   "num": 96,
+   "date": "2026-07-07",
+   "time": "13:00 UTC-7",
+   "team1": "W85",
+   "team2": "W87",
+   "ground": "Vancouver"
+  },
+  {
+   "round": "Quarter-final",
+   "num": 97,
+   "date": "2026-07-09",
+   "time": "16:00 UTC-4",
+   "team1": "W89",
+   "team2": "W90",
+   "ground": "Boston (Foxborough)"
+  },
+  {
+   "round": "Quarter-final",
+   "num": 98,
+   "date": "2026-07-10",
+   "time": "12:00 UTC-7",
+   "team1": "W93",
+   "team2": "W94",
+   "ground": "Los Angeles (Inglewood)"
+  },
+  {
+   "round": "Quarter-final",
+   "num": 99,
+   "date": "2026-07-11",
+   "time": "17:00 UTC-4",
+   "team1": "W91",
+   "team2": "W92",
+   "ground": "Miami (Miami Gardens)"
+  },
+  {
+   "round": "Quarter-final",
+   "num": 100,
+   "date": "2026-07-11",
+   "time": "20:00 UTC-5",
+   "team1": "W95",
+   "team2": "W96",
+   "ground": "Kansas City"
+  },
+  {
+   "round": "Semi-final",
+   "num": 101,
+   "date": "2026-07-14",
+   "time": "14:00 UTC-5",
+   "team1": "W97",
+   "team2": "W99",
+   "ground": "Dallas (Arlington)"
+  },
+  {
+   "round": "Semi-final",
+   "num": 102,
+   "date": "2026-07-15",
+   "time": "15:00 UTC-4",
+   "team1": "W98",
+   "team2": "W100",
+   "ground": "Atlanta"
+  },
+  {
+   "round": "Match for third place",
+   "num": 103,
+   "date": "2026-07-18",
+   "time": "17:00 UTC-4",
+   "team1": "L101",
+   "team2": "L102",
+   "ground": "Miami (Miami Gardens)"
+  },
+  {
+   "round": "Final",
+   "num": 104,
+   "date": "2026-07-19",
+   "time": "15:00 UTC-4",
+   "team1": "W101",
+   "team2": "W102",
+   "ground": "New York/New Jersey (East Rutherford)"
+  }
+ ]
+}

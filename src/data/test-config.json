@@ -1,5 +1,4 @@
 {
-  "_comment": "Testscenario group — 22. juni 2026 kl. 15:00 CEST. Midt i gruppespillet, Norges to første kamper er spilt. Kampdata fra matches-test-group.json.",
-  "simulatedNow": "2026-06-22T13:00:00Z",
-  "scores": []
+  "_comment": "Testscenario group — 23. juni 2026 kl. 22:00 CEST. 46 kamper spilt (45 gruppekamper + Portugal-Uzbekistan 5-0 fra i dag). Alle grupper 2/3 kamper spilt unntatt gruppe K (2+1=3/3) og L (1/3). Norge og Frankrike klinket videre fra gruppe I med 6p.",
+  "simulatedNow": "2026-06-23T20:00:00Z"
 }
