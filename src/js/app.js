@@ -223,6 +223,9 @@ const i18n = {
         timeout:    'Tidsavbrudd',
         updated_at: 'Oppdatert',
         results:    'resultater',
+        tourney_over: 'VM 2026 er over',
+        champion:   (team) => `${team} ble verdensmester 2026`,
+        norway_result: (round) => `Norge spilte et solid VM og nådde ${round}`,
         filter:     'Filter',
         reset:      'Nullstill',
         favourites: 'Favoritter',
@@ -241,7 +244,7 @@ const i18n = {
         matches_n:  (n) => `${n} kamp${n !== 1 ? 'er' : ''} spilt`,
         standings:  'Gruppe',
         best_thirds:'Beste treere',
-        thirds_note:(n) => `4 av ${n} treere går videre · Rangert etter poeng, målforskjell og mål scoret`,
+        thirds_note:(n) => `8 av ${n} treere går videre · Rangert etter poeng, målforskjell og mål scoret`,
         third_pts:  (p) => `${p}p`,
         third_goals:(g) => `${g} mål`,
         adv:        'MF',
@@ -319,6 +322,9 @@ const i18n = {
         timeout:    'Timed out',
         updated_at: 'Updated',
         results:    'results',
+        tourney_over: 'World Cup 2026 is over',
+        champion:   (team) => `${team} won the 2026 World Cup`,
+        norway_result: (round) => `Norway had a solid tournament, reaching the ${round}`,
         filter:     'Filter',
         reset:      'Clear',
         favourites: 'Favourites',
@@ -337,7 +343,7 @@ const i18n = {
         matches_n:  (n) => `${n} match${n !== 1 ? 'es' : ''} played`,
         standings:  'Group',
         best_thirds:'Best third-placed teams',
-        thirds_note:(n) => `4 of ${n} third-placed teams advance · Ranked by points, goal difference and goals scored`,
+        thirds_note:(n) => `8 of ${n} third-placed teams advance · Ranked by points, goal difference and goals scored`,
         third_pts:  (p) => `${p}pts`,
         third_goals:(g) => `${g} goals`,
         adv:        'GD',
@@ -573,6 +579,58 @@ function saveTblRestDays() {
 
 // ── (Header-kollaps fjernet — header er alltid synlig og kompakt) ─────────────
 
+// buildTourneyOverText() → HTML for header når alle 104 kamper er spilt.
+// Finner finalen (num 104) og viser vinneren med flagg.
+function buildTourneyOverText() {
+    const finale = MATCHES.find(m => m.num === 104);
+    if (!finale?.score?.ft) return t('tourney_over');
+    const [g1, g2] = finale.score.ft;
+    let winnerName, winnerFlag;
+    if (g1 > g2)      { winnerName = finale.team1; winnerFlag = finale.flag1; }
+    else if (g2 > g1) { winnerName = finale.team2; winnerFlag = finale.flag2; }
+    else if (finale.score.et) {
+        const [e1, e2] = finale.score.et;
+        if (e1 > e2)      { winnerName = finale.team1; winnerFlag = finale.flag1; }
+        else if (e2 > e1) { winnerName = finale.team2; winnerFlag = finale.flag2; }
+        else if (finale.score.p) {
+            const [p1, p2] = finale.score.p;
+            winnerName = p1 > p2 ? finale.team1 : finale.team2;
+            winnerFlag = p1 > p2 ? finale.flag1 : finale.flag2;
+        } else return t('tourney_over');
+    }
+    else if (finale.score.p) {
+        const [p1, p2] = finale.score.p;
+        winnerName = p1 > p2 ? finale.team1 : finale.team2;
+        winnerFlag = p1 > p2 ? finale.flag1 : finale.flag2;
+    } else return t('tourney_over');
+
+    return `<span class="nm-champion">${winnerFlag} <span class="nm-name">${t('champion', teamName(winnerName))}</span></span>`;
+}
+
+// buildNorwayResultText() → HTML for Norge-raden når turneringen er over.
+// Finner siste kamp Norge spilte og oversetter runden til lesbar tekst.
+function buildNorwayResultText() {
+    const norMatches = MATCHES.filter(m => (m.team1 === 'Norway' || m.team2 === 'Norway') && m.score?.ft)
+        .sort((a, b) => a.isoDate < b.isoDate ? -1 : a.isoDate > b.isoDate ? 1 : (a.t||0) - (b.t||0));
+    if (!norMatches.length) return null;
+    const lastMatch = norMatches[norMatches.length - 1];
+
+    const roundLabels = {
+        g:    t('sec_group'),
+        r32:  t('grp_r32'),
+        r16:  t('grp_r16'),
+        qf:   t('grp_qf'),
+        sf:   t('grp_sf'),
+        '3p': t('grp_3p'),
+        fin:  t('grp_fin'),
+    };
+    const roundLabel = roundLabels[lastMatch.type] || lastMatch.round;
+    const norFlag = TEAMS['Norway']?.flag_id
+        ? `<svg class="flag-svg" aria-hidden="true" style="height:1em"><use href="#${TEAMS['Norway'].flag_id}"/></svg>`
+        : '🇳🇴';
+    return `${norFlag} <span class="nm-name">${t('norway_result', roundLabel)}</span>`;
+}
+
 function updateCountdown() {
     const infoEl = document.getElementById('next-match-info');
     const norRow = document.getElementById('norway-next-row');
@@ -620,9 +678,18 @@ function updateCountdown() {
     const next = live || MATCHES.find(m => cestToDate(m.isoDate, m.t).getTime() > now);
 
     if (!next) {
-        infoEl.textContent = 'VM 2026 er over';
+        // Turneringen er over — vis mester + Norges resultat i stedet for nedtelling
+        infoEl.innerHTML = buildTourneyOverText();
         if (liveBadge) liveBadge.style.display = 'none';
-        if (norRow) norRow.style.display = 'none';
+        if (norRow && norInfo) {
+            const norText = buildNorwayResultText();
+            if (norText) {
+                norInfo.innerHTML = norText;
+                norRow.style.display = 'flex';
+            } else {
+                norRow.style.display = 'none';
+            }
+        }
         return;
     }
 
@@ -768,6 +835,10 @@ function resolveKOTeams() {
             if (g1 !== g2) {
                 w = g1 > g2 ? m.team1 : m.team2;
                 l = g1 > g2 ? m.team2 : m.team1;
+            } else if (sc.et && sc.et[0] !== sc.et[1]) {
+                const [e1, e2] = sc.et;
+                w = e1 > e2 ? m.team1 : m.team2;
+                l = e1 > e2 ? m.team2 : m.team1;
             } else if (sc.p) {
                 const [p1, p2] = sc.p;
                 w = p1 > p2 ? m.team1 : m.team2;
@@ -812,12 +883,14 @@ async function fetchResults() {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
 
-        // Bygg oppslag fra API-data: dato|team1|team2 → kampdata
+        // Bygg oppslag fra API-data: dato|team1|team2 → kampdata, og num → kampdata
         const apiByKey = {};
+        const apiByNum = {}; // kampnummer → kampdata (for KO-runder)
         const apiByDate = {}; // dato → [kampdata] for KO-kamper med ukjente lag
         (data.matches || []).forEach(m => {
             const key = `${m.date}|${teamName(m.team1)}|${teamName(m.team2)}`;
             apiByKey[key] = m;
+            if (m.num != null) apiByNum[m.num] = m;
             if (!apiByDate[m.date]) apiByDate[m.date] = [];
             apiByDate[m.date].push(m);
         });
@@ -826,6 +899,19 @@ async function fetchResults() {
         MATCHES.forEach(m => {
             // Direkte treff: lagnavn stemmer allerede
             let api = apiByKey[`${m.isoDate}|${teamName(m.team1)}|${teamName(m.team2)}`];
+
+            // Num-basert treff: KO-kamper der API har løst posisjonskoder til lagnavn
+            // (f.eks. "1E" → "Germany", "3A/B/C/D/F" → "Paraguay")
+            // Openfootball har num på alle KO-kamper — dette er den primære løsningsmetoden.
+            if (!api && m.num != null && m.type !== 'g') {
+                const candidate = apiByNum[m.num];
+                // Godta kun hvis API-siden har ekte lagnavn (ikke W/L/posisjonskoder)
+                if (candidate &&
+                    !candidate.team1?.match(/^[123WL]/) &&
+                    !candidate.team2?.match(/^[123WL]/)) {
+                    api = candidate;
+                }
+            }
 
             // Ingen direkte treff: for KO-kamper, finn API-kamp på samme dato
             // der team1/team2 er kjente lagnavn (API har oppdatert fra "2E" til "Ecuador")
@@ -871,6 +957,7 @@ async function fetchResults() {
         updateHeaderHeight();
         NORWAY_POTENTIAL_MATCHES = new Set(getNorwayPotentialMatches().map(m => m.num));
         if (document.getElementById('vg')?.dataset.built) buildVerticalGrid();
+        if (document.getElementById('bracket-built')) buildBracket();
 
     } catch (err) {
         clearTimeout(tid);
@@ -2112,10 +2199,12 @@ function buildTimeline() {
     const lastPastMatchDay = [...pastDays].reverse().find(e => e.type === 'match');
     const prevDayISO = lastPastMatchDay?.data?.isoDate;
 
-    // Ved aktivt filter: vis alle pastDays i rekkefølge uten å skjule noe bak knapp.
+    // Ved aktivt filter (eller når turneringen er helt over): vis alle pastDays
+    // i rekkefølge uten å skjule noe bak knapp — ellers ville hele tidslinjen
+    // vært skjult siden det ikke finnes noen kommende kamper.
     // Uten filter: skjul alt eldre enn forrige kampdag bak "Last inn"-knapp.
     let olderDays, prevDayEntries;
-    if (ACTIVE_FILTER) {
+    if (ACTIVE_FILTER || TOURNEY_OVER) {
         olderDays = [];
         prevDayEntries = pastDays; // vis alle fortidsdager i rekkefølge
     } else {
@@ -2497,7 +2586,7 @@ function buildVerticalGrid() {
     const prevISO     = lastPastM?.data?.isoDate;
 
     let olderDays, prevDayEntries;
-    if (ACTIVE_FILTER || VG_SHOW_ALL) {
+    if (ACTIVE_FILTER || VG_SHOW_ALL || TOURNEY_OVER) {
         olderDays = [];
         prevDayEntries = pastDays;
     } else {
@@ -2991,7 +3080,8 @@ function buildTable() {
     // Finn forrige kampdag (siste fortidsdag med faktiske kamper) — vises alltid
     const prevDate = [...pastDates].reverse().find(d => byDate[d]?.length > 0) || null;
     // Alt eldre enn forrige kampdag går bak "Last inn"-knappen
-    const olderDates = ACTIVE_FILTER ? [] : pastDates.filter(d => d !== prevDate && byDate[d]?.length > 0);
+    // (unntatt ved aktivt filter eller når turneringen er helt over)
+    const olderDates = (ACTIVE_FILTER || TOURNEY_OVER) ? [] : pastDates.filter(d => d !== prevDate && byDate[d]?.length > 0);
 
     function buildRows(dates, isPast, startFrom) {
         let html = '';
@@ -3292,7 +3382,7 @@ function buildGroups() {
         });
 
         const rows = allThirds.map((third, i) => {
-            const advancing = i < 4;
+            const advancing = i < 8;
             const gd = (third.gf - third.ga > 0 ? '+' : '') + (third.gf - third.ga);
             return `<div class="third-row${advancing ? ' third-advancing' : ''}">
                 <span class="third-pos">${i+1}</span>
@@ -3451,19 +3541,22 @@ function buildBracket() {
 
     // ── Kampnummer per halvdel ─────────────────────────────────────────────────
     // Rekkefølge: r32L[i*2] og r32L[i*2+1] er feeders for r16L[i]
-    // 89=W74vW77, 90=W73vW75, 91=W76vW78, 92=W79vW80
-    // 97=W89vW90, 99=W91vW92  → venstre QF
-    const r32L = [74, 77, 73, 75, 76, 78, 79, 80];
-    const r16L = [89, 90, 91, 92];
-    const qfL  = [97, 99];
+    // Gruppert etter hvilken semifinale de faktisk feeder til (SF #101 = W97 vs W98,
+    // SF #102 = W99 vs W100) — IKKE etter rå kampnummer-rekkefølge. De to R32-blokkene
+    // 73-80 og 81-88 er hver splittet i to halvparter som går til hver sin SF.
+    // 89=W74vW77, 90=W73vW75, 93=W83vW84, 94=W81vW82
+    // 97=W89vW90, 98=W93vW94  → venstre QF → SF #101
+    const r32L = [74, 77, 73, 75, 83, 84, 81, 82];
+    const r16L = [89, 90, 93, 94];
+    const qfL  = [97, 98];
     const sfL  = [101];
 
-    // 93=W83vW84, 94=W81vW82, 95=W86vW88, 96=W85vW87
-    // 98=W93vW94, 100=W95vW96 → høyre QF
+    // 91=W76vW78, 92=W79vW80, 95=W86vW88, 96=W85vW87
+    // 99=W91vW92, 100=W95vW96 → høyre QF → SF #102
     const sfR  = [102];
-    const qfR  = [98, 100];
-    const r16R = [93, 94, 95, 96];
-    const r32R = [83, 84, 81, 82, 86, 88, 85, 87];
+    const qfR  = [99, 100];
+    const r16R = [91, 92, 95, 96];
+    const r32R = [76, 78, 79, 80, 86, 88, 85, 87];
 
     // Sentrum
     const finNums = [104, 103]; // 104=FIN øverst, 103=3P under
@@ -3563,6 +3656,10 @@ function buildBracket() {
             if (g1 !== g2) {
                 winner = g1 > g2 ? 'team1' : 'team2';
                 loser  = g1 > g2 ? 'team2' : 'team1';
+            } else if (sc.et && sc.et[0] !== sc.et[1]) {
+                const [e1, e2] = sc.et;
+                winner = e1 > e2 ? 'team1' : 'team2';
+                loser  = e1 > e2 ? 'team2' : 'team1';
             } else if (sc.p) {
                 const [p1, p2] = sc.p;
                 winner = p1 > p2 ? 'team1' : 'team2';
@@ -4399,6 +4496,10 @@ function predictKOSlot(code, depth) {
             const [g1, g2] = live.score.ft;
             if (g1 > g2) return { type: 'certain', name: live.team1 };
             if (g2 > g1) return { type: 'certain', name: live.team2 };
+            if (live.score.et && live.score.et[0] !== live.score.et[1]) return {
+                type: 'certain',
+                name: live.score.et[0] > live.score.et[1] ? live.team1 : live.team2
+            };
             if (live.score.p) return {
                 type: 'certain',
                 name: live.score.p[0] > live.score.p[1] ? live.team1 : live.team2
@@ -4435,6 +4536,10 @@ function predictKOSlot(code, depth) {
         const [g1, g2] = live.score.ft;
         if (g1 > g2) return { type: 'certain', name: live.team2 };
         if (g2 > g1) return { type: 'certain', name: live.team1 };
+        if (live.score.et && live.score.et[0] !== live.score.et[1]) return {
+            type: 'certain',
+            name: live.score.et[0] > live.score.et[1] ? live.team2 : live.team1
+        };
         if (live.score.p) return {
             type: 'certain',
             name: live.score.p[0] > live.score.p[1] ? live.team2 : live.team1
@@ -4495,6 +4600,12 @@ function predictKOSlot(code, depth) {
 
     // ── Beste treer: aldri spådd ───────────────────────────────────────────────
     if (code.match(/^3[A-L\/]+$/)) return null;
+
+    // ── Faktisk lagnavn — allerede løst ───────────────────────────────────────
+    // MATCHES_RAW kan inneholde ekte lagnavn (ikke posisjonskoder) etter at
+    // matches.json er oppdatert med kjente kampoppstillinger.
+    // Da skal _collectCandidates gjenkjenne dem som sikre kandidater.
+    if (TEAMS[code] && !TEAMS[code]._alias) return { type: 'certain', name: code };
 
     return null;
 }
@@ -4601,7 +4712,9 @@ function getTeamBracketPaths(teamName) {
         const lastKo = koPlayed[koPlayed.length - 1];
         const [g1, g2] = lastKo.score.ft;
         const winner = g1 > g2 ? lastKo.team1 : g2 > g1 ? lastKo.team2 :
-            (lastKo.score.p ? (lastKo.score.p[0] > lastKo.score.p[1] ? lastKo.team1 : lastKo.team2) : null);
+            (lastKo.score.et && lastKo.score.et[0] !== lastKo.score.et[1]
+                ? (lastKo.score.et[0] > lastKo.score.et[1] ? lastKo.team1 : lastKo.team2)
+                : (lastKo.score.p ? (lastKo.score.p[0] > lastKo.score.p[1] ? lastKo.team1 : lastKo.team2) : null));
 
         if (winner !== teamName) return new Map(); // Laget er ute
 
@@ -4698,17 +4811,34 @@ function getTeamBracketPaths(teamName) {
     for (const pos of possiblePositions) {
         const posLabel = `${pos}${grp}`;
         if (pos===3) {
-            MATCHES.filter(m =>
+            // Søk etter treerkode (3A/B/C/…) som inneholder denne gruppen
+            let r32s = MATCHES.filter(m =>
                 m.type==='r32' && !m.score?.ft && (
                     (m.team1.match(/^3[A-L\/]+$/) && m.team1.replace('3','').split('/').includes(grp)) ||
                     (m.team2.match(/^3[A-L\/]+$/) && m.team2.replace('3','').split('/').includes(grp))
                 )
-            ).forEach(r32 => followBracket(r32, posLabel));
+            );
+            // Fallback: posisjonskoden er løst til lagnavn — søk direkte på lagnavn
+            if (r32s.length === 0) {
+                r32s = MATCHES.filter(m =>
+                    m.type==='r32' && !m.score?.ft &&
+                    (m.team1===teamName || m.team2===teamName)
+                );
+            }
+            r32s.forEach(r32 => followBracket(r32, posLabel));
         } else {
-            const r32 = MATCHES.find(m =>
+            // Søk etter posisjonskode (1I, 2I, osv.)
+            let r32 = MATCHES.find(m =>
                 m.type==='r32' && !m.score?.ft &&
                 (m.team1===posLabel || m.team2===posLabel)
             );
+            // Fallback: posisjonskoden er løst til lagnavn i MATCHES
+            if (!r32) {
+                r32 = MATCHES.find(m =>
+                    m.type==='r32' && !m.score?.ft &&
+                    (m.team1===teamName || m.team2===teamName)
+                );
+            }
             if (r32) followBracket(r32, posLabel);
         }
     }
@@ -4759,6 +4889,14 @@ function toggleCRT() {
 MATCHES = buildMatches(MATCHES_RAW, null);
 resolveKOTeams(); // Løs W/L-koder basert på eventuelle scores i MATCHES_RAW
 
+// TOURNEY_OVER = true når alle kamper (inkl. finalen) har et resultat.
+// Brukes til å 1) vise sluttspillet som standardfane i stedet for tidslinjen,
+// og 2) unngå at tidslinje/tabell/rutenett skjuler alt bak "Last inn tidligere
+// kamper" når det ikke finnes noen kommende kamper å vise først.
+// Blir automatisk false igjen når fremtidige kamper legges til (f.eks. EM),
+// så denne trenger ingen manuell reversering ved gjenbruk av prosjektet.
+const TOURNEY_OVER = MATCHES.length > 0 && MATCHES.every(m => m.score?.ft);
+
 // Sett --header-h CSS-variabel slik at tl-axis-wrap sticky top er korrekt
 function updateHeaderHeight() {
     const h    = document.querySelector('.site-header')?.offsetHeight || 0;
@@ -4796,6 +4934,19 @@ updateCountdown();
 checkLive();
 NORWAY_POTENTIAL_MATCHES = new Set(getNorwayPotentialMatches().map(m => m.num));
 
+// Når turneringen er over: åpne sluttspillet som standardfane i stedet for
+// tidslinjen, siden det ikke er noen kommende kamper å vise der lenger.
+// Kun når URL ikke allerede peker til en spesifikk fane (f.eks. via deling).
+if (TOURNEY_OVER) {
+    const tabHashes = ['#tidslinje','#tab-timeline','#timeline','#rutenett','#tab-grid','#grid',
+        '#kamper','#tab-table','#table','#grupper','#tab-groups','#groups','#arenaer','#tab-arenas',
+        '#venues','#arena','#statistikk','#tab-stats','#stats','#sluttspill','#tab-bracket','#bracket'];
+    if (!tabHashes.includes(location.hash)) {
+        const bracketBtn = document.querySelector(`.tab[onclick*="showTab('bracket'"]`);
+        if (bracketBtn) showTab('bracket', bracketBtn);
+    }
+}
+
 // Åpne modal hvis URL har hash ved innlasting
 requestAnimationFrame(() => requestAnimationFrame(openModalByHash));
 
@@ -4806,6 +4957,9 @@ setInterval(() => {
     checkLive();
 }, 1000);
 
-if (location.protocol === 'https:' || location.protocol === 'http:') {
-    fetchResults();
-}
+// Turneringen er avsluttet (Spania vant finalen 19. juli 2026) — alle resultater
+// er nå bakt inn i matches.json som statisk data. Live-henting fra openfootball
+// er derfor slått av permanent; det kommer ingen flere oppdateringer.
+// if (location.protocol === 'https:' || location.protocol === 'http:') {
+//     fetchResults();
+// }

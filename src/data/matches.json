@@ -134,7 +134,31 @@
    "team2": "Mexico",
    "group": "Group A",
    "ground": "Mexico City",
-   "tv": "TV2"
+   "tv": "TV2",
+   "score": {
+    "ft": [
+     0,
+     3
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   },
+   "goals2": [
+    {
+     "name": "Mateo Chávez",
+     "minute": "55"
+    },
+    {
+     "name": "Julián Quiñones",
+     "minute": "61"
+    },
+    {
+     "name": "Álvaro Fidalgo",
+     "minute": "90+4"
+    }
+   ]
   },
   {
    "round": "Matchday 14",
@@ -144,7 +168,23 @@
    "team2": "South Korea",
    "group": "Group A",
    "ground": "Monterrey (Guadalupe)",
-   "tv": "TV2"
+   "tv": "TV2",
+   "score": {
+    "ft": [
+     1,
+     0
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Thapelo Maseko",
+     "minute": "63"
+    }
+   ]
   },
   {
    "round": "Matchday 2",
@@ -312,7 +352,33 @@
    "team2": "Canada",
    "group": "Group B",
    "ground": "Vancouver",
-   "tv": "NRK"
+   "tv": "NRK",
+   "score": {
+    "ft": [
+     2,
+     1
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Rubén Vargas",
+     "minute": "46"
+    },
+    {
+     "name": "Johan Manzambi",
+     "minute": "57"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Promise David",
+     "minute": "76"
+    }
+   ]
   },
   {
    "round": "Matchday 14",
@@ -322,7 +388,38 @@
    "team2": "Qatar",
    "group": "Group B",
    "ground": "Seattle",
-   "tv": "NRK"
+   "tv": "NRK",
+   "score": {
+    "ft": [
+     3,
+     1
+    ],
+    "ht": [
+     2,
+     1
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Kerim Alajbegovic",
+     "minute": "29"
+    },
+    {
+     "name": "Mahmoud Abunada",
+     "minute": "34",
+     "owngoal": true
+    },
+    {
+     "name": "Ermin Mahmic",
+     "minute": "80"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Hassan Al-Haydos",
+     "minute": "42"
+    }
+   ]
   },
   {
    "round": "Matchday 3",
@@ -450,7 +547,31 @@
    "team2": "Brazil",
    "group": "Group C",
    "ground": "Miami (Miami Gardens)",
-   "tv": "NRK"
+   "tv": "NRK",
+   "score": {
+    "ft": [
+     0,
+     3
+    ],
+    "ht": [
+     0,
+     2
+    ]
+   },
+   "goals2": [
+    {
+     "name": "Vinícius Júnior",
+     "minute": "7"
+    },
+    {
+     "name": "Vinícius Júnior",
+     "minute": "45+3"
+    },
+    {
+     "name": "Matheus Cunha",
+     "minute": "60"
+    }
+   ]
   },
   {
    "round": "Matchday 14",
@@ -460,7 +581,46 @@
    "team2": "Haiti",
    "group": "Group C",
    "ground": "Atlanta",
-   "tv": "NRK"
+   "tv": "NRK",
+   "score": {
+    "ft": [
+     4,
+     2
+    ],
+    "ht": [
+     2,
+     2
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Achraf Hakimi",
+     "minute": "39"
+    },
+    {
+     "name": "Ismael Saibari",
+     "minute": "45+1"
+    },
+    {
+     "name": "Soufiane Rahimi",
+     "minute": "78"
+    },
+    {
+     "name": "Gessime Yassine",
+     "minute": "89"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Yassine Bounou",
+     "minute": "10",
+     "owngoal": true
+    },
+    {
+     "name": "Wilson Isidor",
+     "minute": "43"
+    }
+   ]
   },
   {
    "round": "Matchday 2",
@@ -602,7 +762,41 @@
    "team2": "USA",
    "group": "Group D",
    "ground": "Los Angeles (Inglewood)",
-   "tv": "NRK"
+   "tv": "NRK",
+   "score": {
+    "ft": [
+     3,
+     2
+    ],
+    "ht": [
+     2,
+     1
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Arda Güler",
+     "minute": "10"
+    },
+    {
+     "name": "Baris Alper Yilmaz",
+     "minute": "31"
+    },
+    {
+     "name": "Kaan Ayhan",
+     "minute": "90+8"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Auston Trusty",
+     "minute": "3"
+    },
+    {
+     "name": "Sebastian Berhalter",
+     "minute": "49"
+    }
+   ]
   },
   {
    "round": "Matchday 15",
@@ -612,7 +806,17 @@
    "team2": "Australia",
    "group": "Group D",
    "ground": "San Francisco Bay Area (Santa Clara)",
-   "tv": "NRK"
+   "tv": "NRK",
+   "score": {
+    "ft": [
+     0,
+     0
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   }
   },
   {
    "round": "Matchday 4",
@@ -761,7 +965,27 @@
    "team2": "Ivory Coast",
    "group": "Group E",
    "ground": "Philadelphia",
-   "tv": "TV2"
+   "tv": "TV2",
+   "score": {
+    "ft": [
+     0,
+     2
+    ],
+    "ht": [
+     0,
+     1
+    ]
+   },
+   "goals2": [
+    {
+     "name": "Nicolas Pépé",
+     "minute": "7"
+    },
+    {
+     "name": "Nicolas Pépé",
+     "minute": "64"
+    }
+   ]
   },
   {
    "round": "Matchday 15",
@@ -771,7 +995,33 @@
    "team2": "Germany",
    "group": "Group E",
    "ground": "New York/New Jersey (East Rutherford)",
-   "tv": "TV2"
+   "tv": "TV2",
+   "score": {
+    "ft": [
+     2,
+     1
+    ],
+    "ht": [
+     1,
+     1
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Nilson Angulo",
+     "minute": "9"
+    },
+    {
+     "name": "Gonzalo Plata",
+     "minute": "77"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Leroy Sané",
+     "minute": "2"
+    }
+   ]
   },
   {
    "round": "Matchday 4",
@@ -955,7 +1205,29 @@
    "team2": "Sweden",
    "group": "Group F",
    "ground": "Dallas (Arlington)",
-   "tv": "TV2"
+   "tv": "TV2",
+   "score": {
+    "ft": [
+     1,
+     1
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Daizen Maeda",
+     "minute": "56"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Anthony Elanga",
+     "minute": "62"
+    }
+   ]
   },
   {
    "round": "Matchday 15",
@@ -965,7 +1237,38 @@
    "team2": "Netherlands",
    "group": "Group F",
    "ground": "Kansas City",
-   "tv": "TV2"
+   "tv": "TV2",
+   "score": {
+    "ft": [
+     1,
+     3
+    ],
+    "ht": [
+     0,
+     2
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Hazem Mastouri",
+     "minute": "54"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Ellyes Skhiri",
+     "minute": "3",
+     "owngoal": true
+    },
+    {
+     "name": "Brian Brobbey",
+     "minute": "7"
+    },
+    {
+     "name": "Jan Paul van Hecke",
+     "minute": "62"
+    }
+   ]
   },
   {
    "round": "Matchday 5",
@@ -1108,7 +1411,29 @@
    "team2": "Iran",
    "group": "Group G",
    "ground": "Seattle",
-   "tv": "TV2"
+   "tv": "TV2",
+   "score": {
+    "ft": [
+     1,
+     1
+    ],
+    "ht": [
+     1,
+     1
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Mahmoud Saber",
+     "minute": "5"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Ramin Rezaeian",
+     "minute": "14"
+    }
+   ]
   },
   {
    "round": "Matchday 16",
@@ -1118,7 +1443,45 @@
    "team2": "Belgium",
    "group": "Group G",
    "ground": "Vancouver",
-   "tv": "TV2"
+   "tv": "TV2",
+   "score": {
+    "ft": [
+     1,
+     5
+    ],
+    "ht": [
+     0,
+     1
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Elijah Just",
+     "minute": "84"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Leandro Trossard",
+     "minute": "28"
+    },
+    {
+     "name": "Leandro Trossard",
+     "minute": "50"
+    },
+    {
+     "name": "Kevin De Bruyne",
+     "minute": "66"
+    },
+    {
+     "name": "Romelu Lukaku",
+     "minute": "86"
+    },
+    {
+     "name": "Alexis Saelemaekers",
+     "minute": "90+4"
+    }
+   ]
   },
   {
    "round": "Matchday 5",
@@ -1259,7 +1622,17 @@
    "team2": "Saudi Arabia",
    "group": "Group H",
    "ground": "Houston",
-   "tv": "NRK"
+   "tv": "NRK",
+   "score": {
+    "ft": [
+     0,
+     0
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   }
   },
   {
    "round": "Matchday 16",
@@ -1269,7 +1642,23 @@
    "team2": "Spain",
    "group": "Group H",
    "ground": "Guadalajara (Zapopan)",
-   "tv": "NRK"
+   "tv": "NRK",
+   "score": {
+    "ft": [
+     0,
+     1
+    ],
+    "ht": [
+     0,
+     1
+    ]
+   },
+   "goals2": [
+    {
+     "name": "Álex Baena",
+     "minute": "42"
+    }
+   ]
   },
   {
    "round": "Matchday 6",
@@ -1442,7 +1831,41 @@
    "team2": "France",
    "group": "Group I",
    "ground": "Boston (Foxborough)",
-   "tv": "NRK"
+   "tv": "NRK",
+   "score": {
+    "ft": [
+     1,
+     4
+    ],
+    "ht": [
+     1,
+     3
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Thelo Aasgaard",
+     "minute": "21"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Ousmane Dembélé",
+     "minute": "7"
+    },
+    {
+     "name": "Ousmane Dembélé",
+     "minute": "20"
+    },
+    {
+     "name": "Ousmane Dembélé",
+     "minute": "32"
+    },
+    {
+     "name": "Désiré Doué",
+     "minute": "90+4"
+    }
+   ]
   },
   {
    "round": "Matchday 16",
@@ -1452,7 +1875,39 @@
    "team2": "Iraq",
    "group": "Group I",
    "ground": "Toronto",
-   "tv": "NRK"
+   "tv": "NRK",
+   "score": {
+    "ft": [
+     5,
+     0
+    ],
+    "ht": [
+     1,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Habib Diarra",
+     "minute": "4"
+    },
+    {
+     "name": "Ismaïla Sarr",
+     "minute": "56"
+    },
+    {
+     "name": "Pape Gueye",
+     "minute": "59"
+    },
+    {
+     "name": "Pape Gueye",
+     "minute": "71"
+    },
+    {
+     "name": "Iliman Ndiaye",
+     "minute": "82"
+    }
+   ]
   },
   {
    "round": "Matchday 6",
@@ -1604,7 +2059,45 @@
    "team2": "Austria",
    "group": "Group J",
    "ground": "Kansas City",
-   "tv": "NRK"
+   "tv": "NRK",
+   "score": {
+    "ft": [
+     3,
+     3
+    ],
+    "ht": [
+     1,
+     1
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Rafik Belghali",
+     "minute": "45"
+    },
+    {
+     "name": "Riyad Mahrez",
+     "minute": "60"
+    },
+    {
+     "name": "Riyad Mahrez",
+     "minute": "90+3"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Marko Arnautovic",
+     "minute": "28"
+    },
+    {
+     "name": "Marcel Sabitzer",
+     "minute": "55"
+    },
+    {
+     "name": "Sasa Kalajdzic",
+     "minute": "90+6"
+    }
+   ]
   },
   {
    "round": "Matchday 17",
@@ -1614,7 +2107,38 @@
    "team2": "Argentina",
    "group": "Group J",
    "ground": "Dallas (Arlington)",
-   "tv": "NRK"
+   "tv": "NRK",
+   "score": {
+    "ft": [
+     1,
+     3
+    ],
+    "ht": [
+     0,
+     2
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Mousa Al-Tamari",
+     "minute": "55"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Giovani Lo Celso",
+     "minute": "19"
+    },
+    {
+     "name": "Lautaro Martínez",
+     "minute": "31",
+     "penalty": true
+    },
+    {
+     "name": "Lionel Messi",
+     "minute": "80"
+    }
+   ]
   },
   {
    "round": "Matchday 7",
@@ -1765,7 +2289,17 @@
    "team2": "Portugal",
    "group": "Group K",
    "ground": "Miami (Miami Gardens)",
-   "tv": "NRK"
+   "tv": "NRK",
+   "score": {
+    "ft": [
+     0,
+     0
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   }
   },
   {
    "round": "Matchday 17",
@@ -1775,7 +2309,38 @@
    "team2": "Uzbekistan",
    "group": "Group K",
    "ground": "Atlanta",
-   "tv": "NRK"
+   "tv": "NRK",
+   "score": {
+    "ft": [
+     3,
+     1
+    ],
+    "ht": [
+     0,
+     1
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Yoane Wissa",
+     "minute": "68",
+     "penalty": true
+    },
+    {
+     "name": "Fiston Mayele",
+     "minute": "78"
+    },
+    {
+     "name": "Yoane Wissa",
+     "minute": "90+1"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Eldor Shomurodov",
+     "minute": "10"
+    }
+   ]
   },
   {
    "round": "Matchday 7",
@@ -1906,7 +2471,27 @@
    "team2": "England",
    "group": "Group L",
    "ground": "New York/New Jersey (East Rutherford)",
-   "tv": "TV2"
+   "tv": "TV2",
+   "score": {
+    "ft": [
+     0,
+     2
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   },
+   "goals2": [
+    {
+     "name": "Jude Bellingham",
+     "minute": "62"
+    },
+    {
+     "name": "Harry Kane",
+     "minute": "67"
+    }
+   ]
   },
   {
    "round": "Matchday 17",
@@ -1916,299 +2501,1181 @@
    "team2": "Ghana",
    "group": "Group L",
    "ground": "Philadelphia",
-   "tv": "TV2"
+   "tv": "TV2",
+   "score": {
+    "ft": [
+     2,
+     1
+    ],
+    "ht": [
+     1,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Petar Sucic",
+     "minute": "31"
+    },
+    {
+     "name": "Nikola Vlasic",
+     "minute": "83"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Derrick Luckassen",
+     "minute": "73"
+    }
+   ]
   },
   {
    "round": "Round of 32",
    "num": 73,
    "date": "2026-06-28",
    "time": "12:00 UTC-7",
-   "team1": "2A",
-   "team2": "2B",
-   "ground": "Los Angeles (Inglewood)"
+   "team1": "South Africa",
+   "team2": "Canada",
+   "ground": "Los Angeles (Inglewood)",
+   "score": {
+    "ft": [
+     0,
+     1
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   },
+   "goals2": [
+    {
+     "name": "Stephan Eustáquio",
+     "minute": "90+2"
+    }
+   ]
   },
   {
    "round": "Round of 32",
    "num": 74,
    "date": "2026-06-29",
    "time": "16:30 UTC-4",
-   "team1": "1E",
-   "team2": "3A/B/C/D/F",
-   "ground": "Boston (Foxborough)"
+   "team1": "Germany",
+   "team2": "Paraguay",
+   "ground": "Boston (Foxborough)",
+   "score": {
+    "p": [
+     3,
+     4
+    ],
+    "et": [
+     1,
+     1
+    ],
+    "ft": [
+     1,
+     1
+    ],
+    "ht": [
+     0,
+     1
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Kai Havertz",
+     "minute": "54"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Julio Enciso",
+     "minute": "42"
+    }
+   ]
   },
   {
    "round": "Round of 32",
    "num": 75,
    "date": "2026-06-29",
    "time": "19:00 UTC-6",
-   "team1": "1F",
-   "team2": "2C",
-   "ground": "Monterrey (Guadalupe)"
+   "team1": "Netherlands",
+   "team2": "Morocco",
+   "ground": "Monterrey (Guadalupe)",
+   "score": {
+    "p": [
+     2,
+     3
+    ],
+    "et": [
+     1,
+     1
+    ],
+    "ft": [
+     1,
+     1
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Cody Gakpo",
+     "minute": "72"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Issa Diop",
+     "minute": "90+1"
+    }
+   ]
   },
   {
    "round": "Round of 32",
    "num": 76,
    "date": "2026-06-29",
    "time": "12:00 UTC-5",
-   "team1": "1C",
-   "team2": "2F",
-   "ground": "Houston"
+   "team1": "Brazil",
+   "team2": "Japan",
+   "ground": "Houston",
+   "score": {
+    "ft": [
+     2,
+     1
+    ],
+    "ht": [
+     0,
+     1
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Casemiro",
+     "minute": "56"
+    },
+    {
+     "name": "Gabriel Martinelli",
+     "minute": "90+5"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Kaishu Sano",
+     "minute": "29"
+    }
+   ]
   },
   {
    "round": "Round of 32",
    "num": 77,
    "date": "2026-06-30",
    "time": "17:00 UTC-4",
-   "team1": "1I",
-   "team2": "3C/D/F/G/H",
-   "ground": "New York/New Jersey (East Rutherford)"
+   "team1": "France",
+   "team2": "Sweden",
+   "ground": "New York/New Jersey (East Rutherford)",
+   "score": {
+    "ft": [
+     3,
+     0
+    ],
+    "ht": [
+     1,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Kylian Mbappé",
+     "minute": "45"
+    },
+    {
+     "name": "Kylian Mbappé",
+     "minute": "74"
+    },
+    {
+     "name": "Bradley Barcola",
+     "minute": "53"
+    }
+   ]
   },
   {
    "round": "Round of 32",
    "num": 78,
    "date": "2026-06-30",
    "time": "12:00 UTC-5",
-   "team1": "2E",
-   "team2": "2I",
-   "ground": "Dallas (Arlington)"
+   "team1": "Ivory Coast",
+   "team2": "Norway",
+   "ground": "Dallas (Arlington)",
+   "score": {
+    "ft": [
+     1,
+     2
+    ],
+    "ht": [
+     0,
+     1
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Amad Diallo",
+     "minute": "74"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Antonio Nusa",
+     "minute": "39"
+    },
+    {
+     "name": "Erling Haaland",
+     "minute": "86"
+    }
+   ]
   },
   {
    "round": "Round of 32",
    "num": 79,
    "date": "2026-06-30",
    "time": "19:00 UTC-6",
-   "team1": "1A",
-   "team2": "3C/E/F/H/I",
-   "ground": "Mexico City"
+   "team1": "Mexico",
+   "team2": "Ecuador",
+   "ground": "Mexico City",
+   "score": {
+    "ft": [
+     2,
+     0
+    ],
+    "ht": [
+     1,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Julián Quiñones",
+     "minute": "31"
+    },
+    {
+     "name": "Raúl Jiménez",
+     "minute": "45+1"
+    }
+   ]
   },
   {
    "round": "Round of 32",
    "num": 80,
    "date": "2026-07-01",
    "time": "12:00 UTC-4",
-   "team1": "1L",
-   "team2": "3E/H/I/J/K",
-   "ground": "Atlanta"
+   "team1": "England",
+   "team2": "DR Congo",
+   "ground": "Atlanta",
+   "score": {
+    "ft": [
+     2,
+     1
+    ],
+    "ht": [
+     0,
+     1
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Harry Kane",
+     "minute": "75"
+    },
+    {
+     "name": "Harry Kane",
+     "minute": "86"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Brian Cipenga",
+     "minute": "7"
+    }
+   ]
   },
   {
    "round": "Round of 32",
    "num": 81,
    "date": "2026-07-01",
    "time": "17:00 UTC-7",
-   "team1": "1D",
-   "team2": "3B/E/F/I/J",
-   "ground": "San Francisco Bay Area (Santa Clara)"
+   "team1": "USA",
+   "team2": "Bosnia & Herzegovina",
+   "ground": "San Francisco Bay Area (Santa Clara)",
+   "score": {
+    "ft": [
+     2,
+     0
+    ],
+    "ht": [
+     1,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Folarin Balogun",
+     "minute": "45"
+    },
+    {
+     "name": "Malik Tillman",
+     "minute": "82"
+    }
+   ]
   },
   {
    "round": "Round of 32",
    "num": 82,
    "date": "2026-07-01",
    "time": "13:00 UTC-7",
-   "team1": "1G",
-   "team2": "3A/E/H/I/J",
-   "ground": "Seattle"
+   "team1": "Belgium",
+   "team2": "Senegal",
+   "ground": "Seattle",
+   "score": {
+    "et": [
+     3,
+     2
+    ],
+    "ft": [
+     2,
+     2
+    ],
+    "ht": [
+     0,
+     1
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Romelu Lukaku",
+     "minute": "86"
+    },
+    {
+     "name": "Youri Tielemans",
+     "minute": "89"
+    },
+    {
+     "name": "Youri Tielemans",
+     "minute": "120+5",
+     "penalty": true
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Habib Diarra",
+     "minute": "25"
+    },
+    {
+     "name": "Ismaïla Sarr",
+     "minute": "51"
+    }
+   ]
   },
   {
    "round": "Round of 32",
    "num": 83,
    "date": "2026-07-02",
    "time": "19:00 UTC-4",
-   "team1": "2K",
-   "team2": "2L",
-   "ground": "Toronto"
+   "team1": "Portugal",
+   "team2": "Croatia",
+   "ground": "Toronto",
+   "score": {
+    "ft": [
+     2,
+     1
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Cristiano Ronaldo",
+     "minute": "68",
+     "penalty": true
+    },
+    {
+     "name": "Gonçalo Ramos",
+     "minute": "90+4"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Ivan Perisic",
+     "minute": "53"
+    }
+   ]
   },
   {
    "round": "Round of 32",
    "num": 84,
    "date": "2026-07-02",
    "time": "12:00 UTC-7",
-   "team1": "1H",
-   "team2": "2J",
-   "ground": "Los Angeles (Inglewood)"
+   "team1": "Spain",
+   "team2": "Austria",
+   "ground": "Los Angeles (Inglewood)",
+   "score": {
+    "ft": [
+     3,
+     0
+    ],
+    "ht": [
+     1,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Mikel Oyarzabal",
+     "minute": "36"
+    },
+    {
+     "name": "Mikel Oyarzabal",
+     "minute": "89"
+    },
+    {
+     "name": "Pedro Porro",
+     "minute": "66"
+    }
+   ]
   },
   {
    "round": "Round of 32",
    "num": 85,
    "date": "2026-07-02",
    "time": "20:00 UTC-7",
-   "team1": "1B",
-   "team2": "3E/F/G/I/J",
-   "ground": "Vancouver"
+   "team1": "Switzerland",
+   "team2": "Algeria",
+   "ground": "Vancouver",
+   "score": {
+    "ft": [
+     2,
+     0
+    ],
+    "ht": [
+     1,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Breel Embolo",
+     "minute": "10"
+    },
+    {
+     "name": "Dan Ndoye",
+     "minute": "46"
+    }
+   ]
   },
   {
    "round": "Round of 32",
    "num": 86,
    "date": "2026-07-03",
    "time": "18:00 UTC-4",
-   "team1": "1J",
-   "team2": "2H",
-   "ground": "Miami (Miami Gardens)"
+   "team1": "Argentina",
+   "team2": "Cape Verde",
+   "ground": "Miami (Miami Gardens)",
+   "score": {
+    "et": [
+     3,
+     2
+    ],
+    "ft": [
+     1,
+     1
+    ],
+    "ht": [
+     1,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Lionel Messi",
+     "minute": "29"
+    },
+    {
+     "name": "Lisandro Martínez",
+     "minute": "92"
+    },
+    {
+     "name": "Diney Borges",
+     "minute": "111",
+     "owngoal": true
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Deroy Duarte",
+     "minute": "59"
+    },
+    {
+     "name": "Sidny Lopes Cabral",
+     "minute": "103"
+    }
+   ]
   },
   {
    "round": "Round of 32",
    "num": 87,
    "date": "2026-07-03",
    "time": "20:30 UTC-5",
-   "team1": "1K",
-   "team2": "3D/E/I/J/L",
-   "ground": "Kansas City"
+   "team1": "Colombia",
+   "team2": "Ghana",
+   "ground": "Kansas City",
+   "score": {
+    "ft": [
+     1,
+     0
+    ],
+    "ht": [
+     1,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Jhon Arias",
+     "minute": "14"
+    }
+   ]
   },
   {
    "round": "Round of 32",
    "num": 88,
    "date": "2026-07-03",
    "time": "13:00 UTC-5",
-   "team1": "2D",
-   "team2": "2G",
-   "ground": "Dallas (Arlington)"
+   "team1": "Australia",
+   "team2": "Egypt",
+   "ground": "Dallas (Arlington)",
+   "score": {
+    "p": [
+     2,
+     4
+    ],
+    "et": [
+     1,
+     1
+    ],
+    "ft": [
+     1,
+     1
+    ],
+    "ht": [
+     0,
+     1
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Mohamed Hany",
+     "minute": "55",
+     "owngoal": true
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Emam Ashour",
+     "minute": "13"
+    }
+   ]
   },
   {
    "round": "Round of 16",
    "num": 89,
    "date": "2026-07-04",
    "time": "17:00 UTC-4",
-   "team1": "W74",
-   "team2": "W77",
-   "ground": "Philadelphia"
+   "team1": "Paraguay",
+   "team2": "France",
+   "ground": "Philadelphia",
+   "score": {
+    "ft": [
+     0,
+     1
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   },
+   "goals2": [
+    {
+     "name": "Kylian Mbappé",
+     "minute": "70",
+     "penalty": true
+    }
+   ]
   },
   {
    "round": "Round of 16",
    "num": 90,
    "date": "2026-07-04",
    "time": "12:00 UTC-5",
-   "team1": "W73",
-   "team2": "W75",
-   "ground": "Houston"
+   "team1": "Canada",
+   "team2": "Morocco",
+   "ground": "Houston",
+   "score": {
+    "ft": [
+     0,
+     3
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   },
+   "goals2": [
+    {
+     "name": "Azzedine Ounahi",
+     "minute": "50"
+    },
+    {
+     "name": "Azzedine Ounahi",
+     "minute": "82"
+    },
+    {
+     "name": "Soufiane Rahimi",
+     "minute": "90+8"
+    }
+   ]
   },
   {
    "round": "Round of 16",
    "num": 91,
    "date": "2026-07-05",
    "time": "16:00 UTC-4",
-   "team1": "W76",
-   "team2": "W78",
-   "ground": "New York/New Jersey (East Rutherford)"
+   "team1": "Brazil",
+   "team2": "Norway",
+   "ground": "New York/New Jersey (East Rutherford)",
+   "score": {
+    "ft": [
+     1,
+     2
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Neymar",
+     "minute": "90+10",
+     "penalty": true
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Erling Haaland",
+     "minute": "79"
+    },
+    {
+     "name": "Erling Haaland",
+     "minute": "90"
+    }
+   ]
   },
   {
    "round": "Round of 16",
    "num": 92,
    "date": "2026-07-05",
    "time": "18:00 UTC-6",
-   "team1": "W79",
-   "team2": "W80",
-   "ground": "Mexico City"
+   "team1": "Mexico",
+   "team2": "England",
+   "ground": "Mexico City",
+   "score": {
+    "ft": [
+     2,
+     3
+    ],
+    "ht": [
+     1,
+     2
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Julián Quiñones",
+     "minute": "42"
+    },
+    {
+     "name": "Raúl Jiménez",
+     "minute": "69",
+     "penalty": true
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Jude Bellingham",
+     "minute": "36"
+    },
+    {
+     "name": "Jude Bellingham",
+     "minute": "38"
+    },
+    {
+     "name": "Harry Kane",
+     "minute": "60",
+     "penalty": true
+    }
+   ]
   },
   {
    "round": "Round of 16",
    "num": 93,
    "date": "2026-07-06",
    "time": "14:00 UTC-5",
-   "team1": "W83",
-   "team2": "W84",
-   "ground": "Dallas (Arlington)"
+   "team1": "Portugal",
+   "team2": "Spain",
+   "ground": "Dallas (Arlington)",
+   "score": {
+    "ft": [
+     0,
+     1
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   },
+   "goals2": [
+    {
+     "name": "Mikel Merino",
+     "minute": "90+1"
+    }
+   ]
   },
   {
    "round": "Round of 16",
    "num": 94,
    "date": "2026-07-06",
    "time": "17:00 UTC-7",
-   "team1": "W81",
-   "team2": "W82",
-   "ground": "Seattle"
+   "team1": "USA",
+   "team2": "Belgium",
+   "ground": "Seattle",
+   "score": {
+    "ft": [
+     1,
+     4
+    ],
+    "ht": [
+     1,
+     2
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Malik Tillman",
+     "minute": "31"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Charles De Ketelaere",
+     "minute": "9"
+    },
+    {
+     "name": "Charles De Ketelaere",
+     "minute": "33"
+    },
+    {
+     "name": "Hans Vanaken",
+     "minute": "57"
+    },
+    {
+     "name": "Romelu Lukaku",
+     "minute": "90+3"
+    }
+   ]
   },
   {
    "round": "Round of 16",
    "num": 95,
    "date": "2026-07-07",
    "time": "12:00 UTC-4",
-   "team1": "W86",
-   "team2": "W88",
-   "ground": "Atlanta"
+   "team1": "Argentina",
+   "team2": "Egypt",
+   "ground": "Atlanta",
+   "score": {
+    "ft": [
+     3,
+     2
+    ],
+    "ht": [
+     0,
+     1
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Cristian Romero",
+     "minute": "79"
+    },
+    {
+     "name": "Lionel Messi",
+     "minute": "83"
+    },
+    {
+     "name": "Enzo Fernández",
+     "minute": "90+2"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Yasser Ibrahim",
+     "minute": "15"
+    },
+    {
+     "name": "Mostafa Zico",
+     "minute": "67"
+    }
+   ]
   },
   {
    "round": "Round of 16",
    "num": 96,
    "date": "2026-07-07",
    "time": "13:00 UTC-7",
-   "team1": "W85",
-   "team2": "W87",
-   "ground": "Vancouver"
+   "team1": "Switzerland",
+   "team2": "Colombia",
+   "ground": "Vancouver",
+   "score": {
+    "p": [
+     4,
+     3
+    ],
+    "et": [
+     0,
+     0
+    ],
+    "ft": [
+     0,
+     0
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   }
   },
   {
    "round": "Quarter-final",
    "num": 97,
    "date": "2026-07-09",
    "time": "16:00 UTC-4",
-   "team1": "W89",
-   "team2": "W90",
-   "ground": "Boston (Foxborough)"
+   "team1": "France",
+   "team2": "Morocco",
+   "ground": "Boston (Foxborough)",
+   "tv": "NRK",
+   "score": {
+    "ft": [
+     2,
+     0
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Kylian Mbappé",
+     "minute": "60"
+    },
+    {
+     "name": "Ousmane Dembélé",
+     "minute": "66"
+    }
+   ]
   },
   {
    "round": "Quarter-final",
    "num": 98,
    "date": "2026-07-10",
    "time": "12:00 UTC-7",
-   "team1": "W93",
-   "team2": "W94",
-   "ground": "Los Angeles (Inglewood)"
+   "team1": "Spain",
+   "team2": "Belgium",
+   "ground": "Los Angeles (Inglewood)",
+   "tv": "TV2",
+   "score": {
+    "ft": [
+     2,
+     1
+    ],
+    "ht": [
+     1,
+     1
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Fabián Ruiz",
+     "minute": "30"
+    },
+    {
+     "name": "Mikel Merino",
+     "minute": "88"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Charles De Ketelaere",
+     "minute": "41"
+    }
+   ]
   },
   {
    "round": "Quarter-final",
    "num": 99,
    "date": "2026-07-11",
    "time": "17:00 UTC-4",
-   "team1": "W91",
-   "team2": "W92",
-   "ground": "Miami (Miami Gardens)"
+   "team1": "Norway",
+   "team2": "England",
+   "ground": "Miami (Miami Gardens)",
+   "tv": "TV2",
+   "score": {
+    "et": [
+     1,
+     2
+    ],
+    "ft": [
+     1,
+     1
+    ],
+    "ht": [
+     1,
+     1
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Andreas Schjelderup",
+     "minute": "36"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Jude Bellingham",
+     "minute": "45+2"
+    },
+    {
+     "name": "Jude Bellingham",
+     "minute": "93"
+    }
+   ]
   },
   {
    "round": "Quarter-final",
    "num": 100,
    "date": "2026-07-11",
    "time": "20:00 UTC-5",
-   "team1": "W95",
-   "team2": "W96",
-   "ground": "Kansas City"
+   "team1": "Argentina",
+   "team2": "Switzerland",
+   "ground": "Kansas City",
+   "tv": "NRK",
+   "score": {
+    "et": [
+     3,
+     1
+    ],
+    "ft": [
+     1,
+     1
+    ],
+    "ht": [
+     1,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Alexis Mac Allister",
+     "minute": "10"
+    },
+    {
+     "name": "Julián Álvarez",
+     "minute": "112"
+    },
+    {
+     "name": "Lautaro Martínez",
+     "minute": "120+1"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Dan Ndoye",
+     "minute": "67"
+    }
+   ]
   },
   {
    "round": "Semi-final",
    "num": 101,
    "date": "2026-07-14",
    "time": "14:00 UTC-5",
-   "team1": "W97",
-   "team2": "W99",
+   "team1": "France",
+   "team2": "Spain",
    "ground": "Dallas (Arlington)",
-   "tv": "TV2"
+   "tv": "TV2",
+   "score": {
+    "ft": [
+     0,
+     2
+    ],
+    "ht": [
+     0,
+     1
+    ]
+   },
+   "goals2": [
+    {
+     "name": "Mikel Oyarzabal",
+     "minute": "22",
+     "penalty": true
+    },
+    {
+     "name": "Pedro Porro",
+     "minute": "58"
+    }
+   ]
   },
   {
    "round": "Semi-final",
    "num": 102,
    "date": "2026-07-15",
    "time": "15:00 UTC-4",
-   "team1": "W98",
-   "team2": "W100",
+   "team1": "England",
+   "team2": "Argentina",
    "ground": "Atlanta",
-   "tv": "TV2"
+   "tv": "TV2",
+   "score": {
+    "ft": [
+     1,
+     2
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Anthony Gordon",
+     "minute": "55"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Enzo Fernández",
+     "minute": "86"
+    },
+    {
+     "name": "Lautaro Martínez",
+     "minute": "92"
+    }
+   ]
   },
   {
    "round": "Match for third place",
    "num": 103,
    "date": "2026-07-18",
    "time": "17:00 UTC-4",
-   "team1": "L101",
-   "team2": "L102",
+   "team1": "France",
+   "team2": "England",
    "ground": "Miami (Miami Gardens)",
-   "tv": "NRK"
+   "tv": "NRK",
+   "score": {
+    "ft": [
+     4,
+     6
+    ],
+    "ht": [
+     0,
+     4
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Kylian Mbappé",
+     "minute": "48"
+    },
+    {
+     "name": "Bradley Barcola",
+     "minute": "54"
+    },
+    {
+     "name": "Kylian Mbappé",
+     "minute": "66"
+    },
+    {
+     "name": "Ousmane Dembélé",
+     "minute": "90+6"
+    }
+   ],
+   "goals2": [
+    {
+     "name": "Declan Rice",
+     "minute": "3"
+    },
+    {
+     "name": "Ezri Konsa",
+     "minute": "18"
+    },
+    {
+     "name": "Bukayo Saka",
+     "minute": "37"
+    },
+    {
+     "name": "Bukayo Saka",
+     "minute": "45+1"
+    },
+    {
+     "name": "Bukayo Saka",
+     "minute": "87",
+     "penalty": true
+    },
+    {
+     "name": "Jude Bellingham",
+     "minute": "90+8"
+    }
+   ]
   },
   {
    "round": "Final",
    "num": 104,
    "date": "2026-07-19",
    "time": "15:00 UTC-4",
-   "team1": "W101",
-   "team2": "W102",
+   "team1": "Spain",
+   "team2": "Argentina",
    "ground": "New York/New Jersey (East Rutherford)",
-   "tv": "NRK"
+   "tv": "NRK",
+   "score": {
+    "et": [
+     1,
+     0
+    ],
+    "ft": [
+     0,
+     0
+    ],
+    "ht": [
+     0,
+     0
+    ]
+   },
+   "goals1": [
+    {
+     "name": "Ferran Torres",
+     "minute": "106"
+    }
+   ]
   }
  ]
 }
