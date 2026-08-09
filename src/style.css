@@ -51,24 +51,16 @@
     --sec-bg:   rgba(0,0,0,0.45);
     --sec-text: #2a4070;
 
-    /* Gruppefarger */
+    /* Gruppefarger — 6 grupper (A–F) + KO-runder */
     --grp-A-bg:#0d2a4a; --grp-A-fg:#7ec8ff;
     --grp-B-bg:#0a3a28; --grp-B-fg:#6effc0;
     --grp-C-bg:#2a1a00; --grp-C-fg:#ffcc55;
     --grp-D-bg:#3a0a0a; --grp-D-fg:#ff8888;
     --grp-E-bg:#2a0a30; --grp-E-fg:#dd88ff;
-    --grp-F-bg:#001a3a; --grp-F-fg:#55aaff;
-    --grp-G-bg:#003020; --grp-G-fg:#55ffaa;
-    --grp-H-bg:#3a2000; --grp-H-fg:#ffaa44;
-    --grp-I-bg:#380010; --grp-I-fg:#ff6688;
-    --grp-J-bg:#1a0a38; --grp-J-fg:#aa88ff;
-    --grp-K-bg:#003838; --grp-K-fg:#44eedd;
-    --grp-L-bg:#1a2a00; --grp-L-fg:#aaee44;
-    --grp-R32-bg:#102818; --grp-R32-fg:#b0ffcc;
+    --grp-F-bg:#003838; --grp-F-fg:#44eedd;
     --grp-R16-bg:#0a2030; --grp-R16-fg:#88d8ff;
     --grp-QF-bg:#101028;  --grp-QF-fg:#b0b0ff;
     --grp-SF-bg:#281010;  --grp-SF-fg:#ffb0b0;
-    --grp-3P-bg:#201808;  --grp-3P-fg:#ffe0a0;
     --grp-FIN-bg:#302000; --grp-FIN-fg:#ffd060;
 }
 
@@ -99,18 +91,10 @@
     --grp-C-bg:#ffe490; --grp-C-fg:#382600;
     --grp-D-bg:#ffc0c0; --grp-D-fg:#360000;
     --grp-E-bg:#e0c0ff; --grp-E-fg:#260036;
-    --grp-F-bg:#b4ccff; --grp-F-fg:#001840;
-    --grp-G-bg:#a0ecd4; --grp-G-fg:#002818;
-    --grp-H-bg:#ffd494; --grp-H-fg:#361600;
-    --grp-I-bg:#ffbcc8; --grp-I-fg:#360018;
-    --grp-J-bg:#ccbcff; --grp-J-fg:#160036;
-    --grp-K-bg:#a0e6e6; --grp-K-fg:#002626;
-    --grp-L-bg:#d4ffa0; --grp-L-fg:#162600;
-    --grp-R32-bg:#c0e4d0; --grp-R32-fg:#002616;
+    --grp-F-bg:#a0e6e6; --grp-F-fg:#002626;
     --grp-R16-bg:#b4d8ec; --grp-R16-fg:#001626;
     --grp-QF-bg:#c4c4e4;  --grp-QF-fg:#000026;
     --grp-SF-bg:#e4c0c0;  --grp-SF-fg:#260000;
-    --grp-3P-bg:#e4d8bc;  --grp-3P-fg:#362600;
     --grp-FIN-bg:#ffd478; --grp-FIN-fg:#362600;
 }
 
@@ -118,12 +102,9 @@
 .c-A{background:var(--grp-A-bg);color:var(--grp-A-fg)} .c-B{background:var(--grp-B-bg);color:var(--grp-B-fg)}
 .c-C{background:var(--grp-C-bg);color:var(--grp-C-fg)} .c-D{background:var(--grp-D-bg);color:var(--grp-D-fg)}
 .c-E{background:var(--grp-E-bg);color:var(--grp-E-fg)} .c-F{background:var(--grp-F-bg);color:var(--grp-F-fg)}
-.c-G{background:var(--grp-G-bg);color:var(--grp-G-fg)} .c-H{background:var(--grp-H-bg);color:var(--grp-H-fg)}
-.c-I{background:var(--grp-I-bg);color:var(--grp-I-fg)} .c-J{background:var(--grp-J-bg);color:var(--grp-J-fg)}
-.c-K{background:var(--grp-K-bg);color:var(--grp-K-fg)} .c-L{background:var(--grp-L-bg);color:var(--grp-L-fg)}
-.c-R32{background:var(--grp-R32-bg);color:var(--grp-R32-fg)} .c-R16{background:var(--grp-R16-bg);color:var(--grp-R16-fg)}
+.c-R16{background:var(--grp-R16-bg);color:var(--grp-R16-fg)}
 .c-QF{background:var(--grp-QF-bg);color:var(--grp-QF-fg)}   .c-SF{background:var(--grp-SF-bg);color:var(--grp-SF-fg)}
-.c-3P{background:var(--grp-3P-bg);color:var(--grp-3P-fg)}   .c-FIN{background:var(--grp-FIN-bg);color:var(--grp-FIN-fg)}
+.c-FIN{background:var(--grp-FIN-bg);color:var(--grp-FIN-fg)}
 
 /* ── Animasjoner ───────────────────────────────────────────────────────────── */
 @keyframes fadeInDown { from{opacity:0;transform:translateY(-24px)} to{opacity:1;transform:translateY(0)} }
@@ -2955,4 +2936,512 @@ tr.tr-potential td { font-style: italic; }
 .modal-third-pending {
     color: var(--muted);
     opacity: .6;
+}
+
+/* ── Kvalifisering ─────────────────────────────────────────────────────────── */
+
+/* Info-kort (pre-draw state) */
+.qual-info-card {
+    max-width: 680px;
+    margin: 1.5rem auto;
+    padding: 2rem 1.5rem;
+    background: var(--bg-card, rgba(10,16,30,.7));
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+.qual-info-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.3rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin: 0 0 .3rem;
+    color: var(--text);
+}
+.qual-info-subtitle {
+    color: var(--muted);
+    margin: 0 0 1.5rem;
+    font-size: .9rem;
+}
+.qual-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+.qual-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: .2rem;
+}
+.qual-info-label {
+    font-family: 'Space Mono', monospace;
+    font-size: .7rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+}
+.qual-info-value {
+    font-size: .95rem;
+    color: var(--text);
+}
+.qual-info-section {
+    margin-top: 1.5rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--border);
+}
+.qual-info-section h3 {
+    font-family: 'Space Mono', monospace;
+    font-size: .85rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin: 0 0 .6rem;
+    color: var(--text);
+}
+.qual-info-text {
+    font-size: .88rem;
+    line-height: 1.5;
+    color: var(--text-sec, var(--text));
+    margin: 0;
+}
+.qual-host-flags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .8rem;
+    margin-top: .8rem;
+}
+.qual-host-flag {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    font-size: .85rem;
+    color: var(--text);
+}
+.qual-host-flag .flag-svg {
+    width: 20px;
+    height: 15px;
+}
+
+/* Matchday-liste (pre-draw) */
+.qual-matchdays {
+    margin-top: 1.5rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--border);
+}
+.qual-matchdays h3 {
+    font-family: 'Space Mono', monospace;
+    font-size: .85rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin: 0 0 .8rem;
+    color: var(--text);
+}
+.qual-matchday-list {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+.qual-matchday-item {
+    display: grid;
+    grid-template-columns: 3rem 1fr auto;
+    gap: .5rem;
+    align-items: center;
+    padding: .5rem .7rem;
+    background: var(--row-a, rgba(255,255,255,.03));
+    border-radius: 6px;
+    font-size: .85rem;
+}
+.qual-matchday-item:nth-child(even) {
+    background: var(--row-b, rgba(255,255,255,.06));
+}
+.qual-md-num {
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    color: var(--text);
+}
+.qual-md-date {
+    color: var(--text);
+}
+.qual-md-note {
+    color: var(--muted);
+    font-size: .78rem;
+}
+
+/* Gruppe-standings (når data er tilgjengelig) */
+.qual-groups-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 1rem;
+    padding: 1rem 0;
+}
+.qual-group-card {
+    background: var(--bg-card, rgba(10,16,30,.7));
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+    overflow-x: auto;
+}
+.qual-group-title {
+    font-family: 'Space Mono', monospace;
+    font-size: .9rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin: 0 0 .6rem;
+    color: var(--text);
+}
+.qual-standings {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .82rem;
+}
+.qual-standings th {
+    font-family: 'Space Mono', monospace;
+    font-size: .7rem;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: .3rem .4rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+}
+.qual-standings th.qual-team-col {
+    text-align: left;
+}
+.qual-standings td {
+    padding: .4rem .4rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+}
+.qual-standings td.qual-team-col {
+    text-align: left;
+    white-space: nowrap;
+}
+.qual-standings td.qual-pos {
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: .75rem;
+    width: 1.5rem;
+}
+.qual-standings .qual-team-col .flag-svg {
+    width: 18px;
+    height: 13px;
+    margin-right: .3rem;
+    vertical-align: middle;
+}
+.qual-pts {
+    color: var(--text);
+}
+.qual-pos-winner td {
+    background: rgba(100, 255, 150, .08);
+}
+.qual-pos-runner td {
+    background: rgba(100, 200, 255, .08);
+}
+.qual-norway td {
+    border-left: 3px solid #ef2b2d;
+}
+.qual-host-icon {
+    font-size: .65rem;
+    color: var(--muted);
+    margin-left: .2rem;
+}
+
+/* Kamp-tabell (kvalik) */
+.qual-matches-wrap {
+    max-width: 720px;
+    margin: 1rem auto;
+}
+.qual-schedule .qual-match-row td {
+    padding: .45rem .4rem;
+    font-size: .84rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+}
+.qual-match-group {
+    font-family: 'Space Mono', monospace;
+    font-size: .7rem;
+    color: var(--muted);
+    width: 3rem;
+}
+.qual-match-home {
+    text-align: right;
+    white-space: nowrap;
+}
+.qual-match-score {
+    text-align: center;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    width: 3rem;
+}
+.qual-match-away {
+    text-align: left;
+    white-space: nowrap;
+}
+.qual-match-time {
+    font-size: .75rem;
+    color: var(--muted);
+    text-align: right;
+}
+.qual-match-row .flag-svg {
+    width: 16px;
+    height: 12px;
+    vertical-align: middle;
+}
+.qual-match-row.qual-norway {
+    border-left: 3px solid #ef2b2d;
+}
+
+/* Light mode overrides */
+[data-theme="light"] .qual-info-card {
+    background: var(--bg-card);
+}
+[data-theme="light"] .qual-group-card {
+    background: var(--bg-card);
+}
+[data-theme="light"] .qual-pos-winner td {
+    background: rgba(0, 160, 60, .08);
+}
+[data-theme="light"] .qual-pos-runner td {
+    background: rgba(0, 100, 200, .08);
+}
+
+/* ── Nations League ────────────────────────────────────────────────────────── */
+.nl-header-info {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem 1.5rem;
+    padding: .8rem 0 .5rem;
+}
+.nl-header-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--text);
+    background: var(--bg-card, rgba(10,16,30,.7));
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: .3rem .7rem;
+}
+.nl-header-dates {
+    font-size: .8rem;
+    color: var(--muted);
+}
+.nl-norway-group {
+    border-color: #ef2b2d;
+    border-width: 2px;
+}
+.nl-pos-relegated td {
+    background: rgba(255, 80, 80, .08);
+}
+.nl-group-legend {
+    display: flex;
+    gap: 1rem;
+    margin-top: .6rem;
+    font-size: .72rem;
+    color: var(--muted);
+}
+.nl-legend-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: .3rem;
+    vertical-align: middle;
+}
+.nl-dot-adv { background: rgba(100, 255, 150, .6); }
+.nl-dot-rel { background: rgba(255, 80, 80, .6); }
+
+[data-theme="light"] .nl-header-badge {
+    background: var(--bg-card);
+}
+[data-theme="light"] .nl-pos-relegated td {
+    background: rgba(200, 0, 0, .06);
+}
+[data-theme="light"] .nl-dot-adv { background: rgba(0, 160, 60, .7); }
+[data-theme="light"] .nl-dot-rel { background: rgba(200, 0, 0, .7); }
+
+/* ── «Mer»-knapp og dropdown ──────────────────────────────────────────────── */
+.tab-more-wrap {
+    position: relative;
+    display: inline-flex;
+}
+.tab-more-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 100;
+    min-width: 180px;
+    background: var(--bg, #000);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: .4rem 0;
+    box-shadow: 0 8px 24px rgba(0,0,0,.4);
+    margin-top: .3rem;
+}
+.tab-more-item {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    width: 100%;
+    padding: .55rem 1rem;
+    font-size: .82rem;
+    color: var(--text);
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+}
+.tab-more-item:hover {
+    background: var(--row-b, rgba(255,255,255,.06));
+}
+.tab-more-item i {
+    font-size: .9rem;
+    color: var(--muted);
+}
+
+[data-theme="light"] .tab-more-menu {
+    background: var(--bg);
+    box-shadow: 0 8px 24px rgba(0,0,0,.12);
+}
+
+/* ── NL path flow ──────────────────────────────────────────────────────────── */
+.nl-info-card {
+    margin-top: 1.5rem;
+}
+.nl-path-section {
+    margin-top: 1.2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+.nl-path-section h4 {
+    font-family: 'Space Mono', monospace;
+    font-size: .8rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin: 0 0 .8rem;
+    color: var(--text);
+}
+.nl-path-flow {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    flex-wrap: wrap;
+    margin-bottom: .8rem;
+}
+.nl-path-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .2rem;
+    padding: .6rem .8rem;
+    background: var(--row-a, rgba(255,255,255,.03));
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    min-width: 100px;
+    text-align: center;
+}
+.nl-path-icon {
+    font-size: 1.1rem;
+    color: var(--muted);
+}
+.nl-path-label {
+    font-family: 'Space Mono', monospace;
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--text);
+    font-weight: 700;
+}
+.nl-path-detail {
+    font-size: .7rem;
+    color: var(--muted);
+}
+.nl-path-arrow {
+    color: var(--muted);
+    font-size: .9rem;
+}
+.nl-path-note {
+    font-size: .82rem;
+    line-height: 1.5;
+    color: var(--text-sec, var(--text));
+    margin: 0;
+}
+
+/* ── Qualifying structure grid ─────────────────────────────────────────────── */
+.qual-structure-grid {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    flex-wrap: wrap;
+    margin: .8rem 0;
+}
+.qual-structure-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .15rem;
+    padding: .7rem 1rem;
+    background: var(--row-a, rgba(255,255,255,.03));
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    text-align: center;
+}
+.qual-structure-winner {
+    border-color: rgba(100, 255, 150, .4);
+    background: rgba(100, 255, 150, .05);
+}
+.qual-structure-runner {
+    border-color: rgba(100, 200, 255, .4);
+    background: rgba(100, 200, 255, .05);
+}
+.qual-structure-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text);
+}
+.qual-structure-label {
+    font-family: 'Space Mono', monospace;
+    font-size: .68rem;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--text);
+}
+.qual-structure-detail {
+    font-size: .68rem;
+    color: var(--muted);
+}
+.qual-structure-plus {
+    font-size: 1.2rem;
+    color: var(--muted);
+    font-weight: 700;
+}
+.qual-playoff-list {
+    list-style: none;
+    padding: 0;
+    margin: .5rem 0 0;
+}
+.qual-playoff-list li {
+    position: relative;
+    padding: .35rem 0 .35rem 1.2rem;
+    font-size: .84rem;
+    color: var(--text);
+    line-height: 1.4;
+}
+.qual-playoff-list li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: var(--muted);
+}
+
+[data-theme="light"] .qual-structure-winner {
+    border-color: rgba(0, 160, 60, .4);
+    background: rgba(0, 160, 60, .05);
+}
+[data-theme="light"] .qual-structure-runner {
+    border-color: rgba(0, 100, 200, .4);
+    background: rgba(0, 100, 200, .05);
 }

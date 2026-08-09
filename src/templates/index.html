@@ -12,11 +12,12 @@
         <div class="header-left"></div>
         <div class="header-brand">
             <img src="favicon.svg" class="header-crest" alt="Logo">
-            <span class="header-title">FIFA VM 2026</span>
+            <span class="header-title">UEFA EM 2028</span>
             <span class="header-host-flags">
-                <svg class="flag-svg header-host-flag" aria-hidden="true"><use href="#mx"/></svg>
-                <svg class="flag-svg header-host-flag" aria-hidden="true"><use href="#ca"/></svg>
-                <svg class="flag-svg header-host-flag" aria-hidden="true"><use href="#us"/></svg>
+                <svg class="flag-svg header-host-flag" aria-hidden="true"><use href="#gb-eng"/></svg>
+                <svg class="flag-svg header-host-flag" aria-hidden="true"><use href="#gb-sct"/></svg>
+                <svg class="flag-svg header-host-flag" aria-hidden="true"><use href="#gb-wls"/></svg>
+                <svg class="flag-svg header-host-flag" aria-hidden="true"><use href="#ie"/></svg>
             </span>
         </div>
         <div class="header-right">
@@ -45,21 +46,40 @@
 
     <!-- Tabs -->
     <div class="tabs">
-        <button class="tab active" id="tab-timeline" onclick="showTab('timeline',this)">
-            <i class="bi bi-bar-chart-steps"></i> Tidslinje
+        <button class="tab active" id="tab-nl-groups" onclick="showTab('nl-groups',this)">
+            <i class="bi bi-shield"></i> Nations League
         </button>
-        <button class="tab" id="tab-table" onclick="showTab('table',this)">
-            <i class="bi bi-list-ul"></i> Tabell
+        <button class="tab" id="tab-nl-matches" onclick="showTab('nl-matches',this)">
+            <i class="bi bi-calendar-event"></i> NL-kamper
         </button>
-        <button class="tab" id="tab-groups" onclick="showTab('groups',this)">
-            <i class="bi bi-grid-3x3-gap"></i> Grupper
+        <button class="tab" id="tab-qual-groups" onclick="showTab('qual-groups',this)">
+            <i class="bi bi-trophy"></i> Kvalik
         </button>
-        <button class="tab" id="tab-arenas" onclick="showTab('arenas',this)">
-            <i class="bi bi-geo-alt"></i> Arenaer
+        <button class="tab" id="tab-qual-matches" onclick="showTab('qual-matches',this)">
+            <i class="bi bi-calendar3"></i> Kvalik-kamper
         </button>
-        <button class="tab" id="tab-bracket" onclick="showTab('bracket',this)">
-            <i class="bi bi-diagram-3"></i> Sluttspill
-        </button>
+        <div class="tab-more-wrap">
+            <button class="tab tab-more-btn" id="tab-more" onclick="toggleMoreTabs()">
+                <i class="bi bi-three-dots"></i> EM 2028
+            </button>
+            <div class="tab-more-menu" id="tab-more-menu" style="display:none">
+                <button class="tab-more-item" onclick="showTab('timeline',document.getElementById('tab-more'));closeMoreTabs()">
+                    <i class="bi bi-bar-chart-steps"></i> Tidslinje
+                </button>
+                <button class="tab-more-item" onclick="showTab('table',document.getElementById('tab-more'));closeMoreTabs()">
+                    <i class="bi bi-list-ul"></i> Tabell
+                </button>
+                <button class="tab-more-item" onclick="showTab('groups',document.getElementById('tab-more'));closeMoreTabs()">
+                    <i class="bi bi-grid-3x3-gap"></i> Grupper
+                </button>
+                <button class="tab-more-item" onclick="showTab('bracket',document.getElementById('tab-more'));closeMoreTabs()">
+                    <i class="bi bi-diagram-3"></i> Sluttspill
+                </button>
+                <button class="tab-more-item" onclick="showTab('arenas',document.getElementById('tab-more'));closeMoreTabs()">
+                    <i class="bi bi-geo-alt"></i> Arenaer
+                </button>
+            </div>
+        </div>
         <button class="tab" onclick="showTab('stats',this)" style="display:none">
             <i class="bi bi-bar-chart"></i> Statistikk
         </button>
@@ -81,8 +101,18 @@
         <div class="tz-backdrop" id="tz-backdrop" style="display:none" onclick="closeTZMenu();closeLangMenu()"></div>
     </div>
 
+    <!-- Nations League — Grupper -->
+    <div id="view-nl-groups" class="tab-panel active">
+        <div id="nl-groups"></div>
+    </div>
+
+    <!-- Nations League — Kamper -->
+    <div id="view-nl-matches" class="tab-panel">
+        <div id="nl-matches"></div>
+    </div>
+
     <!-- Tidslinje / Rutenett — deler panel, bytter modus med transponer-knapp -->
-    <div id="view-timeline" class="tab-panel active">
+    <div id="view-timeline" class="tab-panel">
         <!-- Horisontal tidslinje -->
         <div id="tl-mode" class="tl-mode-horizontal">
             <div class="tl-hint" id="tl-hint">
@@ -142,6 +172,16 @@
     <!-- Arenaer -->
     <div id="view-arenas" class="tab-panel">
         <!-- Bygges av buildArenas() ved første besøk -->
+    </div>
+
+    <!-- Kvalifisering — Grupper -->
+    <div id="view-qual-groups" class="tab-panel">
+        <div id="qual-groups"></div>
+    </div>
+
+    <!-- Kvalifisering — Kamper -->
+    <div id="view-qual-matches" class="tab-panel">
+        <div id="qual-matches"></div>
     </div>
 
 

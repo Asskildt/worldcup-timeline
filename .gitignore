@@ -1,5 +1,4 @@
 dist/
-dist-test/
 node_modules/
 inspo/
 test/
@@ -8,3 +7,4 @@ test/
 *.MP4
 Flags.svg
 !src/flags.svg
+.DS_Store

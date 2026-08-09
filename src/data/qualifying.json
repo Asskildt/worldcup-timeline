@@ -1,0 +1,20 @@
+{
+  "name": "UEFA Euro 2028 Qualifying",
+  "status": "pre-draw",
+  "draw_date": "2026-12-06",
+  "draw_venue": "ICC Belfast",
+  "group_stage_start": "2027-03-25",
+  "group_stage_end": "2027-11-18",
+  "playoffs_date": "2028-03",
+  "format": {
+    "groups": 12,
+    "teams_per_group": "4 or 5",
+    "total_teams": 54,
+    "direct_qualifiers": 20,
+    "qualification_method": "12 group winners + 8 best runners-up qualify directly. Remaining spots via play-offs in March 2028.",
+    "host_nations": ["England", "Scotland", "Wales", "Ireland"],
+    "host_rule": "Hosts play in qualifying (separate groups). 2 reserved spots for best-ranked hosts that don't qualify on merit."
+  },
+  "groups": [],
+  "matches": []
+}

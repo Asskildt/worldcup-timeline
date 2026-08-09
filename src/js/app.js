@@ -1,14 +1,14 @@
 // ── Konfig ────────────────────────────────────────────────────────────────────
-const TL_START  = 17.5; // 17:30 CEST
-const TL_END    = 32.5; // 08:30 neste dag
+const TL_START  = 14.5; // 14:30 CEST (tidligste kamp 15:00)
+const TL_END    = 25.5; // 01:30 neste dag (seneste kamp 21:00 + 2t)
 const TL_COLS   = (TL_END - TL_START) * 2;
 const TL_STEP   = 0.5;
 const MATCH_DUR = 2.0;
-const API_URL   = 'https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json';
+const API_URL   = null; // Ingen live-API for EM 2028 ennå
 const FETCH_TIMEOUT_MS = 8000;
 
-// VM starter 11. juni 2026 kl. 21:00 CEST = 19:00 UTC
-const VM_START_UTC = new Date('2026-06-11T19:00:00Z');
+// EM starter 9. juni 2028 kl. 21:00 CEST = 19:00 UTC
+const EM_START_UTC = new Date('2028-06-09T19:00:00Z');
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let MATCHES = [];
@@ -35,12 +35,11 @@ let TL_MODE = localStorage.getItem('tlMode') !== null
 // HOME_TZ_IDX markerer "standard"-tidssonen for denne installasjon (CEST for norsk versjon)
 const TZ_LIST = [
     { offset:  2, label: 'CEST',  flag: 'no',     desc: 'Norge, Sentral-Europa',           descEn: 'Norway, Central Europe',          home: true  },
-    { offset:  1, label: 'BST',   flag: 'gb-eng',  desc: 'Storbritannia, Irland',            descEn: 'UK, Ireland',                     home: false },
-    { offset:  3, label: 'UTC+3', flag: 'sa',      desc: 'Øst-Europa, Midtøsten, E-Afrika', descEn: 'E. Europe, Middle East, E. Africa',home: false },
+    { offset:  1, label: 'BST',   flag: 'gb-eng', desc: 'Storbritannia, Irland (lokal)',    descEn: 'UK, Ireland (local)',             home: false },
+    { offset:  3, label: 'EEST',  flag: null,      desc: 'Øst-Europa, Hellas, Finland',     descEn: 'E. Europe, Greece, Finland',      home: false },
     { offset: -3, label: 'BRT',   flag: 'br',      desc: 'Brasil, Argentina',               descEn: 'Brazil, Argentina',               home: false },
     { offset: -4, label: 'EDT',   flag: 'ca',      desc: 'New York, Toronto',               descEn: 'New York, Toronto',               home: false },
     { offset: -5, label: 'CDT',   flag: 'us',      desc: 'Chicago, Mexico City',            descEn: 'Chicago, Mexico City',            home: false },
-    { offset: -6, label: 'MDT',   flag: 'us',      desc: 'Denver',                          descEn: 'Denver',                          home: false },
     { offset: -7, label: 'PDT',   flag: 'us',      desc: 'Los Angeles, Vancouver',          descEn: 'Los Angeles, Vancouver',          home: false },
     { offset:  0, label: 'UTC',   flag: null,       desc: 'UTC',                             descEn: 'UTC',                             home: false },
 ];
@@ -223,9 +222,9 @@ const i18n = {
         timeout:    'Tidsavbrudd',
         updated_at: 'Oppdatert',
         results:    'resultater',
-        tourney_over: 'VM 2026 er over',
-        champion:   (team) => `${team} ble verdensmester 2026`,
-        norway_result: (round) => `Norge spilte et solid VM og nådde ${round}`,
+        tourney_over: 'EM 2028 er over',
+        champion:   (team) => `${team} ble europamester 2028`,
+        norway_result: (round) => `Norge spilte et solid EM og nådde ${round}`,
         filter:     'Filter',
         reset:      'Nullstill',
         favourites: 'Favoritter',
@@ -244,7 +243,7 @@ const i18n = {
         matches_n:  (n) => `${n} kamp${n !== 1 ? 'er' : ''} spilt`,
         standings:  'Gruppe',
         best_thirds:'Beste treere',
-        thirds_note:(n) => `8 av ${n} treere går videre · Rangert etter poeng, målforskjell og mål scoret`,
+        thirds_note:(n) => `4 av ${n} treere går videre · Rangert etter poeng, målforskjell og mål scoret`,
         third_pts:  (p) => `${p}p`,
         third_goals:(g) => `${g} mål`,
         adv:        'MF',
@@ -280,8 +279,8 @@ const i18n = {
         venue_matches: 'Kamper',
         add_fav:    'Legg til',
         fav_active: 'Favoritt',
-        share_page: 'FIFA VM 2026 – Kampprogram',
-        share_text: 'Se alle kampene, stillingene og sluttspillet for VM 2026 med norsk tid.',
+        share_page: 'UEFA EM 2028 – Kampprogram',
+        share_text: 'Se alle kampene, stillingene og sluttspillet for EM 2028 med norsk tid.',
         copy_link:  'Kopier lenken:',
         map_note:   'Klikk på en arena for å se kampene der',
         no_map:     'Kart ikke tilgjengelig',
@@ -322,8 +321,8 @@ const i18n = {
         timeout:    'Timed out',
         updated_at: 'Updated',
         results:    'results',
-        tourney_over: 'World Cup 2026 is over',
-        champion:   (team) => `${team} won the 2026 World Cup`,
+        tourney_over: 'Euro 2028 is over',
+        champion:   (team) => `${team} won Euro 2028`,
         norway_result: (round) => `Norway had a solid tournament, reaching the ${round}`,
         filter:     'Filter',
         reset:      'Clear',
@@ -343,7 +342,7 @@ const i18n = {
         matches_n:  (n) => `${n} match${n !== 1 ? 'es' : ''} played`,
         standings:  'Group',
         best_thirds:'Best third-placed teams',
-        thirds_note:(n) => `8 of ${n} third-placed teams advance · Ranked by points, goal difference and goals scored`,
+        thirds_note:(n) => `4 of ${n} third-placed teams advance · Ranked by points, goal difference and goals scored`,
         third_pts:  (p) => `${p}pts`,
         third_goals:(g) => `${g} goals`,
         adv:        'GD',
@@ -379,8 +378,8 @@ const i18n = {
         venue_matches: 'Matches',
         add_fav:    'Add',
         fav_active: 'Favourite',
-        share_page: 'FIFA World Cup 2026 – Schedule',
-        share_text: 'See all matches, standings and the knockout bracket for World Cup 2026.',
+        share_page: 'UEFA Euro 2028 – Schedule',
+        share_text: 'See all matches, standings and the knockout bracket for Euro 2028.',
         copy_link:  'Copy the link:',
         map_note:   'Click a venue to see its matches',
         no_map:     'Map not available',
@@ -579,10 +578,10 @@ function saveTblRestDays() {
 
 // ── (Header-kollaps fjernet — header er alltid synlig og kompakt) ─────────────
 
-// buildTourneyOverText() → HTML for header når alle 104 kamper er spilt.
-// Finner finalen (num 104) og viser vinneren med flagg.
+// buildTourneyOverText() → HTML for header når alle 51 kamper er spilt.
+// Finner finalen og viser vinneren med flagg.
 function buildTourneyOverText() {
-    const finale = MATCHES.find(m => m.num === 104);
+    const finale = MATCHES.find(m => m.type === 'fin' && m.grp === 'FIN');
     if (!finale?.score?.ft) return t('tourney_over');
     const [g1, g2] = finale.score.ft;
     let winnerName, winnerFlag;
@@ -871,6 +870,7 @@ function resolveKOTeams() {
 
 // ── Resultater fra openfootball ───────────────────────────────────────────────
 async function fetchResults() {
+    if (!API_URL) return; // Ingen live-API konfigurert
     const status = document.getElementById('fetch-status');
     status.textContent = t('update');
 
@@ -1405,6 +1405,9 @@ function openModalByHash() {
         '#arena':     'arenas',
         '#statistikk':'stats',    '#tab-stats':    'stats',    '#stats':    'stats',
         '#sluttspill':'bracket',  '#tab-bracket':  'bracket',  '#bracket':  'bracket',
+        '#kvalik':    'qual-groups', '#qualifying': 'qual-groups',
+        '#kvalik-kamper': 'qual-matches', '#qualifying-matches': 'qual-matches',
+        '#nations-league': 'nl-groups', '#nl-kamper': 'nl-matches', '#nl-matches': 'nl-matches',
     };
     if (tabMap[hash]) {
         let tabName = tabMap[hash];
@@ -1414,11 +1417,15 @@ function openModalByHash() {
         if (btn) {
             showTab(tabName, btn);
         } else {
-            ['timeline','table','groups','bracket','stats','arenas'].forEach(n => {
+            ['nl-groups','nl-matches','timeline','table','groups','bracket','stats','arenas','qual-groups','qual-matches'].forEach(n => {
                 const el = document.getElementById('view-'+n);
                 if (el) el.classList.toggle('active', n === tabName);
             });
+            if (tabName === 'nl-groups' && !document.getElementById('nl-groups-built')) buildNLGroups();
+            if (tabName === 'nl-matches' && !document.getElementById('nl-matches-built')) buildNLMatches();
             if (tabName === 'stats' && !document.getElementById('stats-built')) buildStats();
+            if (tabName === 'qual-groups' && !document.getElementById('qual-groups-built')) buildQualifyingGroups();
+            if (tabName === 'qual-matches' && !document.getElementById('qual-matches-built')) buildQualifyingMatches();
         }
         return;
     }
@@ -1457,7 +1464,7 @@ function openModalByHash() {
     if (match) openModal(match);
 }
 
-// Hjelpefunksjoner for vertland (USA, Canada, Mexico)
+// Hjelpefunksjoner for vertland (England, Scotland, Wales, Ireland)
 
 // Returnerer +1-badge HTML om kampen starter etter lokal midnatt
 function nextDayBadge(matchT, isoDate) {
@@ -1471,7 +1478,7 @@ function nextDayBadge(matchT, isoDate) {
 }
 
 function hostCountryFlag(country) {
-    const ids = { 'USA': 'us', 'Canada': 'ca', 'Mexico': 'mx' };
+    const ids = { 'England': 'gb-eng', 'Scotland': 'gb-sct', 'Wales': 'gb-wls', 'Ireland': 'ie' };
     const id = ids[country];
     return id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${id}"/></svg>` : '';
 }
@@ -3416,22 +3423,26 @@ function showTab(name, btn) {
         applyTlMode('vertical');
         name = 'timeline';
     }
-    ['timeline','table','groups','bracket','stats','arenas'].forEach(n => {
+    ['nl-groups','nl-matches','timeline','table','groups','bracket','stats','arenas','qual-groups','qual-matches'].forEach(n => {
         const el = document.getElementById('view-'+n);
         if (el) el.classList.toggle('active', n === name);
     });
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    btn.classList.add('active');
+    if (btn) btn.classList.add('active');
     // Oppdater URL-hash ved fanebytte — norsk eller engelsk avhengig av LANG
-    const tabHashNo = { timeline: TL_MODE === 'vertical' ? '#rutenett' : '#tidslinje', table: '#kamper',  groups: '#grupper',  arenas: '#arenaer',  stats: '#statistikk', bracket: '#sluttspill' };
-    const tabHashEn = { timeline: TL_MODE === 'vertical' ? '#grid'     : '#timeline',  table: '#table',   groups: '#groups',   arenas: '#venues',   stats: '#stats',      bracket: '#bracket' };
+    const tabHashNo = { 'nl-groups': '#nations-league', 'nl-matches': '#nl-kamper', timeline: TL_MODE === 'vertical' ? '#rutenett' : '#tidslinje', table: '#kamper',  groups: '#grupper',  arenas: '#arenaer',  stats: '#statistikk', bracket: '#sluttspill', 'qual-groups': '#kvalik', 'qual-matches': '#kvalik-kamper' };
+    const tabHashEn = { 'nl-groups': '#nations-league', 'nl-matches': '#nl-matches', timeline: TL_MODE === 'vertical' ? '#grid'     : '#timeline',  table: '#table',   groups: '#groups',   arenas: '#venues',   stats: '#stats',      bracket: '#bracket',    'qual-groups': '#qualifying', 'qual-matches': '#qualifying-matches' };
     const tabHash   = LANG === 'no' ? tabHashNo : tabHashEn;
     if (tabHash[name]) history.replaceState(null, '', tabHash[name]);
     // Bygg faner ved første besøk
+    if (name === 'nl-groups'  && !document.getElementById('nl-groups-built'))  buildNLGroups();
+    if (name === 'nl-matches' && !document.getElementById('nl-matches-built')) buildNLMatches();
     if (name === 'stats'   && !document.getElementById('stats-built'))   buildStats();
     if (name === 'arenas'  && !document.getElementById('arenas-built'))  buildArenas();
     if (name === 'map'     && !document.getElementById('map-built'))     buildMap();
     if (name === 'bracket' && !document.getElementById('bracket-built')) buildBracket();
+    if (name === 'qual-groups'  && !document.getElementById('qual-groups-built'))  buildQualifyingGroups();
+    if (name === 'qual-matches' && !document.getElementById('qual-matches-built')) buildQualifyingMatches();
     if (name === 'timeline' && TL_MODE === 'horizontal') { buildTimeline(); renderTlToolbar(); }
     if (name === 'timeline' && TL_MODE === 'vertical')   buildVerticalGrid();
 }
@@ -3732,8 +3743,8 @@ function buildBracket() {
 
         const cardCls = [
             'bracket-match',
-            m.num === 103 ? 'bracket-match-3p'    : '',
-            m.num === 104 ? 'bracket-match-fin'    : '',
+            m.grp === '3P'  ? 'bracket-match-3p'    : '',
+            m.grp === 'FIN' ? 'bracket-match-fin'    : '',
             isNorwayHl    ? 'bracket-match-norway' : '',
             isFavMatch    ? 'bracket-match-fav'    : '',
             isDimmed      ? 'bracket-match-dimmed' : '',
@@ -3755,8 +3766,8 @@ function buildBracket() {
         ].filter(Boolean).join(' ');
 
         let typeBadge = '';
-        if (m.num === 103) typeBadge = '<span class="bracket-type-badge badge-3p">3P</span>';
-        if (m.num === 104) typeBadge = '<span class="bracket-type-badge badge-fin">FIN</span>';
+        if (m.grp === '3P')  typeBadge = '<span class="bracket-type-badge badge-3p">3P</span>';
+        if (m.grp === 'FIN') typeBadge = '<span class="bracket-type-badge badge-fin">FIN</span>';
 
         const timeStr = m.t != null ? fmtT(m.t) : '';
         // Tooltip
@@ -4883,6 +4894,439 @@ function toggleCRT() {
     crtOn = !crtOn;
     document.body.classList.toggle('crt-mode', crtOn);
     localStorage.setItem('crtMode', crtOn ? '1' : '0');
+}
+
+// ── «Mer»-meny for EM-faner ──────────────────────────────────────────────────
+function toggleMoreTabs() {
+    const menu = document.getElementById('tab-more-menu');
+    if (!menu) return;
+    const open = menu.style.display !== 'none';
+    menu.style.display = open ? 'none' : 'block';
+}
+function closeMoreTabs() {
+    const menu = document.getElementById('tab-more-menu');
+    if (menu) menu.style.display = 'none';
+}
+
+// ── Nations League — Grupper ──────────────────────────────────────────────────
+function buildNLGroups() {
+    const container = document.getElementById('nl-groups');
+    if (!container) return;
+
+    const nl = typeof NATIONS_LEAGUE !== 'undefined' ? NATIONS_LEAGUE : null;
+    const isEn = LANG !== 'no';
+
+    if (!nl || !nl.groups || nl.groups.length === 0) {
+        container.innerHTML = `<div id="nl-groups-built"></div><p style="text-align:center;color:var(--muted);padding:2rem">${isEn ? 'No Nations League data available.' : 'Ingen Nations League-data tilgjengelig.'}</p>`;
+        return;
+    }
+
+    let html = '<div id="nl-groups-built"></div>';
+
+    // Header info
+    html += `<div class="nl-header-info">
+        <span class="nl-header-badge">UEFA Nations League 2026–27 · Liga A</span>
+        <span class="nl-header-dates">${isEn ? 'League phase' : 'Gruppespill'}: ${isEn ? 'Sep–Nov 2026' : 'sep–nov 2026'} · ${isEn ? 'Quarter-finals' : 'Kvartfinaler'}: ${isEn ? 'March 2027' : 'mars 2027'}</span>
+    </div>`;
+
+    html += '<div class="qual-groups-grid">';
+
+    nl.groups.forEach(group => {
+        const teams = group.teams || [];
+        const isNorwayGroup = teams.some(t => t.name === 'Norway');
+
+        html += `
+        <div class="qual-group-card${isNorwayGroup ? ' nl-norway-group' : ''}">
+            <h3 class="qual-group-title">${isEn ? 'Group' : 'Gruppe'} ${group.name}</h3>
+            <table class="qual-standings">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th class="qual-team-col">${isEn ? 'Team' : 'Lag'}</th>
+                        <th>K</th><th>V</th><th>U</th><th>T</th><th>M</th><th>+/-</th><th>P</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+        // Sort by pts, then gd, then gf
+        const sorted = [...teams].sort((a, b) => {
+            const ptsA = a.pts || (a.w * 3 + a.d), ptsB = b.pts || (b.w * 3 + b.d);
+            if (ptsB !== ptsA) return ptsB - ptsA;
+            const gdA = a.gf - a.ga, gdB = b.gf - b.ga;
+            if (gdB !== gdA) return gdB - gdA;
+            return b.gf - a.gf;
+        });
+
+        sorted.forEach((team, idx) => {
+            const w = team.w || 0, d = team.d || 0, l = team.l || 0;
+            const gf = team.gf || 0, ga = team.ga || 0;
+            const pts = team.pts || (w * 3 + d);
+            const played = team.played || (w + d + l);
+            const gd = gf - ga;
+            const gdStr = gd > 0 ? `+${gd}` : `${gd}`;
+            const teamData = TEAMS[team.name] || {};
+            const flag = teamData.flag_id
+                ? `<svg class="flag-svg" aria-hidden="true"><use href="#${teamData.flag_id}"/></svg>`
+                : (teamData.flag || '');
+            const isNorway = team.name === 'Norway';
+            const rowCls = [
+                idx < 2 ? 'qual-pos-winner' : '',
+                idx === 3 ? 'nl-pos-relegated' : '',
+                isNorway ? 'qual-norway' : '',
+            ].filter(Boolean).join(' ');
+            const teamName = teamData.name_no && LANG === 'no' ? teamData.name_no : team.name;
+
+            html += `
+                    <tr class="${rowCls}">
+                        <td class="qual-pos">${idx + 1}</td>
+                        <td class="qual-team-col">${flag} <span class="qual-team-name">${teamName}</span></td>
+                        <td>${played}</td><td>${w}</td><td>${d}</td><td>${l}</td>
+                        <td>${gf}–${ga}</td><td>${gdStr}</td><td class="qual-pts"><strong>${pts}</strong></td>
+                    </tr>`;
+        });
+
+        html += `
+                </tbody>
+            </table>
+            <div class="nl-group-legend">
+                <span class="nl-legend-adv"><span class="nl-legend-dot nl-dot-adv"></span> ${isEn ? 'Quarter-finals' : 'Kvartfinale'}</span>
+                <span class="nl-legend-rel"><span class="nl-legend-dot nl-dot-rel"></span> ${isEn ? 'Relegated' : 'Nedrykk'}</span>
+            </div>
+        </div>`;
+    });
+
+    html += '</div>';
+
+    // NL sluttspill-forklaring og EM-kobling
+    html += `<div class="qual-info-card nl-info-card">
+        <h3 class="qual-info-title" style="font-size:1rem">${isEn ? 'How it works' : 'Slik fungerer det'}</h3>
+
+        <div class="nl-path-section">
+            <h4>${isEn ? 'Knockout stage' : 'Sluttspill'}</h4>
+            <div class="nl-path-flow">
+                <div class="nl-path-step">
+                    <span class="nl-path-icon"><i class="bi bi-people"></i></span>
+                    <span class="nl-path-label">${isEn ? 'League phase' : 'Gruppespill'}</span>
+                    <span class="nl-path-detail">${isEn ? 'Sep–Nov 2026' : 'Sep–nov 2026'}</span>
+                </div>
+                <span class="nl-path-arrow"><i class="bi bi-arrow-right"></i></span>
+                <div class="nl-path-step">
+                    <span class="nl-path-icon"><i class="bi bi-lightning"></i></span>
+                    <span class="nl-path-label">${isEn ? 'Quarter-finals' : 'Kvartfinaler'}</span>
+                    <span class="nl-path-detail">${isEn ? 'March 2027 · Top 2 per group' : 'Mars 2027 · Topp 2 fra hver gruppe'}</span>
+                </div>
+                <span class="nl-path-arrow"><i class="bi bi-arrow-right"></i></span>
+                <div class="nl-path-step">
+                    <span class="nl-path-icon"><i class="bi bi-trophy"></i></span>
+                    <span class="nl-path-label">${isEn ? 'Finals (Final Four)' : 'Finalerunde (Final Four)'}</span>
+                    <span class="nl-path-detail">${isEn ? 'June 2027 · SF + Final' : 'Juni 2027 · Semi + finale'}</span>
+                </div>
+            </div>
+            <p class="nl-path-note">${isEn
+                ? 'Quarter-finals are two-legged ties. Group winners host the second leg. The four QF winners advance to a Final Four tournament (semi-finals + final at a neutral venue).'
+                : 'Kvartfinalene spilles over to kamper (hjemme/borte). Gruppevinnerne har hjemmekamp i returoppgjøret. De fire kvartfinalevinnerne møtes i en Final Four-turnering (semi + finale på nøytral bane).'
+            }</p>
+        </div>
+
+        <div class="nl-path-section">
+            <h4>${isEn ? 'What does Nations League mean for Euro 2028?' : 'Hva betyr Nations League for EM 2028?'}</h4>
+            <p class="qual-info-text">${isEn
+                ? 'Nations League provides a safety net for Euro 2028 qualification. Teams that fail to qualify through the regular qualifying groups (March–November 2027) can still reach Euro 2028 via play-offs in March 2028. The best-ranked non-qualified Nations League group winners are seeded into these play-offs.'
+                : 'Nations League fungerer som et sikkerhetsnett for EM-kvalifiseringen. Lag som ikke kvalifiserer seg gjennom det vanlige gruppespillet (mars–november 2027) kan fortsatt nå EM 2028 via play-off i mars 2028. De beste NL-gruppevinnerne som ikke allerede er kvalifisert, seedes inn i disse kampene.'
+            }</p>
+            <p class="qual-info-text" style="margin-top:.5rem">${isEn
+                ? '<strong>In short:</strong> Good NL results = better seeding in EM qualifying draw + a second chance via play-offs if regular qualification fails.'
+                : '<strong>Kort sagt:</strong> Gode NL-resultater = bedre seeding i EM-kvaliktrekningen + en ekstra sjanse via play-off om vanlig kvalifisering ikke lykkes.'
+            }</p>
+        </div>
+
+        <div class="nl-path-section">
+            <h4>${isEn ? 'Relegation' : 'Nedrykk'}</h4>
+            <p class="qual-info-text">${isEn
+                ? '4th-placed teams are relegated directly to League B. 3rd-placed teams play a relegation play-off against League B runners-up (two-legged, March 2027).'
+                : 'Lag på 4. plass rykker rett ned til Liga B. Lag på 3. plass spiller nedrykkskvalik mot 2.-plassene fra Liga B (to kamper, mars 2027).'
+            }</p>
+        </div>
+    </div>`;
+
+    container.innerHTML = html;
+}
+
+// ── Nations League — Kamper ───────────────────────────────────────────────────
+function buildNLMatches() {
+    const container = document.getElementById('nl-matches');
+    if (!container) return;
+
+    const nl = typeof NATIONS_LEAGUE !== 'undefined' ? NATIONS_LEAGUE : null;
+    const isEn = LANG !== 'no';
+
+    if (!nl || !nl.matches || nl.matches.length === 0) {
+        container.innerHTML = `<div id="nl-matches-built"></div><p style="text-align:center;color:var(--muted);padding:2rem">${isEn ? 'No matches scheduled yet.' : 'Ingen kamper satt opp ennå.'}</p>`;
+        return;
+    }
+
+    let html = '<div id="nl-matches-built"></div>';
+    html += `<div class="nl-header-info">
+        <span class="nl-header-badge">${isEn ? 'Group' : 'Gruppe'} A4 · Portugal, Denmark, Norway, Wales</span>
+    </div>`;
+    html += '<div class="qual-matches-wrap"><table class="schedule qual-schedule">';
+
+    let currentMD = -1;
+    nl.matches.forEach(m => {
+        if (m.matchday !== currentMD) {
+            currentMD = m.matchday;
+            const dayLabel = fmtDay(m.date);
+            const dateLabel = fmtDate(m.date);
+            const mdLabel = isEn ? `Matchday ${m.matchday}` : `Spilledag ${m.matchday}`;
+            html += `<tr class="tbl-date-row"><td colspan="5"><span class="tbl-date">${mdLabel} · ${dayLabel} ${dateLabel}</span></td></tr>`;
+        }
+
+        const t1Data = TEAMS[m.team1] || {};
+        const t2Data = TEAMS[m.team2] || {};
+        const flag1 = t1Data.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${t1Data.flag_id}"/></svg>` : (t1Data.flag || '');
+        const flag2 = t2Data.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${t2Data.flag_id}"/></svg>` : (t2Data.flag || '');
+        const team1Name = t1Data.name_no && LANG === 'no' ? t1Data.name_no : m.team1;
+        const team2Name = t2Data.name_no && LANG === 'no' ? t2Data.name_no : m.team2;
+        const scoreStr = m.score ? `${m.score.ft[0]}–${m.score.ft[1]}` : '–';
+        const isNorway = m.team1 === 'Norway' || m.team2 === 'Norway';
+        const timeStr = m.time ? m.time.replace(/ CEST| CET/, '') : '';
+
+        html += `<tr class="qual-match-row${isNorway ? ' qual-norway' : ''}">
+            <td class="qual-match-group"></td>
+            <td class="qual-match-home">${flag1} ${team1Name}</td>
+            <td class="qual-match-score">${scoreStr}</td>
+            <td class="qual-match-away">${team2Name} ${flag2}</td>
+            <td class="qual-match-time">${timeStr}</td>
+        </tr>`;
+    });
+
+    html += '</table></div>';
+    container.innerHTML = html;
+}
+
+// ── Kvalifisering — Grupper ───────────────────────────────────────────────────
+function buildQualifyingGroups() {
+    const container = document.getElementById('qual-groups');
+    if (!container) return;
+
+    const q = typeof QUALIFYING !== 'undefined' ? QUALIFYING : null;
+    const isEn = LANG !== 'no';
+
+    // Hvis trekningen ikke er gjort ennå (ingen grupper)
+    if (!q || !q.groups || q.groups.length === 0) {
+        const drawDate = q ? q.draw_date : '2026-12-06';
+        const drawVenue = q ? q.draw_venue : 'ICC Belfast';
+
+        container.innerHTML = `
+            <div id="qual-groups-built"></div>
+            <div class="qual-info-card">
+                <h2 class="qual-info-title">${isEn ? 'UEFA Euro 2028 Qualifying' : 'EM 2028-kvalifisering'}</h2>
+                <p class="qual-info-subtitle">${isEn ? 'The draw takes place 6 December 2026 in Belfast' : 'Trekningen finner sted 6. desember 2026 i Belfast'}</p>
+
+                <div class="qual-info-grid">
+                    <div class="qual-info-item">
+                        <span class="qual-info-label">${isEn ? 'Draw' : 'Trekning'}</span>
+                        <span class="qual-info-value">6. des 2026 · ${drawVenue}</span>
+                    </div>
+                    <div class="qual-info-item">
+                        <span class="qual-info-label">${isEn ? 'Group stage' : 'Gruppespill'}</span>
+                        <span class="qual-info-value">${isEn ? 'March – November 2027' : 'Mars – november 2027'}</span>
+                    </div>
+                    <div class="qual-info-item">
+                        <span class="qual-info-label">${isEn ? 'Play-offs' : 'Play-off'}</span>
+                        <span class="qual-info-value">${isEn ? 'March 2028' : 'Mars 2028'}</span>
+                    </div>
+                    <div class="qual-info-item">
+                        <span class="qual-info-label">${isEn ? 'Total spots' : 'Totalt plasser'}</span>
+                        <span class="qual-info-value">24 ${isEn ? 'teams at Euro 2028' : 'lag til EM 2028'}</span>
+                    </div>
+                </div>
+
+                <div class="qual-info-section">
+                    <h3>${isEn ? 'Group stage — 20 direct qualifiers' : 'Gruppespill — 20 direkte plasser'}</h3>
+                    <div class="qual-structure-grid">
+                        <div class="qual-structure-box">
+                            <span class="qual-structure-num">12</span>
+                            <span class="qual-structure-label">${isEn ? 'groups' : 'grupper'}</span>
+                            <span class="qual-structure-detail">${isEn ? '6 groups of 5 + 6 groups of 4' : '6 grupper med 5 + 6 grupper med 4'}</span>
+                        </div>
+                        <span class="nl-path-arrow"><i class="bi bi-arrow-right"></i></span>
+                        <div class="qual-structure-box qual-structure-winner">
+                            <span class="qual-structure-num">12</span>
+                            <span class="qual-structure-label">${isEn ? 'group winners' : 'gruppevinnere'}</span>
+                            <span class="qual-structure-detail">${isEn ? 'Qualify directly' : 'Kvalifiserer seg direkte'}</span>
+                        </div>
+                        <span class="qual-structure-plus">+</span>
+                        <div class="qual-structure-box qual-structure-runner">
+                            <span class="qual-structure-num">8</span>
+                            <span class="qual-structure-label">${isEn ? 'best runners-up' : 'beste toere'}</span>
+                            <span class="qual-structure-detail">${isEn ? 'Qualify directly' : 'Kvalifiserer seg direkte'}</span>
+                        </div>
+                    </div>
+                    <p class="qual-info-text" style="margin-top:.8rem">${isEn
+                        ? '54 teams divided into 12 groups. Teams in NL quarter-finals get 4-team groups (since NL QF overlaps matchdays 1–2). Home-and-away round-robin format.'
+                        : '54 lag fordelt i 12 grupper. Lag i NL-kvartfinalene trekkes i grupper med 4 lag (fordi NL-kvartfinalene overlapper spilledag 1–2). Hjemme/borte-format.'
+                    }</p>
+                </div>
+
+                <div class="qual-info-section">
+                    <h3>${isEn ? 'Play-offs — remaining spots (2–4)' : 'Play-off — resterende plasser (2–4)'}</h3>
+                    <p class="qual-info-text">${isEn
+                        ? 'Teams that don\'t qualify directly compete in play-offs in March 2028. The play-off field consists of:'
+                        : 'Lag som ikke kvalifiserer seg direkte spiller play-off i mars 2028. Play-off-feltet består av:'
+                    }</p>
+                    <ul class="qual-playoff-list">
+                        <li>${isEn ? 'The worst-ranked group runners-up (those not in the top 8)' : 'De dårligst rangerte toerne (de som ikke er blant de 8 beste)'}</li>
+                        <li>${isEn ? 'Best-ranked non-qualified Nations League group winners' : 'Beste NL-gruppevinnere som ikke allerede er kvalifisert'}</li>
+                    </ul>
+                    <p class="qual-info-text" style="margin-top:.5rem">${isEn
+                        ? 'Play-offs are single-leg knockout (semi-finals + final per path). The number of play-off spots depends on how many host nations qualify on merit.'
+                        : 'Play-off spilles som enkeltkamper (semifinale + finale per sti). Antall play-off-plasser avhenger av hvor mange vertsnasjoner som kvalifiserer seg på vanlig vis.'
+                    }</p>
+                </div>
+
+                <div class="qual-info-section">
+                    <h3>${isEn ? 'Host nations' : 'Vertsnasjoner'}</h3>
+                    <p class="qual-info-text">${isEn
+                        ? 'The four host nations play in qualifying (drawn into separate groups) but have a safety net: 2 reserved spots for the best-ranked hosts that don\'t qualify as group winners or top-8 runners-up.'
+                        : 'De fire vertsnasjonene deltar i kvalifiseringen (trekkes i separate grupper), men har et sikkerhetsnett: 2 reserverte plasser for de beste vertsnasjonene som ikke kvalifiserer seg som gruppevinnere eller topp-8 toere.'
+                    }</p>
+                    <div class="qual-host-flags">
+                        <span class="qual-host-flag"><svg class="flag-svg" aria-hidden="true"><use href="#gb-eng"/></svg> England</span>
+                        <span class="qual-host-flag"><svg class="flag-svg" aria-hidden="true"><use href="#gb-sct"/></svg> ${isEn ? 'Scotland' : 'Skottland'}</span>
+                        <span class="qual-host-flag"><svg class="flag-svg" aria-hidden="true"><use href="#gb-wls"/></svg> Wales</span>
+                        <span class="qual-host-flag"><svg class="flag-svg" aria-hidden="true"><use href="#ie"/></svg> ${isEn ? 'Ireland' : 'Irland'}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    // Når grupper er trukket — vis standings-tabeller
+    let html = '<div id="qual-groups-built"></div><div class="qual-groups-grid">';
+
+    q.groups.forEach(group => {
+        const teams = group.teams || [];
+        html += `
+        <div class="qual-group-card">
+            <h3 class="qual-group-title">${isEn ? 'Group' : 'Gruppe'} ${group.name}</h3>
+            <table class="qual-standings">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th class="qual-team-col">${isEn ? 'Team' : 'Lag'}</th>
+                        <th>K</th><th>V</th><th>U</th><th>T</th><th>M</th><th>+/-</th><th>P</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+        teams.forEach((team, idx) => {
+            const w = team.w || 0, d = team.d || 0, l = team.l || 0;
+            const gf = team.gf || 0, ga = team.ga || 0;
+            const pts = team.pts || (w * 3 + d);
+            const played = team.played || (w + d + l);
+            const gd = gf - ga;
+            const gdStr = gd > 0 ? `+${gd}` : `${gd}`;
+            const teamData = TEAMS[team.name] || {};
+            const flag = teamData.flag_id
+                ? `<svg class="flag-svg" aria-hidden="true"><use href="#${teamData.flag_id}"/></svg>`
+                : (teamData.flag || '');
+            const isHost = ['England','Scotland','Wales','Ireland'].includes(team.name);
+            const isNorway = team.name === 'Norway';
+            const rowCls = [
+                idx === 0 ? 'qual-pos-winner' : '',
+                idx === 1 ? 'qual-pos-runner' : '',
+                isHost ? 'qual-host' : '',
+                isNorway ? 'qual-norway' : '',
+            ].filter(Boolean).join(' ');
+
+            html += `
+                    <tr class="${rowCls}">
+                        <td class="qual-pos">${idx + 1}</td>
+                        <td class="qual-team-col">${flag} <span class="qual-team-name">${teamData.name_no && LANG === 'no' ? teamData.name_no : team.name}</span>${isHost ? ' <i class="bi bi-house-fill qual-host-icon" title="Vertsnasjon"></i>' : ''}</td>
+                        <td>${played}</td><td>${w}</td><td>${d}</td><td>${l}</td>
+                        <td>${gf}–${ga}</td><td>${gdStr}</td><td class="qual-pts"><strong>${pts}</strong></td>
+                    </tr>`;
+        });
+
+        html += `
+                </tbody>
+            </table>
+        </div>`;
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// ── Kvalifisering — Kamper ────────────────────────────────────────────────────
+function buildQualifyingMatches() {
+    const container = document.getElementById('qual-matches');
+    if (!container) return;
+
+    const q = typeof QUALIFYING !== 'undefined' ? QUALIFYING : null;
+    const isEn = LANG !== 'no';
+
+    // Ingen kamper ennå
+    if (!q || !q.matches || q.matches.length === 0) {
+        container.innerHTML = `
+            <div id="qual-matches-built"></div>
+            <div class="qual-info-card">
+                <h2 class="qual-info-title">${isEn ? 'Qualifying matches' : 'Kvalifiseringskamper'}</h2>
+                <p class="qual-info-subtitle">${isEn ? 'The schedule will be available after the draw on 6 December 2026.' : 'Kampoppsettet blir tilgjengelig etter trekningen 6. desember 2026.'}</p>
+
+                <div class="qual-matchdays">
+                    <h3>${isEn ? 'Matchdays' : 'Spilledager'}</h3>
+                    <div class="qual-matchday-list">
+                        <div class="qual-matchday-item"><span class="qual-md-num">1–2</span><span class="qual-md-date">${isEn ? 'March 2027' : 'Mars 2027'}</span><span class="qual-md-note">${isEn ? 'Only 5-team groups' : 'Kun grupper med 5 lag'}</span></div>
+                        <div class="qual-matchday-item"><span class="qual-md-num">3–4</span><span class="qual-md-date">${isEn ? 'June 2027' : 'Juni 2027'}</span><span class="qual-md-note"></span></div>
+                        <div class="qual-matchday-item"><span class="qual-md-num">5–6</span><span class="qual-md-date">${isEn ? 'September 2027' : 'September 2027'}</span><span class="qual-md-note"></span></div>
+                        <div class="qual-matchday-item"><span class="qual-md-num">7–8</span><span class="qual-md-date">${isEn ? 'October 2027' : 'Oktober 2027'}</span><span class="qual-md-note">${isEn ? 'Only 5-team groups' : 'Kun grupper med 5 lag'}</span></div>
+                        <div class="qual-matchday-item"><span class="qual-md-num">9–10</span><span class="qual-md-date">${isEn ? 'November 2027' : 'November 2027'}</span><span class="qual-md-note"></span></div>
+                        <div class="qual-matchday-item"><span class="qual-md-num">${isEn ? 'Play-offs' : 'Play-off'}</span><span class="qual-md-date">${isEn ? 'March 2028' : 'Mars 2028'}</span><span class="qual-md-note">${isEn ? 'Single-leg semi-finals + final' : 'Enkeltkamper i semi + finale'}</span></div>
+                    </div>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    // Når kamper er tilgjengelige — vis som tabell gruppert etter dato
+    let html = '<div id="qual-matches-built"></div>';
+    html += '<div class="qual-matches-wrap"><table class="schedule qual-schedule">';
+
+    let currentDate = '';
+    q.matches.forEach(m => {
+        if (m.date !== currentDate) {
+            currentDate = m.date;
+            const dayLabel = fmtDay(m.date);
+            const dateLabel = fmtDate(m.date);
+            html += `<tr class="tbl-date-row"><td colspan="5"><span class="tbl-date">${dayLabel} ${dateLabel}</span></td></tr>`;
+        }
+
+        const t1Data = TEAMS[m.team1] || {};
+        const t2Data = TEAMS[m.team2] || {};
+        const flag1 = t1Data.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${t1Data.flag_id}"/></svg>` : (t1Data.flag || '');
+        const flag2 = t2Data.flag_id ? `<svg class="flag-svg" aria-hidden="true"><use href="#${t2Data.flag_id}"/></svg>` : (t2Data.flag || '');
+        const team1Name = t1Data.name_no && LANG === 'no' ? t1Data.name_no : m.team1;
+        const team2Name = t2Data.name_no && LANG === 'no' ? t2Data.name_no : m.team2;
+        const scoreStr = m.score ? `${m.score.ft[0]}–${m.score.ft[1]}` : '–';
+        const timeStr = m.time || '';
+        const groupLabel = m.group ? `Gr. ${m.group}` : '';
+        const isNorway = m.team1 === 'Norway' || m.team2 === 'Norway';
+
+        html += `<tr class="qual-match-row${isNorway ? ' qual-norway' : ''}">
+            <td class="qual-match-group">${groupLabel}</td>
+            <td class="qual-match-home">${flag1} ${team1Name}</td>
+            <td class="qual-match-score">${scoreStr}</td>
+            <td class="qual-match-away">${team2Name} ${flag2}</td>
+            <td class="qual-match-time">${timeStr}</td>
+        </tr>`;
+    });
+
+    html += '</table></div>';
+    container.innerHTML = html;
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────

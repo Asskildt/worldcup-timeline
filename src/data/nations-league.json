@@ -1,0 +1,70 @@
+{
+  "name": "UEFA Nations League 2026-27",
+  "season": "2026-27",
+  "league_phase_start": "2026-09-24",
+  "league_phase_end": "2026-11-17",
+  "quarter_finals": "2027-03-25 to 2027-03-30",
+  "finals": "2027-06-09 to 2027-06-13",
+  "format": {
+    "leagues": 4,
+    "league_a_groups": 4,
+    "teams_per_group": 4,
+    "matches_per_team": 6,
+    "advancement": "Top 2 per group advance to quarter-finals",
+    "relegation": "4th placed teams relegated, 3rd play relegation play-offs",
+    "em_link": "Nations League results provide secondary qualification route to Euro 2028 via play-offs in March 2028"
+  },
+  "league": "A",
+  "groups": [
+    {
+      "name": "A1",
+      "teams": [
+        { "name": "France", "played": 0, "w": 0, "d": 0, "l": 0, "gf": 0, "ga": 0, "pts": 0 },
+        { "name": "Italy", "played": 0, "w": 0, "d": 0, "l": 0, "gf": 0, "ga": 0, "pts": 0 },
+        { "name": "Belgium", "played": 0, "w": 0, "d": 0, "l": 0, "gf": 0, "ga": 0, "pts": 0 },
+        { "name": "Turkey", "played": 0, "w": 0, "d": 0, "l": 0, "gf": 0, "ga": 0, "pts": 0 }
+      ]
+    },
+    {
+      "name": "A2",
+      "teams": [
+        { "name": "Germany", "played": 0, "w": 0, "d": 0, "l": 0, "gf": 0, "ga": 0, "pts": 0 },
+        { "name": "Netherlands", "played": 0, "w": 0, "d": 0, "l": 0, "gf": 0, "ga": 0, "pts": 0 },
+        { "name": "Serbia", "played": 0, "w": 0, "d": 0, "l": 0, "gf": 0, "ga": 0, "pts": 0 },
+        { "name": "Greece", "played": 0, "w": 0, "d": 0, "l": 0, "gf": 0, "ga": 0, "pts": 0 }
+      ]
+    },
+    {
+      "name": "A3",
+      "teams": [
+        { "name": "Spain", "played": 0, "w": 0, "d": 0, "l": 0, "gf": 0, "ga": 0, "pts": 0 },
+        { "name": "Croatia", "played": 0, "w": 0, "d": 0, "l": 0, "gf": 0, "ga": 0, "pts": 0 },
+        { "name": "England", "played": 0, "w": 0, "d": 0, "l": 0, "gf": 0, "ga": 0, "pts": 0 },
+        { "name": "Czech Republic", "played": 0, "w": 0, "d": 0, "l": 0, "gf": 0, "ga": 0, "pts": 0 }
+      ]
+    },
+    {
+      "name": "A4",
+      "teams": [
+        { "name": "Portugal", "played": 0, "w": 0, "d": 0, "l": 0, "gf": 0, "ga": 0, "pts": 0 },
+        { "name": "Denmark", "played": 0, "w": 0, "d": 0, "l": 0, "gf": 0, "ga": 0, "pts": 0 },
+        { "name": "Norway", "played": 0, "w": 0, "d": 0, "l": 0, "gf": 0, "ga": 0, "pts": 0 },
+        { "name": "Wales", "played": 0, "w": 0, "d": 0, "l": 0, "gf": 0, "ga": 0, "pts": 0 }
+      ]
+    }
+  ],
+  "matches": [
+    { "matchday": 1, "date": "2026-09-24", "time": "20:45 CEST", "group": "A4", "team1": "Norway", "team2": "Denmark", "score": null },
+    { "matchday": 1, "date": "2026-09-24", "time": "20:45 CEST", "group": "A4", "team1": "Portugal", "team2": "Wales", "score": null },
+    { "matchday": 2, "date": "2026-09-27", "time": "20:45 CEST", "group": "A4", "team1": "Norway", "team2": "Portugal", "score": null },
+    { "matchday": 2, "date": "2026-09-27", "time": "20:45 CEST", "group": "A4", "team1": "Denmark", "team2": "Wales", "score": null },
+    { "matchday": 3, "date": "2026-10-01", "time": "20:45 CEST", "group": "A4", "team1": "Wales", "team2": "Norway", "score": null },
+    { "matchday": 3, "date": "2026-10-01", "time": "20:45 CEST", "group": "A4", "team1": "Denmark", "team2": "Portugal", "score": null },
+    { "matchday": 4, "date": "2026-10-04", "time": "20:45 CEST", "group": "A4", "team1": "Portugal", "team2": "Norway", "score": null },
+    { "matchday": 4, "date": "2026-10-04", "time": "20:45 CEST", "group": "A4", "team1": "Wales", "team2": "Denmark", "score": null },
+    { "matchday": 5, "date": "2026-11-14", "time": "20:45 CET", "group": "A4", "team1": "Norway", "team2": "Wales", "score": null },
+    { "matchday": 5, "date": "2026-11-14", "time": "20:45 CET", "group": "A4", "team1": "Portugal", "team2": "Denmark", "score": null },
+    { "matchday": 6, "date": "2026-11-17", "time": "20:45 CET", "group": "A4", "team1": "Denmark", "team2": "Norway", "score": null },
+    { "matchday": 6, "date": "2026-11-17", "time": "20:45 CET", "group": "A4", "team1": "Wales", "team2": "Portugal", "score": null }
+  ]
+}
